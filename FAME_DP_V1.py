@@ -1223,7 +1223,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
         coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * (Thot-(tF+tF1)/2)
         coolingpowersum = coolingpowersum + coolPn
     qh = coolingpowersum # DP: heating power of the device
-    Q_FAME = qh*7 # DP: cooling power of FAME device is 7 times the cooling power of one regenerator
+    Q_FAME = qh*7 # DP: cooling power of FAME device is 7 times the cooling power of one regenerator.
+    # Demonstrated by the file COoling_capacity_calc.py
 
     Kamb = 0.28
     qccor = qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
