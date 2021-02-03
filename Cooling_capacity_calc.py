@@ -68,6 +68,8 @@ for n in range(2*(time_steps+1)-1):
 
 qc = cooling_power_sum
 
+# Conclusion: the cooling power turns out to be seven times the cooling power of just one regenerator. Confusion solved.
+
 print(qc)
 
 total_vol_flow = np.zeros(2*(time_steps+1))
