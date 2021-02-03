@@ -90,3 +90,5 @@ for n in range(2*(time_steps+1)-1):
     total_vol_flow[n] = V_flow_reg1[n]+V_flow_reg2[n]+V_flow_reg3[n]+V_flow_reg4[n]+V_flow_reg5[n]+V_flow_reg6[n]+V_flow_reg7[n]
 
 print(np.max(total_vol_flow))
+
+# Conclusion: Total volumetric flow rate was found to be equal to 2.37 times the flow of just one regenerator.
