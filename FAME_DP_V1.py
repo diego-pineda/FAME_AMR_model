@@ -292,32 +292,30 @@ def AbsTolFunc2d(var1,var2,Tol):
 
 ######################################### RUN ACTIVE ############################################
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_lim):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
-    # caseNum    <- caseNum number
-    # Thot       <- Hot side heat exchanger
-    # Tcold      <- Cold side heat exchanger
-    # cen_loc    <- offset of the regenerator to the magnet
-    # Tambset    <- Set ambient temperature
-    # numid      <- Experimental id
-    # startprev  <- Do you wish to reload the previous data to start the new cycle
-    #               Only select when a previous file is available.
-    #               You can do so by making sure to save the solid and fluid temperature matrix in the
-    #               multi_sweep file
-    # dispV      <- Displaced volume [m^3]. DP: for the FAME cooler this represents the maximum volumetric flow rate
-    # ff         <- frequency [Hz]
-    # CF         <- Enable/Disable Conduction term in Fluid
-    # CS         <- Enable/Disable Conduction term in Solid
-    # CL         <- Enable/Disable Heat leaks term in the Fluid GE
-    # CVD        <- Enable/Disable Viscous Dissipation Term in the Fluid GE
-    # CMCE       <- Enable/Disable MCE
-    # nodes      <- Number of Spacial nodes used
-    # timesteps  <- Number of Timesteps per cycle
-    # ConfName   <- Load a certain configuration file
-    # jobName    <- The name of the job
-    # time_lim   <- Simulation time limit in minutes (Added by DP)
+    # caseNum        <- caseNum number
+    # Thot           <- Hot side heat exchanger
+    # Tcold          <- Cold side heat exchanger
+    # cen_loc        <- offset of the regenerator to the magnet
+    # Tambset        <- Set ambient temperature
+    # dispV          <- Displaced volume [m^3]. DP: for the FAME cooler this represents the maximum volumetric flow rate
+    # ff             <- frequency [Hz]
+    # CF             <- Enable/Disable Conduction term in Fluid
+    # CS             <- Enable/Disable Conduction term in Solid
+    # CL             <- Enable/Disable Heat leaks term in the Fluid GE
+    # CVD            <- Enable/Disable Viscous Dissipation Term in the Fluid GE
+    # CMCE           <- Enable/Disable MCE
+    # nodes          <- Number of Spacial nodes used
+    # timesteps      <- Number of Timesteps per cycle
+    # ConfName       <- Load a certain configuration file
+    # jobName        <- The name of the job
+    # time_lim       <- Simulation time limit in minutes (Added by DP)
+    # cycle_tol      <- Maximum cycle tolerance: criterion for the end of the iterative calculation process
+    # max_step_iter  <- Maximum time step iterations the simulation is allowed to take
+    # max_cycle_iter <- Maximum cycle iterations the simulation is allowed to take
 
     ########### 14-9-2017 16:39
     code has been check on NTU and U correctness. Some interesting spike was found
@@ -388,12 +386,23 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     dt = 1 / (nt+1) # DP comment: I am not sure why in this case the denominator is nt+1.  Maybe it is also because there a time node for zero.
     # To prevent the simulation running forever we limit the simulation to
     # find a tollerance setting per step and per cycle.
-    maxStepTol  = [1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5] # DP: this was originally up to 1e-7
-    maxCycleTol = 1e-4 # DP: this was originally 1e-6
+
+    # DP: Create a list (maxStepTol) containing the values of the tolerances used to finish the iterative calculation
+    # process for every time step. The list is needed to avoid many iterations on the time step level when the tolerance
+    # on the cycle level is still far from the criterion for convergence
+
+    maxCycleTol = cycle_tol  # DP: this was originally 1e-6
+    maxStepTol  = [1]  # DP: this was originally [1, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]
+    a = 0
+    while maxStepTol[-1] >= maxCycleTol:
+        a = a+1
+        maxStepTol.append(10**-a)
+
     # We also limit the number of steps and cycles the simulation can take. If
     # the simulation runs over these there might be an issue with the code.
-    maxSteps  = 200 # DP: this was 2000
-    maxCycles = 300 # DP: this was 2000
+    maxSteps  = max_step_iter  # DP: this was 2000 in Theo's code. I set this to 200
+    maxCycles = max_cycle_iter  # DP: this was 2000 in Theo's code. I set this to 300
+
     print("Number of cycle iterations: {}\nNumber of time step iterations: {}".format(maxCycles, maxSteps))
     # Cycle period
     t = np.linspace(0, tau_c, nt+1)
@@ -1271,7 +1280,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 if __name__ == '__main__':
 
 
-    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit)
+    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
     #MaxTSpan      = 10
     caseNumber    = 2
     Thot          = 295
@@ -1291,8 +1300,11 @@ if __name__ == '__main__':
     cName         = "R7"
     jName         = "First_trial" # DP: It is better to use underline to connect words because this is used as file name
     time_limit    = 600  # [min] Time limit for the simulation in minutes
+    cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+    maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
+    maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-    results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit)
+    results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
 
     # Some useful functions for storing data.
     def FileSave(filename, content):
@@ -1406,7 +1418,7 @@ if __name__ == '__main__':
     #
     #     print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case,maxcase,casenum,Thot,Tcold))
     #
-    #     results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit)
+    #     results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
     #     # Get result roots variable is broken down in:
     #     #  0     1    2   3      4        5
     #     # Thot,Tcold,qc,qccor,(t1-t0)/60,pave,
