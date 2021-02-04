@@ -292,7 +292,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 
 ######################################### RUN ACTIVE ############################################
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_lim):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -317,6 +317,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     # timesteps  <- Number of Timesteps per cycle
     # ConfName   <- Load a certain configuration file
     # jobName    <- The name of the job
+    # time_lim   <- Simulation time limit in minutes (Added by DP)
 
     ########### 14-9-2017 16:39
     code has been check on NTU and U correctness. Some interesting spike was found
@@ -1067,13 +1068,13 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                     print(s)
                     break
                 # Break the step calculation
-                if ((time.time()-t0)/60)>600: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
+                if ((time.time()-t0)/60)>time_lim: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
                     # So, the difference time.time()-t0 is in seconds, and dividing it by 60 returns a difference in minutes
                     break # DP: this breaks the while loop for every time step
                 ################################################################
                 ################### ELSE ITERATE AGAIN - WHILE LOOP FOR EVERY TIME STEP FINISHES HERE ###################
             # break the cycle calculation
-            if ((time.time()-t0)/60)>600:
+            if ((time.time()-t0)/60)>time_lim:
                 break # DP: This breaks the for loop over the time steps
         # Check if current cycle is close to previous cycle.
         [bool_y_check,max_val_y_diff]=AbsTolFunc2d(y,iyCycle,maxCycleTol)
@@ -1108,7 +1109,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
             qh = heatingpowersum
             print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {3:2.5e} y-tol {4:2.5e} s-tol {5:2.5e} run time {6:4.1f} [min]".format(int(caseNum),cycleCount,qc,qh,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60 ))
 
-        if ((time.time()-t0)/60)>600: # DP: if the for loop was broken above, then do...
+        if ((time.time()-t0)/60)>time_lim: # DP: if the for loop was broken above, then do...
             coolingpowersum=0
             heatingpowersum=0
             startint=0
@@ -1270,7 +1271,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 if __name__ == '__main__':
 
 
-    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName)
+    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit)
     #MaxTSpan      = 10
     caseNumber    = 2
     Thot          = 295
@@ -1289,8 +1290,9 @@ if __name__ == '__main__':
     Dsp           = 425e-6
     cName         = "R7"
     jName         = "First_trial" # DP: It is better to use underline to connect words because this is used as file name
+    time_limit    = 600  # [min] Time limit for the simulation in minutes
 
-    results = runActive(caseNumber,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jName)
+    results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit)
 
     # Some useful functions for storing data.
     def FileSave(filename, content):
@@ -1404,7 +1406,7 @@ if __name__ == '__main__':
     #
     #     print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case,maxcase,casenum,Thot,Tcold))
     #
-    #     results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName)
+    #     results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit)
     #     # Get result roots variable is broken down in:
     #     #  0     1    2   3      4        5
     #     # Thot,Tcold,qc,qccor,(t1-t0)/60,pave,
