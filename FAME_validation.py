@@ -1,5 +1,6 @@
 from FAME_DP_V1 import runActive
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
@@ -29,18 +30,32 @@ if __name__ == '__main__':
     maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
     maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-    Qc =1  # This is just for allowing the initialization of the following loop
-    Qc_data = []
+    Qc_corr =1  # This is just for allowing the initialization of the following loop
+    Qc_corr_data = []
     Tspan_data = []
+    Qc_data = []
 
-    while Qc > 0:
+    while Qc_corr > 0:
         results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter)
         Tspan = Thot-Tcold
-        Tcold = Tcold-5
-        Qc = results[2]  # [W] Cooling capacity of the device
-        Qc_data.append(Qc)
         Tspan_data.append(Tspan)
+        Qc = results[2]  # [W] Cooling capacity of the device without thermal losses correction
+        Qc_data.append(Qc)
+        Qc_corr = results[3]  # [W] Cooling capacity of the device corrected for thermal losses in CHEX
+        Qc_corr_data.append(Qc_corr)
+        Tcold = Tcold-5
 
+    plot1 = plt.figure(1)
+    plt.plot(Qc_corr_data, Tspan_data)
+    plt.plot([0, 24, 51, 77, 103], [9.7, 8, 6, 3.3, 0.01])
+    plt.plot(Qc_data, Tspan_data)
+    plt.legend(["Simulation with heat losses in CHEX", "Bowei's experiments", "Simulation without heat losses in CHEX"])
+    plt.xlabel("Cooling capacity [W]")
+    plt.ylabel("Temperature span [K]")
+    plt.title("Temperature span vs Cooling capacity")
+    plt.grid(which='both', axis='both')
+
+    plt.show()
 
 #     results = runActive(caseNumber,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
 #
