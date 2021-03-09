@@ -77,7 +77,7 @@ from closure.inter_heat import beHeff_I, beHeff_E
 from closure.pressure_drop import SPresM
 # Resistance Term in the Regenerator and void
 from closure.resistance import ThermalResistance,ThermalResistanceVoid
-from closure.FAME_resistance import FAME_ThermalResistance, FAME_ThermalResistanceVoid
+from closure.FAME_resistance import FAME_ThermalResistance, FAME_ThermalResistance2, FAME_ThermalResistanceVoid
 
 
 ############################################## SOLVER ##############################################
@@ -143,9 +143,10 @@ def SolveSolid(iynext, isnext, yprev, sprev, Vd,    Cs,   Kse,   Ksw, Omegas,  S
             b[j] = Cs[j+1]/dt+CS*Ksw[j]/(dx*2)+CS*Kse[j]/(dx*2)+Omegas[j+1]/2
             c[j] = -CS*Kse[j]/(dx*2)
             d[j] = (iynext[j+1]+iynext[j+2])*Omegas[j+1]/2+sprev[j]*(CS*Ksw[j]/(2*dx)) + sprev[j+1]*(Cs[j+1]/dt-CS*Ksw[j]/(2*dx)-CS*Kse[j]/(2*dx)-Omegas[j+1]/2) + sprev[j+2]*(CS*Kse[j]/(2*dx)) + CMCE*Smce[j+1]
-        # TODO: try to understand again the boundary conditions and the construction of the coefficients
+
         # Add in BC
-        # Neumann @ i=0
+        # Neumann @ i=0 : dT/dX|x=0 = 0 : (No heat transfer at the boundary)
+        # T_i=0 = T_i=1 and a_1*T_0+b_1*T_1+c_1*T_2 = d_1 => b_1 = b_1+a_1 (in python first element has index 0)
         b[0] = b[0]  + a[0]
         # Neumann @ i=-1
         b[-1]= b[-1] + c[-1]
@@ -216,7 +217,8 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
         # CL         <- Enable/Disable Heat leaks term in the Fluid GE
         # CVD        <- Enable/Disable Viscous Dissipation Term in the Fluid GE
         # Add in boundary conditions
-        # Dirichlet @ i=0
+        # Dirichlet @ i=0 : T_i=0 = Tcold => y_i=0 = 0 (cold to hot blow). As y_i=0 is known the term a1y0 goes to the
+        # right hand side of the equation and can be subtracted from d1
         d[0] = d[0]  - a[0]*ynext[0]
         # Neumann @ i=-1
         b[-1]= b[-1] + c[-1]
@@ -238,9 +240,9 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
             c[j] = Ff[j+2]/(dx)-Ae*CF*Kfe[j]/(2*dx)+Omegaf[j+1]/2
             d[j] = yprev[j]*(Aw*CF*Kfw[j]/(2*dx)) + yprev[j+1]*(Cf[j+1]/dt-Aw*CF*Kfw[j]/(dx*2)-Ae*CF*Kfe[j]/(dx*2)-CL[j+1]*Lf[j+1]/2) + yprev[j+2]*(Ae*CF*Kfe[j]/(dx*2)) + yamb[j+1]*(CL[j+1]*Lf[j+1]) + isnext[j+1]*(Omegaf[j+1]/2) + sprev[j+1]*(Omegaf[j+1]/2) + CVD*Sp[j+1]
         # Add in bc
-        # Dirichlet @ i=0
+        # Dirichlet @ i=-1
         d[-1] = d[-1] - c[-1] * ynext[-1]
-        # Neumann @ i=-1
+        # Neumann @ i=0
         b[0]  = b[0]  + a[0]
         # Solve the unknown matrix 0->N-1
         ynext[1:-1] = TDMAsolver(a[1:], b, c[:-1], d)
@@ -422,6 +424,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     # DP comment: it seems that the second term of the equation that describes the velocity profile of an alternating piston in a crank-rod-piston mechanism was not considered. Instead a weird sign function is added
     # DP comment: also, vf becomes V, which is the input parameter Vd of the function solvefluid(...,Vd,...). Vd varies with time according to a sine function.
     # DP comment: However, the flow direction through the AMR bed is indicated by the sign of the derivative of velocity rather the sign of velocity itself
+    # DP: sys.float_info.epsilon returns the smallest real number that added to 1.0 can be distinguished from 1.0 by
+    # the binary representation of a floating point real number
 
     # block wave (See notebook pg. 111 Theo Christiaanse Sept 2017)
     #uf = lambda at, Ac, Vd, sf: (Vd*sf / (Ac)) * np.sign(1/(sf*2)-sys.float_info.epsilon-at)
@@ -917,6 +921,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         # Loss term
                         if ConfName == "R7":
                             Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
+                            #Lf[i] = P_c[i] * FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq)
                         else:
                             Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3)
                         # TODO: this is not necessary for the FAME cooler. It can be deleted.
@@ -934,6 +939,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         # Effective Conduction for fluid
                         k[i] = kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
+                        # TODO: heat transfer coefficient is based on crushed particles rather than spherical
                         Omegaf[i] = A_c[i] * beHeff_I(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
@@ -1067,8 +1073,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                     print(AbsTolFunc(snext,isnext,maxStepTol[stepTolInt]))
                     print(stepTol)
                 # Copy current values to new guess and current step.
-                s[n, :] = np.copy(snext)
-                isnext  = np.copy(snext)
+                s[n, :] = np.copy(snext)  # DP: updated the current time step solid Temp distrib in the matrix containing all time steps temperature distributions
+                isnext  = np.copy(snext)  # DP: uses the solid temperature just calculated for new time step iteration
                 y[n, :] = np.copy(ynext)
                 iynext  = np.copy(ynext)
                 if (np.any(np.isnan(y)) or np.any(np.isnan(s))):
@@ -1095,8 +1101,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
             if stepTolInt == len(maxStepTol): # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
                 stepTolInt=len(maxStepTol)-1
 
-
-        # TODO: I am not happy with the following if statement. Heating power should be calculated after having definite results
+        # DP: it is useful to see on screen some results during the iterative calculation process
         if cycleCount % 10 == 1: # DP: this is true for cycleCount = 11 or 21 or 31 and so on. The operator % returns the modulus of the division
             coolingpowersum=0
             heatingpowersum=0
@@ -1138,7 +1143,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
             qh = heatingpowersum # Added by DP
             print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {6:2.5e} y-tol {3:2.5e} s-tol {4:2.5e} run time {5:4.1f} [min]".format(int(caseNum),cycleCount,qc,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60,qh ))
             # Pickle data
-            aaa = ((y,s,stepTolInt,iyCycle,isCycle))
+            aaa = (y, s, stepTolInt, iyCycle, isCycle)
             # open the file for writing
             fileObject = open(PickleFileName,'wb')
             # this writes the object a to the
@@ -1233,11 +1238,11 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
         coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * (Thot-(tF+tF1)/2)
         coolingpowersum = coolingpowersum + coolPn
     qh = coolingpowersum # DP: heating power of the device
-    Q_FAME = qh*7 # DP: cooling power of FAME device is 7 times the cooling power of one regenerator.
-    # Demonstrated by the file COoling_capacity_calc.py
+    # DP: cooling power of FAME device is 7 times the cooling power of one regenerator.
+    # Demonstrated in the file Cooling_capacity_calc.py
 
-    Kamb = 0.28
-    qccor = qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
+    Kamb = 2.5 # DP: This has to be measured experimentally for the
+    qccor = 7*qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
     # It includes a correction to account for additional heat leaks in the CHEX
     pave = np.trapz(pt[halft:], x=t[halft:]) / (tau_c/2)  # DP: average pressure drop across the regenerator
     print("{0:3.1f} {1:3.1f} {2:1.2f} {3:1.2f} Cycle Count: {4:d} Tol-y: {5:1.4e} Tol-s {6:1.4e}".format(float(Thot), float(Tcold), float(Uti), float(freq), int(cycleCount), float(max_val_y_diff), float(max_val_s_diff)))
@@ -1267,44 +1272,17 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     print('highest Temperature found in the SS cycle: {}'.format(maxTemp))
 
     # Remove Pickle
-    # try:
-    #     os.remove(PickleFileName)
-    #     print("We removed the pickle file")
-    # except FileNotFoundError:
-    #     print('Hey! It was done very fast.')
+    try:
+        os.remove(PickleFileName)
+        print("We removed the pickle file")
+    except FileNotFoundError:
+        print('Hey! It was done very fast.')
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount
  #          0     1   2    3        4       5
 ################# DP: the function "Run_Active" ends here ####################
 
 if __name__ == '__main__':
-
-
-    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-    #MaxTSpan      = 10
-    caseNumber    = 2
-    Thot          = 295
-    Tcold         = 292
-    cen_loc       = 0
-    Tambset       = 294
-    dispV         = 15.33e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
-    ff            = 1.2  # [Hz] DP: frequency of AMR cycle
-    CF            = 1
-    CS            = 1
-    CL            = 0
-    CVD           = 1
-    CMCE          = 1
-    nodes         = 400
-    timesteps     = 600
-    Dsp           = 425e-6
-    cName         = "R7"
-    jName         = "First_trial" # DP: It is better to use underline to connect words because this is used as file name
-    time_limit    = 600  # [min] Time limit for the simulation in minutes
-    cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-    maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
-    maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
-
-    results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
 
     # Some useful functions for storing data.
     def FileSave(filename, content):
@@ -1317,131 +1295,199 @@ if __name__ == '__main__':
                 f.write(" ".join("{:9.6f}\t".format(x) for x in line))
                 f.write("\n")
 
-#  runActive():  return Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh
-#                       0       1   2   3     4         5     6           7      8    9      10        11       12       13     14 15 16    17       18  19   20 21    22         23       24         25      26
+    def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
+        numCases       = 1
+        hotResolution  = 1
+        coldResolution = 8
 
-    fileName = "Testing_functionality2.txt"
-    fileNameSave = './' + fileName
-    fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
-    FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-    FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]', 'Uti [-]', 'freq [Hz]', 'run time [min]'))
-    FileSave(fileNameSliceTemp,"{},{},{:4.2f},{},{:4.2f} \n".format(results[0], results[1], results[18], results[19], results[4]))
-    BlowSliceTemperatures = np.stack((results[21], results[10], results[11], results[12], results[13], results[22], results[23], results[24], results[25]), axis=-1)
-    FileSaveMatrix(fileNameSliceTemp, BlowSliceTemperatures)
+        maxcase = numCases * hotResolution * coldResolution
+        Thotarr = np.linspace(273+22, 273+22, hotResolution)
 
-    fluidtemperature = './' + "Fluid_Temperature2.txt"
-    fluidtemperatures = results[14]
-    FileSaveMatrix(fluidtemperature,fluidtemperatures)
+        casenum=int(np.floor(case/(hotResolution*coldResolution))) # DP: I don't understand why making things complicated like this...
 
-    solidtemperature = './' + "Solid_Temperature2.txt"
-    solidtemperatures = results[15]
-    FileSaveMatrix(solidtemperature,solidtemperatures)
+        if (casenum==0):
+            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
+            fileName      = "{}.txt".format(jobName)
+            MaxTSpan      = 24
+            cen_loc       = 0
+            Tambset       = 298
+            dispV         = 30.52e-6
+            ff            = 1.7
+            Dsp           = 600e-6
+            CF            = 1
+            CS            = 1
+            CL            = 0
+            CVD           = 1
+            CMCE          = 1
+            nodes         = 400
+            timesteps     = 600
+            cName         = "R7"
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+        if (casenum==1):
+            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
+            fileName      = "test_078_10_ALL_s_4_dv.txt"
+            MaxTSpan      = 20
+            cen_loc       = 0
+            Tambset       = 294
+            dispV         = 3.91e-6
+            ff            = 1
+            Dsp           = 425e-6
+            CF            = 1
+            CS            = 1
+            CL            = 1
+            CVD           = 1
+            CMCE          = 1
+            nodes         = 400
+            timesteps     = 400
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+        if (casenum==2):
+            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
+            fileName      = "test_ch_conf1.txt"
+            MaxTSpan      = 15
+            cen_loc       = 0
+            Tambset       = 294
+            dispV         = 3.91e-6
+            ff            = 1
+            Dsp           = 425e-6
+            CF            = 1
+            CS            = 1
+            CL            = 1
+            CVD           = 1
+            CMCE          = 1
+            nodes         = 800
+            timesteps     = 800
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+        if (casenum==3):
+            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
+            fileName      = "test_078_10_ALL_s_16_dv.txt"
+            MaxTSpan      = 20
+            cen_loc       = 0
+            Tambset       = 294
+            dispV         = 3.91e-6
+            ff            = 1
+            Dsp           = 425e-6
+            CF            = 1
+            CS            = 1
+            CL            = 1
+            CVD           = 1
+            CMCE          = 1
+            nodes         = 1600
+            timesteps     = 400
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-    # def RunCaseThotTcold(case,jobName):
-    #     numCases       = 1
-    #     hotResolution  = 20
-    #     coldResolution = 20
+        # DP: I don't get why this is defined in this way.
+        Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
+        Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
+
+        print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
+
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
+        # Get result roots variable is broken down in:
+        #  0     1    2   3      4        5
+        # Thot,Tcold,qc,qccor,(t1-t0)/60,pave,
+        #           6               7
+        # integral_eff_HB_CE,integral_eff_CB_HE,
+        #  8    9      10        11       12       13
+        # tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,
+        # 14 15 16      17     18   19  20 21
+        # y, s, pt, np.max(pt),Uti,freq,t,xloc
+        # 22           23       24         25
+        #yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow
+
+        fileNameSave        = './Ends/' + str(case) + fileName
+        FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
+        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
+        FileSave(fileNameSave, "Fluid temperatures \n")
+        FileSaveMatrix(fileNameSave, results[14])
+        FileSave(fileNameSave, "\n")
+        FileSave(fileNameSave, "Solid temperatures \n")
+        FileSaveMatrix(fileNameSave, results[15])
+        FileSave(fileNameSave, "\n")
+
+
+        # fileNameSave        = './' + fileName # DP: ./ is for specifying that the file is save to the working directory
+        # fileNameEndTemp     = './Ends/{:3.0f}-{:3.0f}-PysicalEnd'.format(Thot,Tcold)+fileName
+        # fileNameSliceTemp   = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot,Tcold)+fileName
+        # FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0],results[1],results[2],results[3],results[4],results[5],results[26]) )
+        # #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]','Eff CE-HB [-]', 'Eff HE-CB [-]') )
+        # #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4],results[6],results[7]) )
+        # #EndTemperatures = np.stack((results[20], results[8],results[9]), axis=-1)
+        # #FileSaveMatrix(fileNameEndTemp,EndTemperatures)
+        # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]') )
+        # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4]) )
+        # BlowSliceTemperatures = np.stack((results[21],results[10],results[11],results[12],results[13],results[22],results[23],results[24],results[25]), axis=-1)
+        # FileSaveMatrix(fileNameSliceTemp,BlowSliceTemperatures)
+
+    RunCaseThotTcold(float(sys.argv[1]),sys.argv[2])
+    #RunCaseThotTcold(1)
+
+    # ---------------------------------- Calculation of just one case --------------------------------------
+
+    # #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
+    # #MaxTSpan      = 10
+    # caseNumber    = 2
+    # Thot          = 295
+    # Tcold         = 292
+    # cen_loc       = 0
+    # Tambset       = 294
+    # dispV         = 15.33e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+    # ff            = 1.2  # [Hz] DP: frequency of AMR cycle
+    # CF            = 1
+    # CS            = 1
+    # CL            = 0
+    # CVD           = 1
+    # CMCE          = 1
+    # nodes         = 400
+    # timesteps     = 600
+    # Dsp           = 425e-6
+    # cName         = "R7"
+    # jName         = "First_trial" # DP: It is better to use underline to connect words because this is used as file name
+    # time_limit    = 600  # [min] Time limit for the simulation in minutes
+    # cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+    # maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
+    # maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
     #
-    #     maxcase =  numCases * hotResolution * coldResolution
-    #     Thotarr = np.linspace(273+37, 273+19, hotResolution)
+    # results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
     #
-    #     casenum=int(np.floor(case/(hotResolution*coldResolution))) # DP: I don't understand why making things complicated like this...
+    # # Some useful functions for storing data.
+    # def FileSave(filename, content):
+    #     with open(filename, "a") as myfile:
+    #         myfile.write(content)
     #
-    #     if (casenum==0):
-    #         #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-    #         fileName      = "{}.txt".format(jobName)
-    #         MaxTSpan      = 10
-    #         cen_loc       = 0
-    #         Tambset       = 294
-    #         dispV         = 3.91e-6
-    #         ff            = 1
-    #         Dsp           = 425e-6
-    #         CF            = 1
-    #         CS            = 1
-    #         CL            = 0
-    #         CVD           = 1
-    #         CMCE          = 1
-    #         nodes         = 800
-    #         timesteps     = 800
-    #         cName         = "R1"
-    #     if (casenum==1):
-    #         #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-    #         fileName      = "test_078_10_ALL_s_4_dv.txt"
-    #         MaxTSpan      = 20
-    #         cen_loc       = 0
-    #         Tambset       = 294
-    #         dispV         = 3.91e-6
-    #         ff            = 1
-    #         Dsp           = 425e-6
-    #         CF            = 1
-    #         CS            = 1
-    #         CL            = 1
-    #         CVD           = 1
-    #         CMCE          = 1
-    #         nodes         = 400
-    #         timesteps     = 400
-    #     if (casenum==2):
-    #         #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-    #         fileName      = "test_ch_conf1.txt"
-    #         MaxTSpan      = 15
-    #         cen_loc       = 0
-    #         Tambset       = 294
-    #         dispV         = 3.91e-6
-    #         ff            = 1
-    #         Dsp           = 425e-6
-    #         CF            = 1
-    #         CS            = 1
-    #         CL            = 1
-    #         CVD           = 1
-    #         CMCE          = 1
-    #         nodes         = 800
-    #         timesteps     = 800
-    #     if (casenum==3):
-    #         #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-    #         fileName      = "test_078_10_ALL_s_16_dv.txt"
-    #         MaxTSpan      = 20
-    #         cen_loc       = 0
-    #         Tambset       = 294
-    #         dispV         = 3.91e-6
-    #         ff            = 1
-    #         Dsp           = 425e-6
-    #         CF            = 1
-    #         CS            = 1
-    #         CL            = 1
-    #         CVD           = 1
-    #         CMCE          = 1
-    #         nodes         = 1600
-    #         timesteps     = 400
-    #     # DP: I don't get why this is defined in this way.
-    #     Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
-    #     Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
+    # def FileSaveMatrix(filename, content):
+    #     with open(filename, "a") as f:
+    #         for line in content:
+    #             f.write(" ".join("{:9.6f}\t".format(x) for x in line))
+    #             f.write("\n")
     #
-    #     print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case,maxcase,casenum,Thot,Tcold))
+    # #  runActive():  return Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh
+    # #                       0       1   2   3     4         5     6           7      8    9      10        11       12       13     14 15 16    17       18  19   20 21    22         23       24         25      26
     #
-    #     results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-    #     # Get result roots variable is broken down in:
-    #     #  0     1    2   3      4        5
-    #     # Thot,Tcold,qc,qccor,(t1-t0)/60,pave,
-    #     #           6               7
-    #     # integral_eff_HB_CE,integral_eff_CB_HE,
-    #     #  8    9      10        11       12       13
-    #     # tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,
-    #     # 14 15 16      17     18   19  20 21
-    #     # y, s, pt, np.max(pt),Uti,freq,t,xloc
-    #     # 22           23       24         25
-    #     ,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow
-    #     fileNameSave        = './' + fileName # DP: ./ is for specifying that the file is save to the working directory
-    #     fileNameEndTemp     = './Ends/{:3.0f}-{:3.0f}-PysicalEnd'.format(Thot,Tcold)+fileName
-    #     fileNameSliceTemp   = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot,Tcold)+fileName
-    #     FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0],results[1],results[2],results[3],results[4],results[5],results[26]) )
-    #     #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]','Eff CE-HB [-]', 'Eff HE-CB [-]') )
-    #     #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4],results[6],results[7]) )
-    #     #EndTemperatures = np.stack((results[20], results[8],results[9]), axis=-1)
-    #     #FileSaveMatrix(fileNameEndTemp,EndTemperatures)
-    #     FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]') )
-    #     FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4]) )
-    #     BlowSliceTemperatures = np.stack((results[21],results[10],results[11],results[12],results[13],results[22],results[23],results[24],results[25]), axis=-1)
-    #     FileSaveMatrix(fileNameSliceTemp,BlowSliceTemperatures)
+    # fileName = "Testing_functionality2.txt"
+    # fileNameSave = './' + fileName
+    # fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
+    # FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
+    # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]', 'Uti [-]', 'freq [Hz]', 'run time [min]'))
+    # FileSave(fileNameSliceTemp,"{},{},{:4.2f},{},{:4.2f} \n".format(results[0], results[1], results[18], results[19], results[4]))
+    # BlowSliceTemperatures = np.stack((results[21], results[10], results[11], results[12], results[13], results[22], results[23], results[24], results[25]), axis=-1)
+    # FileSaveMatrix(fileNameSliceTemp, BlowSliceTemperatures)
     #
-    # # RunCaseThotTcold(float(sys.argv[1]),sys.argv[2])
-    # RunCaseThotTcold(1)
+    # fluidtemperature = './' + "Fluid_Temperature2.txt"
+    # fluidtemperatures = results[14]
+    # FileSaveMatrix(fluidtemperature,fluidtemperatures)
+    #
+    # solidtemperature = './' + "Solid_Temperature2.txt"
+    # solidtemperatures = results[15]
+    # FileSaveMatrix(solidtemperature,solidtemperatures)
