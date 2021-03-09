@@ -1296,7 +1296,7 @@ if __name__ == '__main__':
                 f.write("\n")
 
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
-        numCases       = 1
+        numCases       = 4
         hotResolution  = 1
         coldResolution = 8
 
@@ -1323,69 +1323,71 @@ if __name__ == '__main__':
             timesteps     = 600
             cName         = "R7"
             time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            cycle_toler   = 1e-3  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
         if (casenum==1):
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-            fileName      = "test_078_10_ALL_s_4_dv.txt"
-            MaxTSpan      = 20
+            fileName      = "{}.txt".format(jobName)
+            MaxTSpan      = 24
             cen_loc       = 0
-            Tambset       = 294
-            dispV         = 3.91e-6
-            ff            = 1
-            Dsp           = 425e-6
+            Tambset       = 298
+            dispV         = 30.52e-6
+            ff            = 1.7
+            Dsp           = 600e-6
             CF            = 1
             CS            = 1
-            CL            = 1
+            CL            = 0
             CVD           = 1
             CMCE          = 1
             nodes         = 400
-            timesteps     = 400
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+            timesteps     = 600
+            cName         = "R7"
+            time_limit    = 700  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
         if (casenum==2):
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-            fileName      = "test_ch_conf1.txt"
-            MaxTSpan      = 15
+            fileName      = "{}.txt".format(jobName)
+            MaxTSpan      = 24
             cen_loc       = 0
-            Tambset       = 294
-            dispV         = 3.91e-6
-            ff            = 1
-            Dsp           = 425e-6
+            Tambset       = 298
+            dispV         = 30.52e-6
+            ff            = 1.7
+            Dsp           = 600e-6
             CF            = 1
             CS            = 1
-            CL            = 1
+            CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 800
-            timesteps     = 800
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+            nodes         = 400
+            timesteps     = 600
+            cName         = "R7"
+            time_limit    = 800  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-6  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 700  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 700  # Maximum cycle iterations the simulation is allowed to take
         if (casenum==3):
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
-            fileName      = "test_078_10_ALL_s_16_dv.txt"
-            MaxTSpan      = 20
+            fileName      = "{}.txt".format(jobName)
+            MaxTSpan      = 24
             cen_loc       = 0
-            Tambset       = 294
-            dispV         = 3.91e-6
-            ff            = 1
-            Dsp           = 425e-6
+            Tambset       = 298
+            dispV         = 30.52e-6
+            ff            = 1.7
+            Dsp           = 600e-6
             CF            = 1
             CS            = 1
-            CL            = 1
+            CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 1600
-            timesteps     = 400
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 900  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-7  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 900  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 900  # Maximum cycle iterations the simulation is allowed to take
 
         # DP: I don't get why this is defined in this way.
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
