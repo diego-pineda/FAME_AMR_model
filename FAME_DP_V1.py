@@ -915,13 +915,18 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         Omegaf[i] = A_c[i] * beHeff_E(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
                         Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,A_c[i] * e_r[i])
-                        dP = dP * 2.7 # DP: from the paper, this factor is to compensate for the additional pressure drop occurring in beds of irregular
+
+                        # DP: for spherical particles the following correction is not needed
+
+                        # dP = dP * 2.7 # DP: from the paper, this factor is to compensate for the additional pressure drop occurring in beds of irregular
                         # shaped particles given that Ergun's correlation is for beds of spherical particles
-                        Spres[i] = Spres[i]*2.7
+                        # Spres[i] = Spres[i]*2.7
+
                         # Loss term
                         if ConfName == "R7":
-                            Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
-                            #Lf[i] = P_c[i] * FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq)
+                            #Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
+                            U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
+                            Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
                         else:
                             Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3)
                         # TODO: this is not necessary for the FAME cooler. It can be deleted.
@@ -1384,6 +1389,7 @@ if __name__ == '__main__':
             CMCE          = 1
             nodes         = 400
             timesteps     = 600
+            cName         = "R7"
             time_limit    = 900  # [min] Time limit for the simulation in minutes
             cycle_toler   = 1e-7  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 900  # Maximum time step iterations the simulation is allowed to take
