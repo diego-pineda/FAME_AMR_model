@@ -1216,7 +1216,11 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     Kamb = 2.5 # DP: This has to be measured experimentally for the
     qccor = 7*qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
     # It includes a correction to account for additional heat leaks in the CHEX
+
+    # Calculation of average pressure drop across the regenerator
+
     pave = np.trapz(pt[halft:], x=t[halft:]) / (tau_c/2)  # DP: average pressure drop across the regenerator
+
     print("{0:3.1f} {1:3.1f} {2:1.2f} {3:1.2f} Cycle Count: {4:d} Tol-y: {5:1.4e} Tol-s {6:1.4e}".format(float(Thot), float(Tcold), float(Uti), float(freq), int(cycleCount), float(max_val_y_diff), float(max_val_s_diff)))
     print('Utilization: {0:1.3f} Frequency: {1:1.2f}'.format(Uti, freq))
     print("Run time: {0:3.2f} [min]".format((t1 - t0) / 60))
@@ -1234,7 +1238,6 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     print('min SS:{}'.format(minSSprev))
     print('Lowest Temperature found in the SS cycle: {}'.format(minTemp))
 
-
     print('Values found at maximum field')
     print('max Applied Field {}'.format(maxAplField))
     print('max Internal Field {}'.format(maxPrevHint))
@@ -1250,7 +1253,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     except FileNotFoundError:
         print('Hey! It was done very fast.')
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, pt
 
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
 
