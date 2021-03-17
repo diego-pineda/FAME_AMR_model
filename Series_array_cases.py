@@ -1,6 +1,5 @@
 from FAME_DP_V1 import runActive
-import numpy as np
-import matplotlib.pyplot as plt
+
 
 
 if __name__ == '__main__':
@@ -32,7 +31,7 @@ if __name__ == '__main__':
     maxCycleIter  = 600  # Maximum cycle iterations the simulation is allowed to take
 
     # Some useful functions for storing data
-    
+
     def FileSave(filename, content):
         with open(filename, "a") as myfile:
             myfile.write(content)
@@ -72,6 +71,8 @@ if __name__ == '__main__':
 
 
     # Plotting Tspan vs Qc
+    # import numpy as np
+    # import matplotlib.pyplot as plt
 
     # plot1 = plt.figure(1)
     # plt.plot([0, 24, 51, 77, 103], [9.7, 8, 6, 3.3, 0.01])
@@ -83,6 +84,9 @@ if __name__ == '__main__':
     # plt.grid(which='both', axis='both')
     #
     # plt.show()
+
+
+
 
 #     results = runActive(caseNumber,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
 #
