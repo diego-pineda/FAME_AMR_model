@@ -912,7 +912,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         # Effective Conduction for fluid
                         k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
-                        Omegaf[i] = A_c[i] * beHeff_E(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
+                        Omegaf[i] = A_c[i] * beHeff_I(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
                         Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,A_c[i] * e_r[i])
 
@@ -1301,7 +1301,7 @@ if __name__ == '__main__':
                 f.write("\n")
 
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
-        numCases       = 4
+        numCases       = 1
         hotResolution  = 1
         coldResolution = 8
 
@@ -1328,7 +1328,7 @@ if __name__ == '__main__':
             timesteps     = 600
             cName         = "R7"
             time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-3  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
         if (casenum==1):
