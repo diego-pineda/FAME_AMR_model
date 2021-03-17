@@ -10,31 +10,35 @@
 
 import numpy as np
 
-acceleration_period = 10  # [°]
-max_flow_period = 45  # [°]
-full_magnetization_angle = 30  # [°]
+acc_period = 15  # [°] angular duration of acceleration and deceleration
+max_flow_period = 45  # [°] angular duration of max flow
+full_magn_ang = 20  # [°] full magnetization angle or angle at which maximum flow is reached
 
 
 def vol_flow_rate(nt, v_max):
     vol_rate = np.zeros(nt+1)
     angle = 0
     for n in range(0, nt+1):
-        if 0 <= angle < 20:
+        if 0 <= angle < full_magn_ang - acc_period:
             vol_rate[n] = 0  # [m^3/s] Volumetric flow rate during stagnation period
-        elif 20 <= angle < 30:
-            vol_rate[n] = (v_max / 10) * (180 * (n / nt)-20)  # [m^3/s] Vol flow rate increase during magnetization
-        elif 30 <= angle < 75:
+        elif full_magn_ang - acc_period <= angle < full_magn_ang:
+            vol_rate[n] = (v_max / acc_period) * (180 * (n / nt) - (full_magn_ang - acc_period))
+            # [m^3/s] Vol flow rate increase during magnetization
+        elif full_magn_ang <= angle < full_magn_ang + max_flow_period:
             vol_rate[n] = v_max  # [m^3/s] Volumetric flow rate during the cold to hot blow process
-        elif 75 <= angle < 85:
-            vol_rate[n] = (v_max / 10) * (85 - 180 * n / nt)  # [m^3/s] Vol flow rate decrease during the demagnetizatn
-        elif 85 <= angle < 110:
+        elif full_magn_ang + max_flow_period <= angle < full_magn_ang + max_flow_period + acc_period:
+            vol_rate[n] = (v_max / acc_period) * (full_magn_ang + max_flow_period + acc_period - 180 * n / nt)
+            # [m^3/s] Vol flow rate decrease during the demagnetizatn
+        elif full_magn_ang + max_flow_period + acc_period <= angle < 90 + full_magn_ang - acc_period:
             vol_rate[n] = 0  # [m^3/s] Volumetric flow rate during stagnation period
-        elif 110 <= angle < 120:
-            vol_rate[n] = (v_max/10)*(110-180*n/nt)  # [m^3/s] Volumetric flow rate increase towards hot to cold blow
-        elif 120 <= angle < 165:
+        elif 90 + full_magn_ang - acc_period <= angle < 90 + full_magn_ang:
+            vol_rate[n] = (v_max / acc_period)*(90 + full_magn_ang - acc_period - 180 * n / nt)
+            # [m^3/s] Volumetric flow rate increase towards hot to cold blow
+        elif 90 + full_magn_ang <= angle < 90 + full_magn_ang + max_flow_period:
             vol_rate[n] = -v_max  # [m^3/s] Volumetric flow rate during the hot to cold blow process
-        elif 165 <= angle < 175:
-            vol_rate[n] = (v_max / 10) * (180 * (n / nt)-175)  # [m^3/s] Vol flow rate decrease during hot to cold blow
+        elif 90 + full_magn_ang + max_flow_period <= angle < 90 + full_magn_ang + max_flow_period + acc_period:
+            vol_rate[n] = (v_max / acc_period) * (180 * (n / nt) - (90 + full_magn_ang + max_flow_period + acc_period))
+            # [m^3/s] Vol flow rate decrease during hot to cold blow
         else:
             vol_rate[n] = 0  # [m^3/s] Volumetric flow rate during stagnation period
         angle = 180 * (n + 1) / nt
