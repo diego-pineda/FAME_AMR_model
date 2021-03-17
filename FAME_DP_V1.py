@@ -1,15 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Mar 25 16:50:31 2017
 
-@author: Theo
-"""
-# mpi4py
-# from mpi4py import MPI
-# multiprocessing
-#from multiprocessing import Pool
-#from multifuntest import sqrt
-#from patankarreggd_one_void import runActive
 import numba as nb
 from numba import jit, f8, int32,b1
 # Numpy library
@@ -24,27 +13,7 @@ import os
 # Import time to time the simulation
 import time
 
-
-################################# Si Material properties  ####################################
-#
-# Naming convention
-#
-# Specific heat function
-#
-# mCp_c/h
-#
-# Magnetization
-#
-# mMag_c/h
-#
-# Entropy
-#
-# mS_c/h
-#
-# Temp
-#
-# mTemp_c/h
-
+# -------------------------- Si Material properties -----------------------------
 
 from sourcefiles.mat import si1
 from sourcefiles.mat import si2
@@ -53,39 +22,35 @@ from sourcefiles.mat import si4
 from sourcefiles.mat import si5
 from sourcefiles.mat import Gd
 
-######################################## Fluid properties  ##########################################
+# -------------------- Naming convention for MCM properties -----------------
 
-# Density
-from sourcefiles.fluid.density import fRho
-# Dynamic Viscosity
-from sourcefiles.fluid.dynamic_viscosity import fMu
-# Specific Heat
-from sourcefiles.fluid.specific_heat import fCp
-# Conduction
-from sourcefiles.fluid.conduction import fK
+# Specific heat function: mCp_c/h
+# Magnetization: mMag_c/h
+# Entropy: mS_c/h
+# Temp: mTemp_c/h
 
-######################################## CLOSURE RELATIONSHIPS ######################################
+# --------------------------------- Fluid properties ----------------------------------
 
+from sourcefiles.fluid.density import fRho  # Density
+from sourcefiles.fluid.dynamic_viscosity import fMu  # Dynamic Viscosity
+from sourcefiles.fluid.specific_heat import fCp  # Specific Heat
+from sourcefiles.fluid.conduction import fK  # Conduction
 
-# Dynamic conduction
-from closure.dynamic_conduction import kDyn_P
-# Static conduction
-from closure.static_conduction import kStat
-# Internal Heat transfer coefficient * Specific surface area
-from closure.inter_heat import beHeff_I, beHeff_E
-# pressure Drop
-from closure.pressure_drop import SPresM
-# Resistance Term in the Regenerator and void
-from closure.resistance import ThermalResistance,ThermalResistanceVoid
+# -------------------- CLOSURE RELATIONSHIPS -------------------------
+
+from closure.dynamic_conduction import kDyn_P  # Dynamic conduction
+from closure.static_conduction import kStat  # Static conduction
+from closure.inter_heat import beHeff_I, beHeff_E  # Internal Heat transfer coefficient * Specific surface area
+from closure.pressure_drop import SPresM  # pressure Drop
+from closure.resistance import ThermalResistance,ThermalResistanceVoid  # Resistance Term in the Regenerator and void
 from closure.FAME_resistance import FAME_ThermalResistance, FAME_ThermalResistance2, FAME_ThermalResistanceVoid
 
+# ----------------------- SOLVER ---------------------------------
 
-############################################## SOLVER ##############################################
-############################################## TDMA   ##############################################
 from core.tdma_solver import TDMAsolver
 
+# ----------------------- EXPONENTIAL SCHEME -----------------------------
 
-######################################## EXPONENTIAL SCHEME #########################################
 
 @jit
 def alpha_exp(Pe):
@@ -94,8 +59,7 @@ def alpha_exp(Pe):
     return np.max([0,val])
 
 
-
-######################################## SOLID SOLVER ##############################################
+# ------------------------ SOLID SOLVER -------------------------------
 @jit(f8[:]     (f8[:],  f8[:], f8[:], f8[:], f8, f8[:], f8[:], f8[:],  f8[:], f8[:], f8,   f8, int32, f8, f8),nopython=True)
 def SolveSolid(iynext, isnext, yprev, sprev, Vd,    Cs,   Kse,   Ksw, Omegas,  Smce, CS, CMCE,     N, dx, dt):
     '''
@@ -157,6 +121,7 @@ def SolveSolid(iynext, isnext, yprev, sprev, Vd,    Cs,   Kse,   Ksw, Omegas,  S
         snext[0]  = snext[1]
         return snext
 
+
 @jit(f8(f8),nopython=True)
 def alpha_pow(Pe):
     # Powerlaw
@@ -164,7 +129,7 @@ def alpha_pow(Pe):
     return max(0,val)
 
 
-######################################## FLUID SOLVER ##############################################
+# -------------------------- FLUID SOLVER ---------------------------------
 @jit(f8[:]     (f8[:], f8[:],f8[:],f8[:],f8, f8[:], f8[:], f8[:],  f8[:],  f8[:], f8[:], f8[:], f8, f8[:], f8,int32,f8,f8,f8[:]),nopython=True)
 def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf,    Lf,    Sp, CF, CL,   CVD,    N,dx,dt, yamb):
     '''
@@ -280,8 +245,9 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
         return ynext
 
 
+# ---------------------------- LOOP FUNC -----------------------------------
 
-####################################### LOOP FUNC ##############################################
+
 @jit(nb.types.Tuple((b1,f8))(f8[:],f8[:],f8))
 def AbsTolFunc(var1,var2,Tol):
     maximum_val=np.max(np.abs(var1-var2))
@@ -292,7 +258,8 @@ def AbsTolFunc2d(var1,var2,Tol):
     maximum_val=np.max(np.abs(var1-var2))
     return maximum_val<=Tol,maximum_val
 
-######################################### RUN ACTIVE ############################################
+# ---------------------------- RUN ACTIVE ------------------------------
+
 
 def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter):
     '''
@@ -1284,8 +1251,9 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
         print('Hey! It was done very fast.')
 
     return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount
- #          0     1   2    3        4       5
-################# DP: the function "Run_Active" ends here ####################
+
+# ------------------ DP: the function "Run_Active" ends here ----------------------------
+
 
 if __name__ == '__main__':
 
@@ -1439,63 +1407,5 @@ if __name__ == '__main__':
         # FileSaveMatrix(fileNameSliceTemp,BlowSliceTemperatures)
 
     RunCaseThotTcold(float(sys.argv[1]),sys.argv[2])
-    #RunCaseThotTcold(1)
 
-    # ---------------------------------- Calculation of just one case --------------------------------------
 
-    # #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-    # #MaxTSpan      = 10
-    # caseNumber    = 2
-    # Thot          = 295
-    # Tcold         = 292
-    # cen_loc       = 0
-    # Tambset       = 294
-    # dispV         = 15.33e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
-    # ff            = 1.2  # [Hz] DP: frequency of AMR cycle
-    # CF            = 1
-    # CS            = 1
-    # CL            = 0
-    # CVD           = 1
-    # CMCE          = 1
-    # nodes         = 400
-    # timesteps     = 600
-    # Dsp           = 425e-6
-    # cName         = "R7"
-    # jName         = "First_trial" # DP: It is better to use underline to connect words because this is used as file name
-    # time_limit    = 600  # [min] Time limit for the simulation in minutes
-    # cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-    # maxStepIter   = 200  # Maximum time step iterations the simulation is allowed to take
-    # maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
-    #
-    # results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
-    #
-    # # Some useful functions for storing data.
-    # def FileSave(filename, content):
-    #     with open(filename, "a") as myfile:
-    #         myfile.write(content)
-    #
-    # def FileSaveMatrix(filename, content):
-    #     with open(filename, "a") as f:
-    #         for line in content:
-    #             f.write(" ".join("{:9.6f}\t".format(x) for x in line))
-    #             f.write("\n")
-    #
-    # #  runActive():  return Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh
-    # #                       0       1   2   3     4         5     6           7      8    9      10        11       12       13     14 15 16    17       18  19   20 21    22         23       24         25      26
-    #
-    # fileName = "Testing_functionality2.txt"
-    # fileNameSave = './' + fileName
-    # fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
-    # FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-    # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]', 'Uti [-]', 'freq [Hz]', 'run time [min]'))
-    # FileSave(fileNameSliceTemp,"{},{},{:4.2f},{},{:4.2f} \n".format(results[0], results[1], results[18], results[19], results[4]))
-    # BlowSliceTemperatures = np.stack((results[21], results[10], results[11], results[12], results[13], results[22], results[23], results[24], results[25]), axis=-1)
-    # FileSaveMatrix(fileNameSliceTemp, BlowSliceTemperatures)
-    #
-    # fluidtemperature = './' + "Fluid_Temperature2.txt"
-    # fluidtemperatures = results[14]
-    # FileSaveMatrix(fluidtemperature,fluidtemperatures)
-    #
-    # solidtemperature = './' + "Solid_Temperature2.txt"
-    # solidtemperatures = results[15]
-    # FileSaveMatrix(solidtemperature,solidtemperatures)
