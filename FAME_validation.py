@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
+    # The following section can be used to run an array of cases in a single computer, one after another
 
-    #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,cycle_toler)
-    #MaxTSpan      = 10
+    # runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
+
     caseNumber    = 10
     Thot          = 294.8  # [K]
     Tcold         = 274.8
@@ -30,7 +31,8 @@ if __name__ == '__main__':
     maxStepIter   = 400  # Maximum time step iterations the simulation is allowed to take
     maxCycleIter  = 600  # Maximum cycle iterations the simulation is allowed to take
 
-    # Some useful functions for storing data.
+    # Some useful functions for storing data
+    
     def FileSave(filename, content):
         with open(filename, "a") as myfile:
             myfile.write(content)
