@@ -6,14 +6,14 @@ from sourcefiles.fluid.density import fRho
 from sourcefiles.fluid.specific_heat import fCp
 from configurations.R7 import percGly
 
-Thot = 294.8 # [K]
-Tcold = 286.8 # [K]
+Thot = 294.8  # [K]
+Tcold = 286.8  # [K]
 Vd = 12.94e-6  # [m3/s]
-time_steps = 600 # [-]
-nodes = 400 # [-]
-freq = 1.2 # [Hz] Frequency of AMR cycle. Frequency of device would be half this frequency
+time_steps = 600  # [-]
+nodes = 400  # [-]
+freq = 1.2  # [Hz] Frequency of AMR cycle. Frequency of device would be half this frequency
 #fluidTemp = np.loadtxt('Fluid_Temp_val.txt')
-fluidTemp = np.loadtxt('Fluid_Temp_val_near_zero_qc.txt')
+fluidTemp = np.loadtxt('../Simulation results/Fluid_Temp_val_near_zero_qc.txt')
 #fluidTemp = np.loadtxt('Fluid_Temp_val_zero_span.txt')
 #fluidTemp = np.loadtxt('Fluid_Temp_val_span_11K.txt')
 Tf_cold_side = fluidTemp[:, 0]*(Thot-Tcold)+Tcold
@@ -46,6 +46,25 @@ V_flow_reg6 = np.concatenate((V_flow_reg1[-reg6ind:], V_flow_reg1[:-reg6ind]), a
 reg7ind = int(np.floor(6 * 2 * (time_steps + 1) / 7))
 Tf_cold_side_reg7 = np.concatenate((Tf_cold_side_reg1[-reg7ind:], Tf_cold_side_reg1[:-reg7ind]), axis=None)
 V_flow_reg7 = np.concatenate((V_flow_reg1[-reg7ind:], V_flow_reg1[:-reg7ind]), axis=None)
+
+# ---- Plotting Volumetric flow rate of each regenerator as a function of rotation angle of magnets (time) ----
+
+import matplotlib.pyplot as plt
+angle = np.linspace(0, 360, 1202)
+fig = plt.figure()
+plt.plot(angle, V_flow_reg1)
+plt.plot(angle, V_flow_reg2)
+plt.plot(angle, V_flow_reg3)
+plt.plot(angle, V_flow_reg4)
+plt.plot(angle, V_flow_reg5)
+plt.plot(angle, V_flow_reg6)
+plt.plot(angle, V_flow_reg7)
+plt.title("Volumetric flow rate per regenerator")
+plt.xlabel("Angle [°]")
+plt.ylabel("Volumetric flow rate [$m^3/s$]")
+
+plt.show()
+
 
 print(len(Tf_cold_side_reg7))
 print(len(V_flow_reg7))
@@ -91,6 +110,14 @@ for n in range(2*(time_steps+1)-1):
         V_flow_reg7[n] = 0
 
     total_vol_flow[n] = V_flow_reg1[n]+V_flow_reg2[n]+V_flow_reg3[n]+V_flow_reg4[n]+V_flow_reg5[n]+V_flow_reg6[n]+V_flow_reg7[n]
+
+fig2 = plt.figure(2)
+plt.plot(angle, total_vol_flow)
+plt.title("Total volumetric flow rate of the device")
+plt.xlabel("Angle [°]")
+plt.ylabel("Total vol flow rate $[m^3/s]$")
+plt.grid(which='major', axis='both')
+plt.show()
 
 print(np.max(total_vol_flow))
 

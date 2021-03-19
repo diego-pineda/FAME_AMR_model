@@ -118,17 +118,11 @@ if __name__ == '__main__':
         print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
 
         results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-        # Get result roots variable is broken down in:
-        #  0     1    2   3      4        5
-        # Thot,Tcold,qc,qccor,(t1-t0)/60,pave,
-        #           6               7
-        # integral_eff_HB_CE,integral_eff_CB_HE,
-        #  8    9      10        11       12       13
-        # tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,
-        # 14 15 16      17     18   19  20 21
-        # y, s, pt, np.max(pt),Uti,freq,t,xloc
-        # 22           23       24         25    26   27
-        #yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
+        #  runActive():  returns
+        #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
+        #  0       1   2   3     4         5     6           7      8    9      10        11       12
+        # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
+        #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
         fileNameSave        = './Ends/' + str(case) + fileName
         FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
@@ -139,5 +133,21 @@ if __name__ == '__main__':
         FileSave(fileNameSave, "Solid temperatures \n")
         FileSaveMatrix(fileNameSave, results[15])
         FileSave(fileNameSave, "\n")
+        FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle \n")
+        FileSaveMatrix(fileNameSave, results[15])
+        FileSave(fileNameSave, "\n")
+
+        # fileNameSave        = './' + fileName # DP: ./ is for specifying that the file is save to the working directory
+        # fileNameEndTemp     = './Ends/{:3.0f}-{:3.0f}-PysicalEnd'.format(Thot,Tcold)+fileName
+        # fileNameSliceTemp   = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot,Tcold)+fileName
+        # FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0],results[1],results[2],results[3],results[4],results[5],results[26]) )
+        # #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]','Eff CE-HB [-]', 'Eff HE-CB [-]') )
+        # #FileSave(fileNameEndTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4],results[6],results[7]) )
+        # #EndTemperatures = np.stack((results[20], results[8],results[9]), axis=-1)
+        # #FileSaveMatrix(fileNameEndTemp,EndTemperatures)
+        # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]','Uti [-]', 'freq [Hz]', 'run time [min]') )
+        # FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format(results[0],results[1],results[18],results[19], results[4]) )
+        # BlowSliceTemperatures = np.stack((results[21],results[10],results[11],results[12],results[13],results[22],results[23],results[24],results[25]), axis=-1)
+        # FileSaveMatrix(fileNameSliceTemp,BlowSliceTemperatures)
 
     RunCaseThotTcold(float(sys.argv[1]),sys.argv[2])

@@ -10,9 +10,9 @@
 
 import numpy as np
 
-acc_period = 15  # [°] angular duration of acceleration and deceleration
+acc_period = 10  # [°] angular duration of acceleration and deceleration
 max_flow_period = 45  # [°] angular duration of max flow
-full_magn_ang = 20  # [°] full magnetization angle or angle at which maximum flow is reached
+full_magn_ang = 30  # [°] full magnetization angle or angle at which maximum flow is reached
 
 
 def vol_flow_rate(nt, v_max):
@@ -54,6 +54,8 @@ if __name__ == '__main__':
 
     volumetric_rate = vol_flow_rate(nt, V_rate)
     # print(np.abs(volumetric_rate[25] / (0.045*0.013)))
+
+    # The following lines are for plotting flow rate profiles of 7 regenerators each in its one phase
 
     reg1twocycles = np.append(volumetric_rate[:], volumetric_rate[:]) # One full rotation of the device
     reg2ind = int(np.floor(1 * 2 * (nt + 1) / 7))

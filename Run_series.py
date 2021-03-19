@@ -52,6 +52,11 @@ if __name__ == '__main__':
 
     while Qc > 0:
         results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter)
+        #  runActive():  returns
+        #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
+        #  0       1   2   3     4         5     6           7      8    9      10        11       12
+        # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
+        #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
         Tspan = Thot-Tcold
         Tspan_data.append(Tspan)
         Qc = 7*results[2]  # [W] Cooling capacity of the device without thermal losses correction

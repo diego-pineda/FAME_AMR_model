@@ -43,7 +43,7 @@ def FileSaveMatrix(filename, content):
             f.write(" ".join("{:9.6f}\t".format(x) for x in line))
             f.write("\n")
 
-#  runActive():  return
+#  runActive():  returns
 #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
 #  0       1   2   3     4         5     6           7      8    9      10        11       12
 # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
