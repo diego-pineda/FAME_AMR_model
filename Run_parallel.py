@@ -26,7 +26,7 @@ if __name__ == '__main__':
 
         casenum=int(np.floor(case/(hotResolution*coldResolution))) # DP: I don't understand why making things complicated like this...
 
-        if (casenum==0):
+        if casenum==0:
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
@@ -47,7 +47,7 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
-        if (casenum==1):
+        if casenum==1:
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
-        if (casenum==2):
+        if casenum==2:
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
@@ -89,7 +89,7 @@ if __name__ == '__main__':
             cycle_toler   = 1e-6  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 700  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 700  # Maximum cycle iterations the simulation is allowed to take
-        if (casenum==3):
+        if casenum==3:
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
@@ -111,7 +111,6 @@ if __name__ == '__main__':
             maxStepIter   = 900  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 900  # Maximum cycle iterations the simulation is allowed to take
 
-        # DP: I don't get why this is defined in this way.
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
 
@@ -124,7 +123,7 @@ if __name__ == '__main__':
         # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
         #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
-        fileNameSave        = './Ends/' + str(case) + fileName
+        fileNameSave = './output/' + str(case) + fileName
         FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
         FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
         FileSave(fileNameSave, "Fluid temperatures \n")
@@ -150,4 +149,4 @@ if __name__ == '__main__':
         # BlowSliceTemperatures = np.stack((results[21],results[10],results[11],results[12],results[13],results[22],results[23],results[24],results[25]), axis=-1)
         # FileSaveMatrix(fileNameSliceTemp,BlowSliceTemperatures)
 
-    RunCaseThotTcold(float(sys.argv[1]),sys.argv[2])
+    RunCaseThotTcold(float(sys.argv[1]), sys.argv[2])
