@@ -891,9 +891,9 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 
                         # Loss term
                         if ConfName == "R7":
-                            #Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
-                            U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
-                            Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
+                            Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
+                            #U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
+                            #Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
                         else:
                             Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3)
                         # TODO: this is not necessary for the FAME cooler. It can be deleted.
