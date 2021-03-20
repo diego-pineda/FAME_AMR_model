@@ -134,7 +134,7 @@ if __name__ == '__main__':
         FileSaveMatrix(fileNameSave, results[15])
         FileSave(fileNameSave, "\n")
         FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle \n")
-        FileSaveMatrix(fileNameSave, results[15])
+        FileSaveMatrix(fileNameSave, results[16])
         FileSave(fileNameSave, "\n")
 
         # fileNameSave        = './' + fileName # DP: ./ is for specifying that the file is save to the working directory
