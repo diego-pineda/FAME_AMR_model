@@ -24,7 +24,7 @@ Dsp           = 600e-6
 cName         = "R7"
 jName         = "Int_htc" # DP: It is better to use underline to connect words because this is used as file name
 time_limit    = 600  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+cycle_toler   = 1e-1  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
@@ -42,6 +42,12 @@ def FileSaveMatrix(filename, content):
         for line in content:
             f.write(" ".join("{:9.6f}\t".format(x) for x in line))
             f.write("\n")
+
+
+def FileSaveVector(filename, content):
+    with open(filename, "a") as f:
+        f.write(" ".join("{:9.6f}\t".format(x) for x in content))
+        f.write("\n")
 
 #  runActive():  returns
 #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
@@ -62,7 +68,7 @@ FileSave(fileNameSave, "Solid temperatures\n")
 FileSaveMatrix(fileNameSave, results[15])
 #FileSave(fileNameSave, "\n")
 FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
-FileSave(fileNameSave, results[16])
+FileSaveVector(fileNameSave, results[16])
 #FileSave(fileNameSave, "\n")
 print(results[16])
 

@@ -16,6 +16,12 @@ if __name__ == '__main__':
                 f.write(" ".join("{:9.6f}\t".format(x) for x in line))
                 f.write("\n")
 
+    def FileSaveVector(filename, content):
+        with open(filename, "a") as f:
+            f.write(" ".join("{:9.6f}\t".format(x) for x in content))
+            f.write("\n")
+
+
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
         numCases       = 1
         hotResolution  = 1
@@ -126,15 +132,12 @@ if __name__ == '__main__':
         fileNameSave = './output/' + str(case) + fileName
         FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
         FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
-        FileSave(fileNameSave, "Fluid temperatures \n")
+        FileSave(fileNameSave, "Fluid temperatures\n")
         FileSaveMatrix(fileNameSave, results[14])
-        FileSave(fileNameSave, "\n")
-        FileSave(fileNameSave, "Solid temperatures \n")
+        FileSave(fileNameSave, "Solid temperatures\n")
         FileSaveMatrix(fileNameSave, results[15])
-        FileSave(fileNameSave, "\n")
-        FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle \n")
-        FileSaveMatrix(fileNameSave, results[16])
-        FileSave(fileNameSave, "\n")
+        FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
+        FileSaveVector(fileNameSave, results[16])
 
         # fileNameSave        = './' + fileName # DP: ./ is for specifying that the file is save to the working directory
         # fileNameEndTemp     = './Ends/{:3.0f}-{:3.0f}-PysicalEnd'.format(Thot,Tcold)+fileName
