@@ -651,7 +651,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 
     while (not cycleTol  and cycleCount <= maxCycles): # DP comment: "not cycleTol" evaluates if cycleTol is zero or False and return True if so...
         # Account for pressure every time step (restart every cycle)
-        pt = np.zeros(nt + 1) # DP: it seems this refers to a pressure drop along the regenerator
+        pt = np.zeros(nt + 1) # DP: total pressure drop along the regenerator as function of time
         # DP comment: It seems these variables are not that relevant and that they are only created to keep a record
         minPrevHint = 0.5
         maxPrevHint = 0.5
@@ -891,9 +891,9 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 
                         # Loss term
                         if ConfName == "R7":
-                            Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
-                            #U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
-                            #Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
+                            #Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
+                            U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
+                            Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
                         else:
                             Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3)
                         # TODO: this is not necessary for the FAME cooler. It can be deleted.
