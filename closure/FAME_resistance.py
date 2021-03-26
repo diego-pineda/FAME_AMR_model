@@ -53,7 +53,11 @@ def FAME_ThermalResistance2(Dsp, Ud, fMu, fRho, kair, kf, kg10, casing_th, fAMR,
     Re_film = u_air * 2 * film_th / (Mu_air / rho_air)
     Nu_D = 7.54 + 0.03 * (2*film_th/W_reg) * Re_film * Pr_air / (1 + 0.016 * ((2 * film_th / W_reg) * Re_film * Pr_air) ** (2 / 3))
     h_film = Nu_D*kair/(2*film_th)
-    U_film = 0.1e1 / (0.5882352941e1 * (fRho * np.abs(Ud) * Dsp / fMu) ** (-0.79e0) / kf * Dsp + casing_th / kg10 + 1 / h_film)
+    if Ud == 0:
+        h_int = 100  # TODO: estimate heat transfer coefficient between liquid and casing for stagnation periods
+        U_film = 0.1e1 / (1 / h_int + casing_th / kg10 + 1 / h_film)
+    else:
+        U_film = 0.1e1 / (0.5882352941e1 * (fRho * np.abs(Ud) * Dsp / fMu) ** (-0.79e0) / kf * Dsp + casing_th / kg10 + 1 / h_film)
     return U_flat, U_film
 
 
@@ -71,9 +75,10 @@ if __name__ == '__main__':
     from sourcefiles.fluid.density import fRho
     from sourcefiles.fluid.dynamic_viscosity import fMu
     from sourcefiles.fluid.conduction import fK
+    import matplotlib.pyplot as plt
 
     diam_spheres = 600e-6  # [m] Diameter of spherical particles composing the regenerator
-    Vol_flow_rate = 0# 30.52e-6  # [m3/s] Maximum volumetric flow rate of HFT passing the regenerator
+    Vol_flow_rate = 30.52e-6  # [m3/s] Maximum volumetric flow rate of HFT passing the regenerator
     Area_cross = 0.045*0.013  # [m2] Cross sectional area of regenerator
     Perimeter = 0.045*2+0.013*2  # [m] Perimeter of regenerator
     T_fluid = 290  # [K] Temperature of fluid
@@ -85,6 +90,7 @@ if __name__ == '__main__':
     fAMR = 1.7  # [Hz] Frequency of AMR
 
 
+
     Tair = Tamb
     kair = 1.5207e-11*Tair**3-4.8574e-8*Tair**2+1.0184e-4*Tair-3.9333e-4  # [W/(m K)] Thermal conductivity of air
     print('Thermal conductivity of air is: {}'.format(kair))
@@ -92,6 +98,15 @@ if __name__ == '__main__':
     rho_fluid = fRho(T_fluid, perc_gly)
     mu_fluid = fMu(T_fluid, perc_gly)
     k_fluid = fK(T_fluid,perc_gly)
+
+    # Making a plot of internal htc vs volumetric flow rate to see what value to choose for stagnation periods
+
+    def h_int(V):
+        h_int = 1/(0.5882352941e1 * (rho_fluid * np.abs(V/Area_cross) * diam_spheres / mu_fluid) ** (-0.79e0) / k_fluid * diam_spheres)
+        return h_int
+    V = [30e-6, 25e-6, 20e-6, 15e-6, 10e-6, 5e-6, 4e-6, 3e-6, 2e-6, 1e-6, 1e-7]  # [m3/s]
+    plt.plot(V, [h_int(i) for i in V])
+    plt.show()
 
     U1 = FAME_ThermalResistance(diam_spheres, Vol_flow_rate/Area_cross, mu_fluid, rho_fluid, kair, k_fluid, kg10, thick_casing, thick_air)
     U2 = FAME_ThermalResistance2(diam_spheres, Vol_flow_rate / Area_cross, mu_fluid, rho_fluid, kair, k_fluid, kg10,
