@@ -11,14 +11,14 @@ air_th = 0.001 # [m] Thickness of the air layer in between regenerator casing an
 reg_length = 0.060 # [m] length of one regenerator. New variable, it seems that it is not necessary
 #species_discription = ['void', 'reg-si5', 'reg-si4', 'reg-si3', 'reg-si2', 'reg-si1', 'void'] # This is to identify the layers of MCM
 #species_discription = ['void', 'reg-si3', 'reg-si2', 'reg-si1', 'void'] # This is to identify the layers of MCM
-#species_discription = ['void', 'reg-Gd', 'void'] # This is to identify the layers of MCM
-species_discription = ['reg-Gd'] # This is to identify the layers of MCM
+species_discription = ['void', 'reg-Gd', 'void']  # Case with some voids on the ends of the regenerator
+#species_discription = ['reg-Gd'] # This is to identify the layers of MCM
 # If the number of layers increases to 30, which is a realistic number, this list should have 30 elements to identify
 # each layer.
 #x_discription = [0, 0.006, 0.018, 0.030, 0.042, 0.054, 0.066, 0.072] # This needs to be defined prior to the simulation
 #x_discription = [0, 0.006, 0.026, 0.046, 0.066, 0.072]
-#x_discription = [0, 0.006, 0.066, 0.072]
-x_discription = [0, 0.060]
+x_discription = [0, 0.006, 0.066, 0.072]
+#x_discription = [0, 0.060]
 # This needs to be defined prior to the simulation and adjusted everytime the geometry changes
 
 # TODO. It could be interesting to see how the length of the layers influence the performance of the regenerator.
