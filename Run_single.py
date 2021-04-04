@@ -21,6 +21,7 @@ CMCE          = 1
 nodes         = 400
 timesteps     = 600
 Dsp           = 600e-6
+er            = 0.36
 cName         = "R7"
 jName         = "Int_htc" # DP: It is better to use underline to connect words because this is used as file name
 time_limit    = 600  # [min] Time limit for the simulation in minutes
@@ -28,7 +29,7 @@ cycle_toler   = 1e-1  # Maximum cycle tolerance: criterion for ending the iterat
 maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
+results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
 
 
 # Some useful functions for storing data.

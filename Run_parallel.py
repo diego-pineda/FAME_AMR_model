@@ -41,6 +41,7 @@ if __name__ == '__main__':
             dispV         = 30.52e-6
             ff            = 1.7
             Dsp           = 600e-6
+            er = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -62,6 +63,7 @@ if __name__ == '__main__':
             dispV         = 30.52e-6
             ff            = 1.7
             Dsp           = 600e-6
+            er = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -83,6 +85,7 @@ if __name__ == '__main__':
             dispV         = 30.52e-6
             ff            = 1.7
             Dsp           = 600e-6
+            er = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -104,6 +107,7 @@ if __name__ == '__main__':
             dispV         = 30.52e-6
             ff            = 1.7
             Dsp           = 600e-6
+            er = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -122,7 +126,7 @@ if __name__ == '__main__':
 
         print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12

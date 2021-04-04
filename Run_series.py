@@ -23,6 +23,7 @@ if __name__ == '__main__':
     nodes         = 400
     timesteps     = 600
     Dsp           = 600e-6  # [m] Bowei reported that he used spheres in between 400 and 800 micrometers
+    er            = 0.36
     cName         = "R7"
     jName         = "Validation_Gd_no_voids_er0.45_Tspan20"  # DP: It is better to use underline to connect words because this is used as file name
     time_limit    = 600  # [min] Time limit for completing the calculations of the runActive function in minutes
@@ -51,7 +52,7 @@ if __name__ == '__main__':
     Qc_data = []
 
     while Qc > 0:
-        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter)
+        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
