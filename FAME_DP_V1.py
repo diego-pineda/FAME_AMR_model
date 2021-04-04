@@ -261,7 +261,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -331,7 +331,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
         from configurations.R6  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
             percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
     if ConfName == "R7":
-        from configurations.R7 import Ac, Nd, MOD_CL, Pc, er, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th
+        from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th
 
     # TODO: check if the variables left out in configuration R7 are necessary or not.
     print("Hot Side: {} Cold Side: {}".format(Thot,Tcold))
