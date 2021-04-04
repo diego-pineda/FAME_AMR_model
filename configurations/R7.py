@@ -29,7 +29,7 @@ x_discription = [0, 0.006, 0.066, 0.072]
 # TODO. Write a test statement to check if the number of elements of x_discription equals the number of elements of species_discription plus one
 
 #er      = 0.53 # [-] Porosity of regenerator
-er      = 0.36 # [-] Porosity of regenerator. er=0.36 in Bowei's paper
+#er      = 0.36 # [-] Porosity of regenerator. er=0.36 in Bowei's paper
 # TODO. Enter this as a parameter of the simulation
 
 percGly = 20 # [%] Percentage of glycol in the water glycol mixture used as HTF
