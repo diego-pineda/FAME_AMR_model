@@ -19,7 +19,7 @@ fluidTemp = np.loadtxt('../Simulation results/Fluid_Temp_val_near_zero_qc.txt')
 Tf_cold_side = fluidTemp[:, 0]*(Thot-Tcold)+Tcold
 time_amr = np.linspace(0, 1/freq, time_steps+1)
 volumetric_rate = FAME_V_flow.vol_flow_rate(time_steps, Vd)
-
+print(Tf_cold_side)
 Tf_cold_side_reg1 = np.append(Tf_cold_side,Tf_cold_side) # One full rotation of the device
 V_flow_reg1 = np.append(volumetric_rate[:], volumetric_rate[:]) # One full rotation of the device
 
@@ -51,7 +51,7 @@ V_flow_reg7 = np.concatenate((V_flow_reg1[-reg7ind:], V_flow_reg1[:-reg7ind]), a
 
 import matplotlib.pyplot as plt
 angle = np.linspace(0, 360, 1202)
-fig = plt.figure()
+fig = plt.figure(1)
 plt.plot(angle, V_flow_reg1)
 plt.plot(angle, V_flow_reg2)
 plt.plot(angle, V_flow_reg3)
@@ -63,8 +63,17 @@ plt.title("Volumetric flow rate per regenerator")
 plt.xlabel("Angle [°]")
 plt.ylabel("Volumetric flow rate [$m^3/s$]")
 
-plt.show()
-
+fig3 = plt.figure(3)
+plt.plot(angle, Tf_cold_side_reg1)
+plt.plot(angle, Tf_cold_side_reg2)
+plt.plot(angle, Tf_cold_side_reg3)
+plt.plot(angle, Tf_cold_side_reg4)
+plt.plot(angle, Tf_cold_side_reg5)
+plt.plot(angle, Tf_cold_side_reg6)
+plt.plot(angle, Tf_cold_side_reg7)
+plt.title("Temperature cold side as a function of time")
+plt.xlabel("Angle [°]")
+plt.ylabel("Temperature cold side [K]")
 
 print(len(Tf_cold_side_reg7))
 print(len(V_flow_reg7))
@@ -85,34 +94,47 @@ for n in range(2*(time_steps+1)-1):
 
     cooling_power_sum = cooling_power_sum+coolPn_reg1+coolPn_reg2+coolPn_reg3+coolPn_reg4+coolPn_reg5+coolPn_reg6+coolPn_reg7
 
-qc = cooling_power_sum
+
+qc1 = cooling_power_sum
 
 # Conclusion: the cooling power turns out to be seven times the cooling power of just one regenerator.
 # Confusion solved.
 
-print(qc)
+print(qc1)
 
 total_vol_flow = np.zeros(2*(time_steps+1))
+Tc = np.zeros(2*(time_steps+1))
+cool_capacity_sum = 0
+
 for n in range(2*(time_steps+1)-1):
-    if V_flow_reg1[n] < 0:
+    if V_flow_reg1[n] > 0:
         V_flow_reg1[n] = 0
-    if V_flow_reg2[n] < 0:
+    if V_flow_reg2[n] > 0:
         V_flow_reg2[n] = 0
-    if V_flow_reg3[n] < 0:
+    if V_flow_reg3[n] > 0:
         V_flow_reg3[n] = 0
-    if V_flow_reg4[n] < 0:
+    if V_flow_reg4[n] > 0:
         V_flow_reg4[n] = 0
-    if V_flow_reg5[n] < 0:
+    if V_flow_reg5[n] > 0:
         V_flow_reg5[n] = 0
-    if V_flow_reg6[n] < 0:
+    if V_flow_reg6[n] > 0:
         V_flow_reg6[n] = 0
-    if V_flow_reg7[n] < 0:
+    if V_flow_reg7[n] > 0:
         V_flow_reg7[n] = 0
 
     total_vol_flow[n] = V_flow_reg1[n]+V_flow_reg2[n]+V_flow_reg3[n]+V_flow_reg4[n]+V_flow_reg5[n]+V_flow_reg6[n]+V_flow_reg7[n]
+    Tc[n] = (V_flow_reg1[n] * Tf_cold_side_reg1[n] + V_flow_reg2[n] * Tf_cold_side_reg2[n] + V_flow_reg3[n] * Tf_cold_side_reg3[n] + V_flow_reg4[n] * Tf_cold_side_reg4[n] + V_flow_reg5[n] * Tf_cold_side_reg5[n] + V_flow_reg6[n] * Tf_cold_side_reg6[n] + V_flow_reg7[n] * Tf_cold_side_reg7[n]) / total_vol_flow[n]
+    coolPn_dev = (freq/2) * fCp((Tc[n]+Tc[n+1])/2, percGly) * fRho((Tc[n]+Tc[n+1])/2, percGly) * total_vol_flow[n] * DT * ((Tc[n]+Tc[n+1])/2 - Tcold)
+
+    cool_capacity_sum = cool_capacity_sum + coolPn_dev
+    # print(cool_capacity_sum)
+
+qc2 = cool_capacity_sum
+print(qc2)
 
 fig2 = plt.figure(2)
-plt.plot(angle, total_vol_flow)
+plt.plot(angle, Tc)
+# plt.plot(angle, Tf_cold_side_reg1)
 plt.title("Total volumetric flow rate of the device")
 plt.xlabel("Angle [°]")
 plt.ylabel("Total vol flow rate $[m^3/s]$")
