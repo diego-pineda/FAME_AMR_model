@@ -261,7 +261,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, acc_period, max_flow_period, full_magn_ang, unbal_rat):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -402,7 +402,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     #V = vf(t, Ac, Vd, freq)
 
     from sourcefiles.device import FAME_V_flow
-    V = FAME_V_flow.vol_flow_rate(nt, Vd)  # DP: Vd for the FAME cooler is the maximum volumetric flow rate in m^3/s
+    V = FAME_V_flow.vol_flow_rate(nt, Vd, acc_period, max_flow_period, full_magn_ang, unbal_rat)  # DP: Vd for the FAME cooler is the maximum volumetric flow rate in m^3/s
 
     pdrop = lambda at, dP, sf: (dP) * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
