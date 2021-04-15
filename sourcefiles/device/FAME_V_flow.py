@@ -10,12 +10,12 @@
 
 import numpy as np
 
-acc_period = 10  # [°] angular duration of acceleration and deceleration
-max_flow_period = 45  # [°] angular duration of max flow
-full_magn_ang = 30  # [°] full magnetization angle or angle at which maximum flow is reached
+# acc_period = 10  # [°] angular duration of acceleration and deceleration
+# max_flow_period = 45  # [°] angular duration of max flow
+# full_magn_ang = 30  # [°] full magnetization angle or angle at which maximum flow is reached
 
 
-def vol_flow_rate(nt, v_max):
+def vol_flow_rate(nt, v_max, acc_period, max_flow_period, full_magn_ang):
     vol_rate = np.zeros(nt+1)
     angle = 0
     for n in range(0, nt+1):
