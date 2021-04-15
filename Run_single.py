@@ -12,6 +12,10 @@ Tcold         = 292
 cen_loc       = 0
 Tambset       = 298
 dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+acc_period    = 10
+max_flow_per  = 45
+full_magn_ang = 30
+unbal_rat     = 1
 ff            = 1.7  # [Hz] DP: frequency of AMR cycle
 CF            = 1
 CS            = 1
@@ -29,7 +33,7 @@ cycle_toler   = 1e-1  # Maximum cycle tolerance: criterion for ending the iterat
 maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter)
+results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter, acc_period, max_flow_per, full_magn_ang, unbal_rat)
 
 
 # Some useful functions for storing data.
