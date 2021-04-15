@@ -1,7 +1,6 @@
 from FAME_DP_V1 import runActive
 
 
-
 if __name__ == '__main__':
 
     # The following section can be used to run an array of cases in a single computer, one after another
@@ -14,6 +13,10 @@ if __name__ == '__main__':
     cen_loc       = 0
     Tambset       = 298  # [K] Temperature of room reported between 296 K to 300 K
     dispV         = 12.94e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min. 2.37 regenerators with simultaneous flow.
+    acc_period    = 10
+    max_flow_per  = 45
+    full_magn_ang = 30
+    unbal_rat     = 1
     ff            = 1.2  # [Hz] DP: frequency of AMR cycle
     CF            = 1
     CS            = 1
@@ -52,7 +55,7 @@ if __name__ == '__main__':
     Qc_data = []
 
     while Qc > 0:
-        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter)
+        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, acc_period, max_flow_per, full_magn_ang, unbal_rat)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
