@@ -12,13 +12,17 @@ Vd = 12.94e-6  # [m3/s]
 time_steps = 600  # [-]
 nodes = 400  # [-]
 freq = 1.2  # [Hz] Frequency of AMR cycle. Frequency of device would be half this frequency
+acc_period = 10  # [°] angular duration of acceleration and deceleration
+max_flow_period = 45  # [°] angular duration of max flow
+full_magn_ang = 30  # [°] full magnetization angle or angle at which maximum flow is reached
+unbal_rat = 1
 #fluidTemp = np.loadtxt('Fluid_Temp_val.txt')
 fluidTemp = np.loadtxt('../Simulation results/Fluid_Temp_val_near_zero_qc.txt')
 #fluidTemp = np.loadtxt('Fluid_Temp_val_zero_span.txt')
 #fluidTemp = np.loadtxt('Fluid_Temp_val_span_11K.txt')
 Tf_cold_side = fluidTemp[:, 0]*(Thot-Tcold)+Tcold
 time_amr = np.linspace(0, 1/freq, time_steps+1)
-volumetric_rate = FAME_V_flow.vol_flow_rate(time_steps, Vd)
+volumetric_rate = FAME_V_flow.vol_flow_rate(time_steps, Vd, acc_period, max_flow_period, full_magn_ang, unbal_rat)
 print(Tf_cold_side)
 Tf_cold_side_reg1 = np.append(Tf_cold_side,Tf_cold_side) # One full rotation of the device
 V_flow_reg1 = np.append(volumetric_rate[:], volumetric_rate[:]) # One full rotation of the device
@@ -122,22 +126,29 @@ for n in range(2*(time_steps+1)-1):
     if V_flow_reg7[n] > 0:
         V_flow_reg7[n] = 0
 
+# Estimation of total volumetric flow rate as a function of time and the mixed temperature of fluid going to CHEX
+
     total_vol_flow[n] = V_flow_reg1[n]+V_flow_reg2[n]+V_flow_reg3[n]+V_flow_reg4[n]+V_flow_reg5[n]+V_flow_reg6[n]+V_flow_reg7[n]
     Tc[n] = (V_flow_reg1[n] * Tf_cold_side_reg1[n] + V_flow_reg2[n] * Tf_cold_side_reg2[n] + V_flow_reg3[n] * Tf_cold_side_reg3[n] + V_flow_reg4[n] * Tf_cold_side_reg4[n] + V_flow_reg5[n] * Tf_cold_side_reg5[n] + V_flow_reg6[n] * Tf_cold_side_reg6[n] + V_flow_reg7[n] * Tf_cold_side_reg7[n]) / total_vol_flow[n]
-    coolPn_dev = (freq/2) * fCp((Tc[n]+Tc[n+1])/2, percGly) * fRho((Tc[n]+Tc[n+1])/2, percGly) * total_vol_flow[n] * DT * ((Tc[n]+Tc[n+1])/2 - Tcold)
 
+# Estimation of cooling power from mixed stream passing through CHEC
+
+for n in range(2*(time_steps+1)-1):
+
+    coolPn_dev = (freq/2) * fCp((Tc[n]+Tc[n+1])/2, percGly) * fRho((Tc[n]+Tc[n+1])/2, percGly) * total_vol_flow[n] * DT * ((Tc[n]+Tc[n+1])/2 - Tcold)
     cool_capacity_sum = cool_capacity_sum + coolPn_dev
-    # print(cool_capacity_sum)
+    print(cool_capacity_sum)
 
 qc2 = cool_capacity_sum
 print(qc2)
 
 fig2 = plt.figure(2)
-plt.plot(angle, Tc)
+plt.plot(angle[0:-10], Tc[0:-10])
 # plt.plot(angle, Tf_cold_side_reg1)
-plt.title("Total volumetric flow rate of the device")
+plt.title("Mixed stream temperature")
 plt.xlabel("Angle [°]")
-plt.ylabel("Total vol flow rate $[m^3/s]$")
+plt.ylabel("Mixed stream temperature $[K]$")
+# plt.ylabel("Total vol flow rate $[m^3/s]$")
 plt.grid(which='major', axis='both')
 plt.show()
 
