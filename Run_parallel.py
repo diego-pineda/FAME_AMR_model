@@ -30,7 +30,7 @@ if __name__ == '__main__':
         maxcase = numCases * hotResolution * coldResolution
         Thotarr = np.linspace(273+22, 273+22, hotResolution)
 
-        casenum=int(np.floor(case/(hotResolution*coldResolution))) # DP: I don't understand why making things complicated like this...
+        casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
         if casenum==0:
             #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
@@ -39,9 +39,13 @@ if __name__ == '__main__':
             cen_loc       = 0
             Tambset       = 298
             dispV         = 30.52e-6
+            acc_period    = 10
+            max_flow_per  = 45
+            full_magn_ang = 30
+            unbal_rat     = 1
             ff            = 1.7
             Dsp           = 600e-6
-            er = 0.36
+            er            = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -61,9 +65,13 @@ if __name__ == '__main__':
             cen_loc       = 0
             Tambset       = 298
             dispV         = 30.52e-6
+            acc_period    = 10
+            max_flow_per  = 45
+            full_magn_ang = 30
+            unbal_rat     = 1
             ff            = 1.7
             Dsp           = 600e-6
-            er = 0.36
+            er            = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -83,9 +91,13 @@ if __name__ == '__main__':
             cen_loc       = 0
             Tambset       = 298
             dispV         = 30.52e-6
+            acc_period    = 10
+            max_flow_per  = 45
+            full_magn_ang = 30
+            unbal_rat     = 1
             ff            = 1.7
             Dsp           = 600e-6
-            er = 0.36
+            er            = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -105,9 +117,13 @@ if __name__ == '__main__':
             cen_loc       = 0
             Tambset       = 298
             dispV         = 30.52e-6
+            acc_period    = 10
+            max_flow_per  = 45
+            full_magn_ang = 30
+            unbal_rat     = 1
             ff            = 1.7
             Dsp           = 600e-6
-            er = 0.36
+            er            = 0.36
             CF            = 1
             CS            = 1
             CL            = 0
@@ -126,7 +142,7 @@ if __name__ == '__main__':
 
         print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter,acc_period,max_flow_per,full_magn_ang,unbal_rat)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
