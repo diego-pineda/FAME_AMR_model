@@ -33,7 +33,6 @@ if __name__ == '__main__':
         casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
         if casenum==0:
-            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
             cen_loc       = 0
@@ -56,10 +55,9 @@ if __name__ == '__main__':
             cName         = "R7"
             time_limit    = 600  # [min] Time limit for the simulation in minutes
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
         if casenum==1:
-            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
             cen_loc       = 0
@@ -80,12 +78,11 @@ if __name__ == '__main__':
             nodes         = 400
             timesteps     = 600
             cName         = "R7"
-            time_limit    = 700  # [min] Time limit for the simulation in minutes
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
         if casenum==2:
-            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
             cen_loc       = 0
@@ -106,12 +103,11 @@ if __name__ == '__main__':
             nodes         = 400
             timesteps     = 600
             cName         = "R7"
-            time_limit    = 800  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-6  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 700  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 700  # Maximum cycle iterations the simulation is allowed to take
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
         if casenum==3:
-            #RunTest("test_128_20_ALL.txt", 6.4e-6, 2, CF, CS, CL, CVD,CMCE, Thot, 35, num_processors, 200, 400, [0,20,40],300e-6)
             fileName      = "{}.txt".format(jobName)
             MaxTSpan      = 24
             cen_loc       = 0
@@ -132,15 +128,16 @@ if __name__ == '__main__':
             nodes         = 400
             timesteps     = 600
             cName         = "R7"
-            time_limit    = 900  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-7  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 900  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 900  # Maximum cycle iterations the simulation is allowed to take
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
 
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
 
-        print("iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
+        print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
+        print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
         results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter,acc_period,max_flow_per,full_magn_ang,unbal_rat)
         #  runActive():  returns
@@ -150,8 +147,8 @@ if __name__ == '__main__':
         #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
         fileNameSave = './output/' + str(case) + fileName
-        FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
-        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
+        FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
+        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17]))
         FileSave(fileNameSave, "Fluid temperatures\n")
         FileSaveMatrix(fileNameSave, results[14])
         FileSave(fileNameSave, "Solid temperatures\n")
