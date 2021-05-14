@@ -1207,7 +1207,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     for n in range(startint, nt):
         tF = y[n, -1] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, -1] * (Thot - Tcold) + Tcold
-        coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * (Thot-(tF+tF1)/2)
+        coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2-Thot)
         coolingpowersum = coolingpowersum + coolPn
     qh = coolingpowersum # DP: heating power of the device
     # DP: cooling power of FAME device is 7 times the cooling power of one regenerator.
