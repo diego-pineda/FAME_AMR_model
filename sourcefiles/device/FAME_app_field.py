@@ -20,13 +20,15 @@ import numpy as np
 def app_field(nt,N):
     ap_fld = np.zeros((nt+1,N+1))
     angle = 0
+    full_mag_ang = 30
+    max_field_period = 45
     for n in range(0,nt+1):
-        if angle<30:
-            ap_fld[n,:] = (0.875/30)*(180*(n/nt)) # [T]. Applied field as a function of time during the magnetization ramp
-        elif 30 <= angle < 75:
+        if angle<full_mag_ang:
+            ap_fld[n,:] = (0.875/full_mag_ang)*(180*(n/nt)) # [T]. Applied field as a function of time during the magnetization ramp
+        elif full_mag_ang <= angle < (full_mag_ang + max_field_period):
             ap_fld[n,:] = 0.875 # [T] Applied field as a function of time during the cold to hot blow process
-        elif 75 <= angle < 105:
-            ap_fld[n,:] = (0.875/30)*(105-180*n/nt) # [T] Applied field during the demagnetization ramp
+        elif (full_mag_ang + max_field_period) <= angle < (2 * full_mag_ang + max_field_period):
+            ap_fld[n,:] = (0.875/full_mag_ang)*((2 * full_mag_ang + max_field_period)-180*n/nt) # [T] Applied field during the demagnetization ramp
         else:
             ap_fld[n,:] = 0 # [T] Applied field during the hot to cold blow process
         angle = 180*(n+1)/nt
@@ -34,23 +36,23 @@ def app_field(nt,N):
 
 ########## The following lines are for testing the function ##########
 
-# nt = 100 # number of nodes in the time domain
-# N = 200 # number of nodes in the spatial domain
-#
-# ap_field = app_field(nt, N)
-# print(ap_field)
-#
-# import matplotlib.pyplot as plt
-# from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
-#
-# fig, plot1 = plt.subplots()
-# plt.plot(np.linspace(0,180,nt+1),ap_field[:,0])
-# plt.xlabel("Angle [°]")
-# plt.ylabel("Applied field [T]")
-# plt.title("Applied magnetic field as a function of rotation angle")
-# plt.grid(which='both', axis='both')
-# plot1.xaxis.set_major_locator(MultipleLocator(15))
-# plt.show()
+nt = 100 # number of nodes in the time domain
+N = 200 # number of nodes in the spatial domain
+
+ap_field = app_field(nt, N)
+print(ap_field)
+
+import matplotlib.pyplot as plt
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
+
+fig, plot1 = plt.subplots()
+plt.plot(np.linspace(0,180,nt+1),ap_field[:,0])
+plt.xlabel("Angle [°]")
+plt.ylabel("Applied field [T]")
+plt.title("Applied magnetic field as a function of rotation angle")
+plt.grid(which='both', axis='both')
+plot1.xaxis.set_major_locator(MultipleLocator(15))
+plt.show()
 
 ###### Ploting the results of Bowei's simulation about magnetic field ######
 
@@ -65,6 +67,7 @@ def app_field(nt,N):
 # Y = mag_field_data[0, 1:]
 # X, Y = np.meshgrid(X, Y)
 # Z = np.matrix.transpose(mag_field_data[1:, 1:])
+#
 #
 # # Plot the surface.
 # fig = plt.figure(1)
