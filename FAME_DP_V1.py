@@ -12,6 +12,7 @@ import sys
 import os
 # Import time to time the simulation
 import time
+import importlib
 
 # -------------------------- Si Material properties -----------------------------
 
@@ -40,7 +41,7 @@ from sourcefiles.fluid.conduction import fK  # Conduction
 
 from closure.dynamic_conduction import kDyn_P  # Dynamic conduction
 from closure.static_conduction import kStat  # Static conduction
-from closure.inter_heat import beHeff_I, beHeff_E  # Internal Heat transfer coefficient * Specific surface area
+#from closure.inter_heat import beHeff_I, beHeff_E  # Internal Heat transfer coefficient * Specific surface area
 from closure.pressure_drop import SPresM  # pressure Drop
 from closure.resistance import ThermalResistance,ThermalResistanceVoid  # Resistance Term in the Regenerator and void
 from closure.FAME_resistance import FAME_ThermalResistance, FAME_ThermalResistance2, FAME_ThermalResistanceVoid
@@ -261,7 +262,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, acc_period, max_flow_period, full_magn_ang, unbal_rat):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -311,6 +312,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     porosity was added. The code has modified to activate the field again.
     '''
 
+    htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)
+
     # Import the configuration
     if ConfName == "R1":
         from configurations.R1  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
@@ -331,7 +334,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
         from configurations.R6  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
             percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
     if ConfName == "R7":
-        from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th
+        from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, reg_length
 
     # TODO: check if the variables left out in configuration R7 are necessary or not.
     print("Hot Side: {} Cold Side: {}".format(Thot,Tcold))
@@ -341,7 +344,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     # Small displacer 2.53cm^2
     # Medium displacer 6.95cm^2
     # 1inch = 2.54cm
-    Vd      = dispV # DP: for the FAME cooler this is the maximum volumetric flow rate
+    #Vd      = dispV # DP: for the FAME cooler this is the maximum volumetric flow rate
     freq    = ff
     tau_c   = 1/freq # DP comment: this is the period of the cycle
 
@@ -401,8 +404,14 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     # Build all volumetric fluid speeds V[n] (m^3/s) dt time unit
     #V = vf(t, Ac, Vd, freq)
 
-    from sourcefiles.device import FAME_V_flow
-    V = FAME_V_flow.vol_flow_rate(nt, Vd, acc_period, max_flow_period, full_magn_ang, unbal_rat)  # DP: Vd for the FAME cooler is the maximum volumetric flow rate in m^3/s
+    # from sourcefiles.device import FAME_V_flow
+    # V = FAME_V_flow.vol_flow_rate(nt, Vd, acc_period, max_flow_period, full_magn_ang, unbal_rat)  # DP: Vd for the FAME cooler is the maximum volumetric flow rate in m^3/s
+    V = vol_flow_profile
+
+    vol_disp = 0
+    for i in range(np.floor((nt+1)/2)):
+        v_disp = V[i]*DT  # Integration using the rectangle rule
+        vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
 
     pdrop = lambda at, dP, sf: (dP) * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
@@ -413,12 +422,13 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     #U = uf(t, 1, 1, freq)
 
     # Calculate the utilization as defined by Armando's paper
-    #Uti     = (Vd * 1000 * 4200) / (1000 * Ac * (1  - er) * 6100 * (L_reg1+L_reg2))# TODO by DP: redefine utilization for the FAME cooler
-    Uti = (Vd * 1000 * 4200) / (1000 * Ac * (1 - er) * 6100 * (L_tot-0.012)) # DP: 0.012 is the length of the voids
+    #Uti     = (Vd * 1000 * 4200) / (1000 * Ac * (1  - er) * 6100 * (L_reg1+L_reg2))
+    Uti = (vol_disp * 1000 * 4200) / (235 * Ac * (1 - er) * mRho * (reg_length)) # DP: 0.012 is the length of the voids
+    # TODO: the heat capacity of the MCM should be read from an input file or calculated somehow
     # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 in the numerator is the density of water.
-    # DP comment: 1000 in the denominator is an approximate value of Cp of MCM.
+    # DP comment: 235 in the denominator is an average value of Cp of Gd.
     print('Utilization: {0:1.3f} Frequency: {1:1.2f} [Hz]'.format(Uti,freq))
-    print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
+    #print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
 
     # Initial ch-factor
     ch_factor = np.ones(N + 1)*ch_fac # DP comment: ch_fac = 0.5 is set in the configuration file. This is the averaging cooling and heating factor
@@ -582,6 +592,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
     # TODO: the problem with this is that x_discription starts at the node 1 while xloc starts at the node 0. So, this
     #  quantities are not based on the same reference and their difference could lead to problems.
     # DP: fr[i] is useful for the calculation of the kf_west Kf_east. It refers to the fraction of the control volume that corresponds to a particular material
+
     ############################# BUILD appliedField array ####################
     # Shift the rotation of the magnet so it aligns with the sin time
     #RotMag = lambda t, f: 360 * t * f + 270 - 360 * np.floor(t * f + 270 / 360)
@@ -598,9 +609,10 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
    #         else:
    #             appliedFieldm[n, i] = 0
 
-    # Applied field FAME cooler
-    from sourcefiles.device import FAME_app_field
-    appliedFieldm = FAME_app_field.app_field(nt, N)
+    # Applied field profile (Input of the model)
+    #from sourcefiles.device import FAME_app_field
+    #appliedFieldm = FAME_app_field.app_field(nt, N)
+    appliedFieldm = app_field  # Matrix nt rows and N columns describing the magnetic field along the reg as a f(t)
 
     for i in range(N + 1):
         if (not species_descriptor[i].startswith("reg")):
@@ -879,7 +891,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         # Effective Conduction for fluid
                         k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
-                        Omegaf[i] = A_c[i] * beHeff_I(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
                         Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,A_c[i] * e_r[i])
 
@@ -912,7 +924,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         k[i] = kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
                         # TODO: heat transfer coefficient is based on crushed particles rather than spherical
-                        Omegaf[i] = A_c[i] * beHeff_I(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
                         Spres[i], dP = SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
@@ -933,7 +945,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
                         # Effective Conduction for fluid
                         k[i] = kDyn_P(Dspls, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
-                        Omegaf[i] = A_c[i] * beHeff_I(Dspls, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, lsCp, lsK, lsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
                         Spres[i], dP = SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
@@ -1258,5 +1270,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,node
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
 
 
-
+# TODO: magnetic field and volume flow rate are defined in functions that are external to this piece of code. So, it
+#  would be nicer if the file could be defined as an input of the model. This way, different types of profiles can be
+#  easily implemented. For example, I am using now a trapezoidal profile. After implementing this, I could easily
+#  switch from a trapezoidal shape to a sinusoidal and so on.
 
