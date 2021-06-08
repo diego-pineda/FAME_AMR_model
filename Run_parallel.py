@@ -29,109 +29,195 @@ if __name__ == '__main__':
 
         maxcase = numCases * hotResolution * coldResolution
         Thotarr = np.linspace(273+22, 273+22, hotResolution)
-
         casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
-        if casenum==0:
+        if casenum == 0:
             fileName      = "{}.txt".format(jobName)
-            MaxTSpan      = 24
-            cen_loc       = 0
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+            MaxTSpan      = 24  # This with coldResolution defines a difference between the Tcold of consecutive cases
+            cen_loc       = 0  # TODO: what is this for? can this be eliminated?
+
+            # Ambient temperature
             Tambset       = 298
+
+            # Flow profile
             dispV         = 30.52e-6
             acc_period    = 10
             max_flow_per  = 45
             full_magn_ang = 30
             unbal_rat     = 1
+            from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # Magnetic field profile
+            from sourcefiles.device import FAME_app_field
+            app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # Frequency of AMR cycle
             ff            = 1.7
+
+            # Geometric parameters
+            cName         = "R7"
             Dsp           = 600e-6
             er            = 0.36
+
+            # Switches for activating and deactivating terms in governing equations
             CF            = 1
             CS            = 1
             CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 400
-            timesteps     = 600
-            cName         = "R7"
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'
+
         if casenum==1:
             fileName      = "{}.txt".format(jobName)
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
             MaxTSpan      = 24
             cen_loc       = 0
+
+            # Ambient temperature
             Tambset       = 298
+
+            # Flow profile
             dispV         = 30.52e-6
             acc_period    = 10
             max_flow_per  = 45
             full_magn_ang = 30
             unbal_rat     = 1
+            from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # Magnetic field profile
+            from sourcefiles.device import FAME_app_field
+            app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # Frequency of AMR cycle
             ff            = 1.7
+
+            # Geometric parameters
             Dsp           = 600e-6
             er            = 0.36
+            cName         = "R7"
+
+            # Switches for activating and deactivating terms in governing equations
             CF            = 1
             CS            = 1
             CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 400
-            timesteps     = 600
-            cName         = "R7"
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'
+
         if casenum==2:
             fileName      = "{}.txt".format(jobName)
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
             MaxTSpan      = 24
             cen_loc       = 0
+
+            # Ambient temperature
             Tambset       = 298
+
+            # Flow profile
             dispV         = 30.52e-6
             acc_period    = 10
             max_flow_per  = 45
             full_magn_ang = 30
             unbal_rat     = 1
+            from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # Magnetic field profile
+            from sourcefiles.device import FAME_app_field
+            app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # Frequency of AMR cycle
             ff            = 1.7
+
+            # Geometric parameters
             Dsp           = 600e-6
             er            = 0.36
+            cName         = "R7"
+
+            # Switches for activating and deactivating terms in governing equations
             CF            = 1
             CS            = 1
             CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 400
-            timesteps     = 600
-            cName         = "R7"
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'
+
         if casenum==3:
             fileName      = "{}.txt".format(jobName)
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
             MaxTSpan      = 24
             cen_loc       = 0
+
+            # Ambient temperature
             Tambset       = 298
+
+            # Flow profile
             dispV         = 30.52e-6
             acc_period    = 10
             max_flow_per  = 45
             full_magn_ang = 30
             unbal_rat     = 1
+            from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # Magnetic field profile
+            from sourcefiles.device import FAME_app_field
+            app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # Frequency of AMR cycle
             ff            = 1.7
+
+            # Geometric parameters
             Dsp           = 600e-6
             er            = 0.36
+            cName         = "R7"
+
+            # Switches for activating and deactivating terms in governing equations
             CF            = 1
             CS            = 1
             CL            = 0
             CVD           = 1
             CMCE          = 1
-            nodes         = 400
-            timesteps     = 600
-            cName         = "R7"
-            time_limit    = 600  # [min] Time limit for the simulation in minutes
-            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'
 
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
@@ -139,7 +225,7 @@ if __name__ == '__main__':
         print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
         print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter,acc_period,max_flow_per,full_magn_ang,unbal_rat)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
