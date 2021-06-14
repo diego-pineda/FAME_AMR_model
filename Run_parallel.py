@@ -77,6 +77,7 @@ if __name__ == '__main__':
 
             # Heat transfer model
             htc_model_name = 'wakao_and_kagei_1982'
+            leaks_model_name = 'flow_btw_plates'
 
         if casenum==1:
             fileName      = "{}.txt".format(jobName)
@@ -124,6 +125,7 @@ if __name__ == '__main__':
 
             # Heat transfer model
             htc_model_name = 'wakao_and_kagei_1982'
+            leaks_model_name = 'flow_btw_plates'
 
         if casenum==2:
             fileName      = "{}.txt".format(jobName)
@@ -171,6 +173,7 @@ if __name__ == '__main__':
 
             # Heat transfer model
             htc_model_name = 'wakao_and_kagei_1982'
+            leaks_model_name = 'flow_btw_plates'
 
         if casenum==3:
             fileName      = "{}.txt".format(jobName)
@@ -217,7 +220,8 @@ if __name__ == '__main__':
             CMCE          = 1
 
             # Heat transfer model
-            htc_model_name = 'wakao_and_kagei_1982'
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
 
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
@@ -225,7 +229,7 @@ if __name__ == '__main__':
         print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
         print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
