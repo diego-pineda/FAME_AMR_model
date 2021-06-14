@@ -262,7 +262,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -313,6 +313,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     '''
 
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)
+    leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)
 
     # Import the configuration
     if ConfName == "R1":
@@ -902,14 +903,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         # Spres[i] = Spres[i]*2.7
 
                         # Loss term
-                        if ConfName == "R7":
-                            #Lf[i] = P_c[i] * FAME_ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, air_th)
-                            U_factor = FAME_ThermalResistance2(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, casing_th, freq, air_th)
-                            Lf[i] = P_c[i] * U_factor[1]  # 0: turbulent flow over flat plate. 1: film flow between plates
-                        else:
-                            Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3)
-                        # TODO: this is not necessary for the FAME cooler. It can be deleted.
-
+                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
 
                         # Effective Conduction for solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
