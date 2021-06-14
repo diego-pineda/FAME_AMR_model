@@ -105,7 +105,6 @@ kg10  =  0.608  # [W/(m K)] Thermal conductivity g10 material
 
 kair  = 0.0255  # [W/(m K)] air material
 
-# TODO. If the casing used by Bowei is to be considered, the thermal conductivity of fiberglass must be included
 
 # Transport booklet
 
@@ -124,7 +123,5 @@ CL_set="Tamb" # Casing BC assumption DP: changed from grad to Tamb. It does make
 MOD_CL=0 # Do we wish to use experimental modication of the BC
 
 ch_fac=0.5 # Averaging heating and cooling properties
-
-
 
 print(CL_set)
