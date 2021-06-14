@@ -903,13 +903,14 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         # Spres[i] = Spres[i]*2.7
 
                         # Loss term
-                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
+                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, 0, 0, 0, casing_th, freq, air_th)  # TODO change the zeros for r1, r2, r3
 
                         # Effective Conduction for solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
                         ### Capacitance solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq  # DP: freq is used here because in the..
                         # SolveSolid function Cs is divided by dt = 1/(nt+1). So, this way dt becomes DT
+                        # TODO for glass and lead spheres change the ThermalResistance function
                     elif species_descriptor[i] == 'gs':
                         # This is where the gs stuff will go
                         # Effective Conduction for solid
@@ -917,7 +918,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         # Effective Conduction for fluid
                         k[i] = kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # Forced convection term east of the P node
-                        # TODO: heat transfer coefficient is based on crushed particles rather than spherical
+
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
@@ -953,12 +954,13 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         Smce[i] = 0
                         ### Capacitance solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
-                    else:
+                    else:  # TODO: change the ThermalResistance function to match the new style.
+                        # TODO: Eliminate dependence on R7
                         k[i] = kf_ave
                         if species_descriptor[i] == 'void' and ConfName != "R7":
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs, r1, r2, r3)
                         elif species_descriptor[i] == 'void' and ConfName == "R7":
-                            Lf[i] = P_c[i] * FAME_ThermalResistanceVoid(kair, kf_ave, kg10, A_c[i], P_c[i], casing_th, air_th)
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, 0, 0, 0, 0, 0, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)  # TODO change the zeros for kUlt, r0, r1, r2, r3
                         elif species_descriptor[i] == 'void1':
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs1, r1, r2, r3)
                         elif species_descriptor[i] == 'void2':
