@@ -34,53 +34,56 @@ def app_field(nt,N):
         angle = 180*(n+1)/nt
     return ap_fld
 
-########## The following lines are for testing the function ##########
 
-nt = 100 # number of nodes in the time domain
-N = 200 # number of nodes in the spatial domain
+if __name__ == '__main__':
+    
+    ########## The following lines are for testing the function ##########
 
-ap_field = app_field(nt, N)
-print(ap_field)
+    nt = 600 # number of nodes in the time domain
+    N = 200 # number of nodes in the spatial domain
 
-import matplotlib.pyplot as plt
-from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
+    ap_field = app_field(nt, N)
+    print(ap_field)
 
-fig, plot1 = plt.subplots()
-plt.plot(np.linspace(0,180,nt+1),ap_field[:,0])
-plt.xlabel("Angle [°]")
-plt.ylabel("Applied field [T]")
-plt.title("Applied magnetic field as a function of rotation angle")
-plt.grid(which='both', axis='both')
-plot1.xaxis.set_major_locator(MultipleLocator(15))
-plt.show()
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
 
-###### Ploting the results of Bowei's simulation about magnetic field ######
+    fig, plot1 = plt.subplots()
+    plt.plot(np.linspace(0,180,nt+1),ap_field[:,0])
+    plt.xlabel("Angle [°]")
+    plt.ylabel("Applied field [T]")
+    plt.title("Applied magnetic field as a function of rotation angle")
+    plt.grid(which='both', axis='both')
+    plot1.xaxis.set_major_locator(MultipleLocator(15))
+    plt.show()
 
-# import matplotlib.pyplot as plt
-# from matplotlib import cm
-# from matplotlib.ticker import LinearLocator, FormatStrFormatter
-# import numpy as np
-#
-# # Import the data
-# mag_field_data = np.loadtxt('Magfield_profile.txt')
-# X = mag_field_data[1:, 0]
-# Y = mag_field_data[0, 1:]
-# X, Y = np.meshgrid(X, Y)
-# Z = np.matrix.transpose(mag_field_data[1:, 1:])
-#
-#
-# # Plot the surface.
-# fig = plt.figure(1)
-# ax = fig.gca(projection='3d')
-# surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-#
-# # Customize the z axis.
-# ax.set_zlim(0, 1)
-# ax.zaxis.set_major_locator(LinearLocator(11))
-# ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-#
-# # Add a color bar which maps values to colors.
-# fig.colorbar(surf, shrink=0.5, aspect=5)
-#
-# plt.show()
+    ###### Ploting the results of Bowei's simulation about magnetic field ######
+
+    # import matplotlib.pyplot as plt
+    # from matplotlib import cm
+    # from matplotlib.ticker import LinearLocator, FormatStrFormatter
+    # import numpy as np
+    #
+    # # Import the data
+    # mag_field_data = np.loadtxt('Magfield_profile.txt')
+    # X = mag_field_data[1:, 0]
+    # Y = mag_field_data[0, 1:]
+    # X, Y = np.meshgrid(X, Y)
+    # Z = np.matrix.transpose(mag_field_data[1:, 1:])
+    #
+    #
+    # # Plot the surface.
+    # fig = plt.figure(1)
+    # ax = fig.gca(projection='3d')
+    # surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    #
+    # # Customize the z axis.
+    # ax.set_zlim(0, 1)
+    # ax.zaxis.set_major_locator(LinearLocator(11))
+    # ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    #
+    # # Add a color bar which maps values to colors.
+    # fig.colorbar(surf, shrink=0.5, aspect=5)
+    #
+    # plt.show()
 
