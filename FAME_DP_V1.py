@@ -410,9 +410,10 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     V = vol_flow_profile
 
     vol_disp = 0
-    for i in range(np.floor((nt+1)/2)):
+    for i in range(int(np.floor((nt+1)/2))):
         v_disp = V[i]*DT  # Integration using the rectangle rule
         vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
+    print("The volume displace in one blowing process is: {} [m^3]".format(vol_disp))
 
     pdrop = lambda at, dP, sf: (dP) * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
