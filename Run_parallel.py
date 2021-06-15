@@ -65,8 +65,8 @@ if __name__ == '__main__':
 
             # Geometric parameters
             cName         = "R7"
-            Dsp           = 600e-6
-            er            = 0.36
+            # Dsp           = 600e-6
+            # er            = 0.36
 
             # Switches for activating and deactivating terms in governing equations
             CF            = 1
@@ -112,8 +112,8 @@ if __name__ == '__main__':
             ff            = 1.7
 
             # Geometric parameters
-            Dsp           = 600e-6
-            er            = 0.36
+            # Dsp           = 600e-6
+            # er            = 0.36
             cName         = "R7"
 
             # Switches for activating and deactivating terms in governing equations
@@ -160,8 +160,8 @@ if __name__ == '__main__':
             ff            = 1.7
 
             # Geometric parameters
-            Dsp           = 600e-6
-            er            = 0.36
+            # Dsp           = 600e-6
+            # er            = 0.36
             cName         = "R7"
 
             # Switches for activating and deactivating terms in governing equations
@@ -208,8 +208,8 @@ if __name__ == '__main__':
             ff            = 1.7
 
             # Geometric parameters
-            Dsp           = 600e-6
-            er            = 0.36
+            # Dsp           = 600e-6
+            # er            = 0.36
             cName         = "R7"
 
             # Switches for activating and deactivating terms in governing equations
@@ -229,7 +229,7 @@ if __name__ == '__main__':
         print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
         print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
