@@ -315,6 +315,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)
 
+
     # Import the configuration
     if ConfName == "R1":
         from configurations.R1  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
@@ -336,6 +337,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
             percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
     if ConfName == "R7":
         from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, reg_length
+
 
     # TODO: check if the variables left out in configuration R7 are necessary or not.
     print("Hot Side: {} Cold Side: {}".format(Thot,Tcold))
@@ -958,10 +960,10 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                     else:  # TODO: change the ThermalResistance function to match the new style.
                         # TODO: Eliminate dependence on R7
                         k[i] = kf_ave
-                        if species_descriptor[i] == 'void' and ConfName != "R7":
+                        if species_descriptor[i] == 'void':
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs, r1, r2, r3)
-                        elif species_descriptor[i] == 'void' and ConfName == "R7":
-                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, 0, 0, 0, 0, 0, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)  # TODO change the zeros for kUlt, r0, r1, r2, r3
+                        elif species_descriptor[i] == 'void3':
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)  # TODO change the zeros for kUlt, r0, r1, r2, r3
                         elif species_descriptor[i] == 'void1':
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs1, r1, r2, r3)
                         elif species_descriptor[i] == 'void2':
