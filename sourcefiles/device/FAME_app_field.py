@@ -22,13 +22,14 @@ def app_field(nt,N):
     angle = 0
     full_mag_ang = 30
     max_field_period = 45
+    max_app_field = 0.875
     for n in range(0,nt+1):
         if angle<full_mag_ang:
-            ap_fld[n,:] = (0.875/full_mag_ang)*(180*(n/nt)) # [T]. Applied field as a function of time during the magnetization ramp
+            ap_fld[n,:] = (max_app_field/full_mag_ang)*(180*(n/nt)) # [T]. Applied field as a function of time during the magnetization ramp
         elif full_mag_ang <= angle < (full_mag_ang + max_field_period):
-            ap_fld[n,:] = 0.875 # [T] Applied field as a function of time during the cold to hot blow process
+            ap_fld[n,:] = max_app_field # [T] Applied field as a function of time during the cold to hot blow process
         elif (full_mag_ang + max_field_period) <= angle < (2 * full_mag_ang + max_field_period):
-            ap_fld[n,:] = (0.875/full_mag_ang)*((2 * full_mag_ang + max_field_period)-180*n/nt) # [T] Applied field during the demagnetization ramp
+            ap_fld[n,:] = (max_app_field/full_mag_ang)*((2 * full_mag_ang + max_field_period)-180*n/nt) # [T] Applied field during the demagnetization ramp
         else:
             ap_fld[n,:] = 0 # [T] Applied field during the hot to cold blow process
         angle = 180*(n+1)/nt
@@ -36,7 +37,7 @@ def app_field(nt,N):
 
 
 if __name__ == '__main__':
-    
+
     ########## The following lines are for testing the function ##########
 
     nt = 600 # number of nodes in the time domain
