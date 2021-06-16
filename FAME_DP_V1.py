@@ -262,105 +262,175 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,er,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
+def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
-    # caseNum        <- caseNum number
-    # Thot           <- Hot side heat exchanger
-    # Tcold          <- Cold side heat exchanger
-    # cen_loc        <- offset of the regenerator to the magnet
-    # Tambset        <- Set ambient temperature
-    # dispV          <- Displaced volume [m^3]. DP: for the FAME cooler this represents the maximum volumetric flow rate
-    # ff             <- frequency [Hz]
-    # CF             <- Enable/Disable Conduction term in Fluid
-    # CS             <- Enable/Disable Conduction term in Solid
-    # CL             <- Enable/Disable Heat leaks term in the Fluid GE
-    # CVD            <- Enable/Disable Viscous Dissipation Term in the Fluid GE
-    # CMCE           <- Enable/Disable MCE
-    # nodes          <- Number of Spacial nodes used
-    # timesteps      <- Number of Timesteps per cycle
-    # ConfName       <- Load a certain configuration file
-    # jobName        <- The name of the job
-    # time_lim       <- Simulation time limit in minutes (Added by DP)
-    # cycle_tol      <- Maximum cycle tolerance: criterion for the end of the iterative calculation process
-    # max_step_iter  <- Maximum time step iterations the simulation is allowed to take
-    # max_cycle_iter <- Maximum cycle iterations the simulation is allowed to take
+    # caseNum          <- caseNum number
+    # Thot             <- Hot side heat exchanger
+    # Tcold            <- Cold side heat exchanger
+    # cen_loc          <- offset of the regenerator to the magnet TODO: remove from code. Particular for PM1 device
+    # Tambset          <- Set ambient temperature
+    # dispV            <- Displaced volume [m^3]. DP: for the FAME cooler this represents the maximum volumetric flow rate
+    # ff               <- frequency [Hz]
+    # CF               <- Enable/Disable Conduction term in Fluid
+    # CS               <- Enable/Disable Conduction term in Solid
+    # CL               <- Enable/Disable Heat leaks term in the Fluid GE
+    # CVD              <- Enable/Disable Viscous Dissipation Term in the Fluid GE
+    # CMCE             <- Enable/Disable MCE
+    # nodes            <- Number of Spacial nodes used
+    # timesteps        <- Number of Timesteps per cycle
+    # ConfName         <- Load a certain configuration file
+    # jobName          <- The name of the job
+    # time_lim         <- Simulation time limit in minutes (Added by DP)
+    # cycle_tol        <- Maximum cycle tolerance: criterion for the end of the iterative calculation process
+    # max_step_iter    <- Maximum time step iterations the simulation is allowed to take
+    # max_cycle_iter   <- Maximum cycle iterations the simulation is allowed to take
+    # vol_flow_profile <- Matrix with flow rate values for every time step considered
+    # app_field        <- Matrix with applied field data for each one of the nodes and time steps considered
+    # htc_model_name   <- Name of file where function for convective heat transfer coefficient model is
+    # leaks_model_name <- Name of file where functions for heat leak calculations are
 
-    ########### 14-9-2017 16:39
-    code has been check on NTU and U correctness. Some interesting spike was found
-    when fluid speed hit zero. This can be solved by using the eps method which worked
-    in COMSOL as well.
-        - Moving forward implementing fluid and solid properties.
-    ########### 18-9-2017 08:43
-    Fluid and Solid properties have been inplemented.
-    Code has been change to a function.
-    Pressure drop term has been implemented however, need to redo the math on
-    term.
-    ###########    ''     09:20
-    Implemented pressure and leak terms. Math checks out. Should be good to go
-    and do some spatial and temporal resolution tests.
-         - Need to implement Glass spheres and Void space options. Should not
-           be difficult as I've already implemented the distretization of the
-           discription and build placer functions to implement the different
-           closure functions.
-    ###########     ''      13:33
-    Cleaning up the functions so only what is changing per time step is taken
-    as an imput to the function. This makes the code a lot more readable.
-    ########### 14-11-2017 14:17
-    This version of the code is ported from the V4 version before the gradient
-    porosity was added. The code has modified to activate the field again.
+    TODO: (16/06/2021) implement new feature - each layer of MCM can have its own porosity in the same way glass sphere
+    layers and lead sphere layers have their own porosities.
+
     '''
 
+    # Import the model for the calc. of the convective htc between solid and fluid in the packed bed
+
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)
+
+    # Import the model for the calc. of the overall htc for heat leaks through regenerator casing
+
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)
 
+    # ------- Import the geometric configuration of the regenerator -------
 
-    # Import the configuration
-    if ConfName == "R1":
-        from configurations.R1  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R2":
-        from configurations.R2  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R3":
-        from configurations.R3  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R4":
-        from configurations.R4  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R5":
-        from configurations.R5  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R6":
-        from configurations.R6  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
-            percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
-    if ConfName == "R7":
-        from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, reg_length
+    config = importlib.import_module('configurations.' + ConfName)
 
+    # !IMPORTANT! All configurations MUST have the same variables.
+    # If new variables are needed they must be added also here and to any configuration file to be used afterwards
+    # The advantage of importing the configuration variables in this way is to avoid having to add the import statement
+    # for any new configuration file that is needed. This way any number of configuration files can be created,
+    # and they will never have to be added here again.
+    # Any variable in the configuration file can be now changed to study its influence on AMR performance. In order to
+    # do so, as many configuration files as values of that variable are wanted need to be created.
+
+    # For a cuboid regenerator
+
+    W_reg     = config.W_reg      # [m] Width of regenerator
+    H_reg     = config.H_reg      # [m] Height of regenerator
+    L_reg1    = config.L_reg1     # [m] Length of first regenerator in the arrangement
+    L_reg2    = config.L_reg2     # [m] Length of second regenerator in the arrangement
+    casing_th = config.casing_th  # [m] Thickness of casing material
+    air_th    = config.air_th     # [m] Thickness of air layer between regnerator and magnets
+
+    # For a cylindrical regenerator
+
+    r1   = config.r1    # [m] internal radius of regenerator casing
+    r2   = config.r2    # [m] external radius of regenerator casing
+    r3   = config.r3    # [m] internal radius of cylindrical magnet
+    rvs  = config.rvs   # [m] internal radius of void section named "void"
+    rvs1 = config.rvs1  # [m] internal radius of void section named "void1"
+    rvs2 = config.rvs2  # [m] internal radius of void section named "void2"
+
+    # If two regenerators with either voids or other passive beds are considered in the species description
+
+    L_add  = config.L_add   # [m] TODO: remove from code this param. This parameter is only for the PM1 device.
+
+    # Variables common to all geometries
+
+    Ac = config.Ac  # [m2] Area of cross sectional area of regenerator
+    Pc = config.Pc  # [m] Perimeter of regenerator
+    Nd = config.Nd  # [-] Demagnetizing factor
+
+    species_discription = config.species_discription  # [-] Different species found in the axial direction
+    x_discription       = config.x_discription        # [m] Position of the different species relative to a zero
+
+    # About the active beds of magnetocaloric material
+
+    Dsp  = config.Dsp   # [m] Diameter of MCM spheres
+    er   = config.er    # [-] Porosity of packed bed
+    mK   = config.mK    # [W/(m*K)] Thermal conductivity of MCM
+    mRho = config.mRho  # [kg/m3] Density of MCM
+
+    # About passive bed of glass spheres
+
+    Dspgs = config.Dspgs  # [m] Diameter of glass spheres
+    egs   = config.egs    # [-] Porosity of packed bed of glass spheres
+    gsCp  = config.gsCp   # [J / (kg*K)] Heat capacity of glass spheres
+    gsK   = config.gsK    # [W/(m*K)] Thermal conductivity of glass spheres
+    gsRho = config.gsRho  # [kg/m3] Density of glass spheres
+
+    # About the passive bed of lead spheres
+
+    Dspls = config.Dspls  # [m] Diameter of lead spheres
+    els   = config.els    # [-] Porosity of packed bed of lead spheres
+    lsCp  = config.lsCp   # [J / (kg*K)] Heat capacity of lead spheres
+    lsK   = config.lsK    # [W/(m*K)] Thermal conductivity of lead spheres
+    lsRho = config.lsRho  # [kg/m3] Density of lead spheres
+
+    # About casing and insulation materials
+
+    kair = config.kair  # [W/(m*K)] Thermal conductivity of air at Tamb
+    kg10 = config.kg10  # [W/(m*K)] Thermal conductivity of glass reinforced epoxy G10 at Tamb
+    kult = config.kult  # [W/(m*K)] Thermal conductivity of Ultem at Tamb
+
+    # Other parameters
+
+    MOD_CL  = config.MOD_CL   # Switch for activation of usage of experimental data for heat leaks
+    percGly = config.percGly  # Percentage of Glycol in the water - glycol mixture
+    CL_set  = config.CL_set   # Type of model for the calculation of heat leaks
+    ch_fac  = config.ch_fac   # Factor for averaging heating and cooling properties of MCMs with hysteresis
+
+
+    # Import the configuration (Old style)
+    # if ConfName == "R1":
+    #     from configurations.R1  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,\
+    #         kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R2":
+    #     from configurations.R2  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R3":
+    #     from configurations.R3  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R4":
+    #     from configurations.R4  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R5":
+    #     from configurations.R5  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R6":
+    #     from configurations.R6  import Ac,Dspgs,Dspls,L_add,L_reg1, L_reg2, MOD_CL,Nd,Pc,egs,els,er,gsCp,gsK,gsRho,kair,kg10,kult,lsCp,lsK,lsRho,mK,mRho, \
+    #         percGly,r1,r2,r3, rvs,rvs1,rvs2,species_discription,x_discription,CL_set,ch_fac
+    # if ConfName == "R7":
+    #     from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, L_reg
 
     # TODO: check if the variables left out in configuration R7 are necessary or not.
+
     print("Hot Side: {} Cold Side: {}".format(Thot,Tcold))
+
     # Start Timer
     t0 = time.time()
-    # Volume displacement in [m3]
-    # Small displacer 2.53cm^2
-    # Medium displacer 6.95cm^2
-    # 1inch = 2.54cm
-    #Vd      = dispV # DP: for the FAME cooler this is the maximum volumetric flow rate
-    freq    = ff
-    tau_c   = 1/freq # DP comment: this is the period of the cycle
+    # The space discretization considers all layers in the regenerator assembly including voids and passive layers
+    N     = nodes                  # [-] Spatial nodes in which the reg. assembly is splitted for sim. No ghost nodes.
+    dx    = 1 / (N+1)              # [-] Molecule size
+    L_tot = np.max(x_discription)  # [m] Total length of the domain (regenerator assembly)
+    DX    = L_tot / (N+1)          # [m] Real element size
 
-    # Number of spatial nodes
-    N = nodes
-    # Number of time steps
-    nt = timesteps
-    # Molecule size
-    dx = 1 / (N+1) # DP comment: I think the denominator in this case is N+1 because there is a node zero
-    # The time step is:
-    dt = 1 / (nt+1) # DP comment: I am not sure why in this case the denominator is nt+1.  Maybe it is also because there a time node for zero.
-    # To prevent the simulation running forever we limit the simulation to
-    # find a tollerance setting per step and per cycle.
+    freq  = ff                           # [Hz] Frequency of AMR cylce
+    nt    = timesteps                    # [-] Number of time steps
+    tau_c = 1/freq                       # [s] Period of AMR cycle
+    dt    = 1 / (nt+1)                   # [-] The time step
+    t     = np.linspace(0, tau_c, nt+1)  # [s] Time vector from beginning, 0 [s], to the end of AMR cycle, tau [s].
+    DT    = tau_c/(nt+1)                 # [s] Time step # DP comment: ok
+
+    # DP comment: not sure why the denominator of dt is nt+1. Maybe it is also because there a time node for zero.
+    # TODO: test what happens if DX = L_tot/(N-1) because nodes N and 0 are ghost nodes.
+    #  This is even the definition shown in equation B.1 of Theo's thesis
+
+    # A tolerance is established per step and per cycle as criteria to stop the simulation
 
     # DP: Create a list (maxStepTol) containing the values of the tolerances used to finish the iterative calculation
     # process for every time step. The list is needed to avoid many iterations on the time step level when the tolerance
@@ -373,23 +443,11 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
         a = a+1
         maxStepTol.append(10**-a)
 
-    # We also limit the number of steps and cycles the simulation can take. If
-    # the simulation runs over these there might be an issue with the code.
-    maxSteps  = max_step_iter  # DP: this was 2000 in Theo's code. I set this to 200
-    maxCycles = max_cycle_iter  # DP: this was 2000 in Theo's code. I set this to 300
+    maxSteps  = max_step_iter   # Maximum allowed number of time step iterations. Time step iteration breaks if reached.
+    maxCycles = max_cycle_iter  # Maximum allowed number of cycle iterations. Simulation breaks if reached.
 
     print("Number of cycle iterations: {}\nNumber of time step iterations: {}".format(maxCycles, maxSteps))
-    # Cycle period
-    t = np.linspace(0, tau_c, nt+1)
-    # Total length of the domain
-    L_tot   = np.max(x_discription)  # [m]
-    # Real element size
-    # Element size
-    DX = L_tot/ (N+1) # DP comment: this means that the discretization takes into account not only the AMR bed but also the voids and glass-sphere beds
-    # TODO: verify why DX is defined this way. In my opinion it should be DX = L_tot/(N-1) because nodes N and 0 are ghost nodes.
-    #  That is even the definition shown in equation B.1 of Theo's thesis
-    # Time step
-    DT = tau_c/(nt+1) # DP comment: ok
+
 
     # Build darcy velocity for all n steps
     # Sine wave (See notebook pg. 33 Theo Christiaanse Sept 2017)
@@ -427,7 +485,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
 
     # Calculate the utilization as defined by Armando's paper
     #Uti     = (Vd * 1000 * 4200) / (1000 * Ac * (1  - er) * 6100 * (L_reg1+L_reg2))
-    Uti = (vol_disp * 1000 * 4200) / (235 * Ac * (1 - er) * mRho * (reg_length)) # DP: 0.012 is the length of the voids
+    Uti = (vol_disp * 1000 * 4200) / (235 * Ac * (1 - er) * mRho * (L_reg1+L_reg2)) # DP: 0.012 is the length of the voids
     # TODO: the heat capacity of the MCM should be read from an input file or calculated somehow
     # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 in the numerator is the density of water.
     # DP comment: 235 in the denominator is an average value of Cp of Gd.
@@ -958,7 +1016,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         ### Capacitance solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
                     else:  # TODO: change the ThermalResistance function to match the new style.
-                        # TODO: Eliminate dependence on R7
+
                         k[i] = kf_ave
                         if species_descriptor[i] == 'void':
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs, r1, r2, r3)
@@ -1025,10 +1083,10 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                 # TODO: an apparent error in the solid conduction terms was corrected because e_r was used instead of (1-e_r)
                 # TODO: check if fr is used correctly
                 Omegas = np.copy(Omegaf) # DP: this is the coefficient of the convection term, which is equal for both fluid and solid
-                Kfw = Kfw /(DX*L_tot) # DP: L_tot is included here because in SolveFluid function Kfw is multiplied by dx = 1/(N+1)
-                Kfe = Kfe /(DX*L_tot)
-                Ksw = Ksw /(DX*L_tot)
-                Kse = Kse /(DX*L_tot)
+                Kfw = Kfw / (DX*L_tot)  # DP: L_tot is included here because in SolveFluid function Kfw is multiplied by dx = 1/(N+1)
+                Kfe = Kfe / (DX*L_tot)
+                Ksw = Ksw / (DX*L_tot)
+                Kse = Kse / (DX*L_tot)
 
 
                 ################################################################
