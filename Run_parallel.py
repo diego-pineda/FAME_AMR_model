@@ -23,12 +23,12 @@ if __name__ == '__main__':
 
 
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
-        numCases       = 1
+        numCases       = 6
         hotResolution  = 1
-        coldResolution = 8
+        coldResolution = 6
 
         maxcase = numCases * hotResolution * coldResolution
-        Thotarr = np.linspace(273+22, 273+22, hotResolution)
+        Thotarr = np.linspace(273+27, 273+27, hotResolution)
         casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
         if casenum == 0:
@@ -41,43 +41,54 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
-            MaxTSpan      = 24  # This with coldResolution defines a difference between the Tcold of consecutive cases
-            cen_loc       = 0  # TODO: what is this for? can this be eliminated?
+            cen_loc       = 0
 
-            # Ambient temperature
-            Tambset       = 298
-
-            # Flow profile
-            dispV         = 30.52e-6
-            acc_period    = 10
-            max_flow_per  = 45
-            full_magn_ang = 30
-            unbal_rat     = 1
-            from sourcefiles.device.FAME_V_flow import vol_flow_rate
-            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
-
-            # Magnetic field profile
-            from sourcefiles.device import FAME_app_field
-            app_field = FAME_app_field.app_field(timesteps, nodes)
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
 
             # Frequency of AMR cycle
-            ff            = 1.7
+            ff            = 0.25
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 4.74e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
 
             # Geometric parameters
-            cName         = "R7"
-            # Dsp           = 600e-6
-            # er            = 0.36
+            cName = "polo_1"
 
             # Switches for activating and deactivating terms in governing equations
-            CF            = 1
-            CS            = 1
-            CL            = 0
-            CVD           = 1
-            CMCE          = 1
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
 
             # Heat transfer model
-            htc_model_name = 'wakao_and_kagei_1982'
-            leaks_model_name = 'flow_btw_plates'
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
         if casenum==1:
             fileName      = "{}.txt".format(jobName)
@@ -89,43 +100,54 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
-            MaxTSpan      = 24
             cen_loc       = 0
 
-            # Ambient temperature
-            Tambset       = 298
-
-            # Flow profile
-            dispV         = 30.52e-6
-            acc_period    = 10
-            max_flow_per  = 45
-            full_magn_ang = 30
-            unbal_rat     = 1
-            from sourcefiles.device.FAME_V_flow import vol_flow_rate
-            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
-
-            # Magnetic field profile
-            from sourcefiles.device import FAME_app_field
-            app_field = FAME_app_field.app_field(timesteps, nodes)
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
 
             # Frequency of AMR cycle
-            ff            = 1.7
+            ff            = 0.25
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 6.43e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
 
             # Geometric parameters
-            # Dsp           = 600e-6
-            # er            = 0.36
-            cName         = "R7"
+            cName = "polo_1"
 
             # Switches for activating and deactivating terms in governing equations
-            CF            = 1
-            CS            = 1
-            CL            = 0
-            CVD           = 1
-            CMCE          = 1
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
 
             # Heat transfer model
-            htc_model_name = 'wakao_and_kagei_1982'
-            leaks_model_name = 'flow_btw_plates'
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
         if casenum==2:
             fileName      = "{}.txt".format(jobName)
@@ -137,43 +159,54 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
-            MaxTSpan      = 24
             cen_loc       = 0
 
-            # Ambient temperature
-            Tambset       = 298
-
-            # Flow profile
-            dispV         = 30.52e-6
-            acc_period    = 10
-            max_flow_per  = 45
-            full_magn_ang = 30
-            unbal_rat     = 1
-            from sourcefiles.device.FAME_V_flow import vol_flow_rate
-            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
-
-            # Magnetic field profile
-            from sourcefiles.device import FAME_app_field
-            app_field = FAME_app_field.app_field(timesteps, nodes)
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
 
             # Frequency of AMR cycle
-            ff            = 1.7
+            ff            = 0.5
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 4.74e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
 
             # Geometric parameters
-            # Dsp           = 600e-6
-            # er            = 0.36
-            cName         = "R7"
+            cName = "polo_1"
 
             # Switches for activating and deactivating terms in governing equations
-            CF            = 1
-            CS            = 1
-            CL            = 0
-            CVD           = 1
-            CMCE          = 1
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
 
             # Heat transfer model
-            htc_model_name = 'wakao_and_kagei_1982'
-            leaks_model_name = 'flow_btw_plates'
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
         if casenum==3:
             fileName      = "{}.txt".format(jobName)
@@ -185,43 +218,174 @@ if __name__ == '__main__':
             cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
             maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
             maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
-            MaxTSpan      = 24
             cen_loc       = 0
 
-            # Ambient temperature
-            Tambset       = 298
-
-            # Flow profile
-            dispV         = 30.52e-6
-            acc_period    = 10
-            max_flow_per  = 45
-            full_magn_ang = 30
-            unbal_rat     = 1
-            from sourcefiles.device.FAME_V_flow import vol_flow_rate
-            volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
-
-            # Magnetic field profile
-            from sourcefiles.device import FAME_app_field
-            app_field = FAME_app_field.app_field(timesteps, nodes)
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
 
             # Frequency of AMR cycle
-            ff            = 1.7
+            ff            = 0.5
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 6.43e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
 
             # Geometric parameters
-            # Dsp           = 600e-6
-            # er            = 0.36
-            cName         = "R7"
+            cName = "polo_1"
 
             # Switches for activating and deactivating terms in governing equations
-            CF            = 1
-            CS            = 1
-            CL            = 0
-            CVD           = 1
-            CMCE          = 1
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
 
             # Heat transfer model
             htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
-            leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+
+        if casenum==4:
+            fileName      = "{}.txt".format(jobName)
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+            cen_loc       = 0
+
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
+
+            # Frequency of AMR cycle
+            ff            = 1
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 4.74e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
+
+            # Geometric parameters
+            cName = "polo_1"
+
+            # Switches for activating and deactivating terms in governing equations
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+
+        if casenum==5:
+            fileName      = "{}.txt".format(jobName)
+
+            # Numerical parameters
+            nodes         = 400
+            timesteps     = 600
+            time_limit    = 600  # [min] Time limit for the simulation in minutes
+            cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+            maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+            maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+            cen_loc       = 0
+
+            # Temperatures
+            MaxTSpan      = 30
+            Tambset       = 300
+
+            # Frequency of AMR cycle
+            ff            = 1
+
+            # Flow profile
+
+            # - FAME cooler
+            # dispV         = 30.52e-6
+            # acc_period    = 10
+            # max_flow_per  = 45
+            # full_magn_ang = 30
+            # unbal_rat     = 1
+            # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+            # volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+            # - POLO cooler
+            dispV = 6.43e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+            from sourcefiles.device.polo_V_flow import polo_vol_flow
+            volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+            # Magnetic field profile
+
+            # - FAME cooler
+            # from sourcefiles.device import FAME_app_field
+            # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+            # - POLO cooler
+            from sourcefiles.device.polo_mag_field import polo_app_field
+            app_field = polo_app_field(timesteps, nodes, 0.1)
+
+            # Geometric parameters
+            cName = "polo_1"
+
+            # Switches for activating and deactivating terms in governing equations
+            CF   = 1
+            CS   = 1
+            CL   = 1
+            CVD  = 1
+            CMCE = 1
+
+            # Heat transfer model
+            htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+            leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+
+        # Setting values of Thot and Tcold for simulation
 
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
