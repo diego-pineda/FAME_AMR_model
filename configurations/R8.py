@@ -57,16 +57,18 @@ Nd     = 0.36  # [-] Demagnetization coefficient
 
 # ------- Description of layers: materials and lengths -------
 
+# Note: this is very device specific. The following species can be used.
+
 # void: for voids of cylindrical shape surrounded by two annular layers of materials,
 # ultem and G11, before the air gap with the magnet
 
 # void1: for voids of cylindrical shape surrounded by two annular layers of materials,
 # ultem and G11, before the air gap with the magnet. Generally used in the middle of two beds.
-# Useful if a different geometry than void is needed.
+# Useful if a different geometry than "void" is needed.
 
 # void2: for voids of cylindrical shape surrounded by two annular layers of materials,
 # # ultem and G11, before the air gap with the magnet. Generally used in the middle of two beds.
-# # Useful if a different geometry than void is needed.
+# # Useful if a different geometry than "void" and "void1" is needed.
 
 # void3: for voids of cuboid shape surrounded by one layer of insulating material,
 # G11, before the air gap with the magnet. The casing has the same dimensions around the void and around a bed
@@ -75,7 +77,7 @@ Nd     = 0.36  # [-] Demagnetization coefficient
 
 # ls: packed bed of lead spheres
 
-# reg-mat: packed bed of MCM
+# reg-MCM: packed bed of MCM
 
 species_discription = ['void', 'reg-Gd', 'void']  # Different species found along the axis of the regenerator assembly
 x_discription       = [0, 0.006, 0.066, 0.072]    # [m] position of each species in the assembly
@@ -84,22 +86,16 @@ x_discription       = [0, 0.006, 0.066, 0.072]    # [m] position of each species
 
 Dsp  = 600e-6  # [m] Diameter of MCM spheres
 er   = 0.53    # [-]
+mK   = 10.5      # [W/(m K)]...DP: this was 6 and is an assumed thermal conductivity of the MCM
 mRho = 7900    # [kg/m^3]... DP: This was 6100 and is an assumed MCM density to calculate porosity of bed
-mK   = 14      # [W/(m K)]...DP: this was 6 and is an assumed thermal conductivity of the MCM
-
-# Casing and insulating materials
-
-kult  =  0.122  # [W/(m K)] Thermal conductivity Ultem (https://www.plasticsintl.com/datasheets/ULTEM_GF30.pdf)
-kg10  =  0.608  # [W/(m K)] Thermal conductivity g10 material (http://cryogenics.nist.gov/MPropsMAY/G-10%20CR%20Fiberglass%20Epoxy/G10CRFiberglassEpoxy_rev.htm)
-kair  = 0.0255  # [W/(m K)] air material
 
 # (BOROSILICATE) Glass spheres
 
 Dspgs = 0.003175  # [m]
 egs     = 0.43    # [-]
 gsCp  = 800       # [J/(kg K)]
-gsRho = 2230      # [kg/m^3]
 gsK   = 1.2       # [W/(m K)]
+gsRho = 2230      # [kg/m^3]
 # http://www.scientificglass.co.uk/contents/en-uk/d115_Physical_Properties_of_Borosilicate_Glass.html
 # http://www.schott.com/borofloat/english/attribute/thermic/index.html
 # http://www.schott.com/d/tubing/9a0f5126-6e35-43bd-bf2a-349912caf9f2/schott-algae-brochure-borosilicate.pdf
@@ -109,8 +105,14 @@ gsK   = 1.2       # [W/(m K)]
 Dspls = 300e-6  # [m]
 els   = 0.36    # [-]
 lsCp  = 830     # [J/(kg K)]
-lsRho = 2230    # [kg/m^3]
 lsK   = 1.005   # [W/(m K)]
+lsRho = 2230    # [kg/m^3]
+
+# Casing and insulating materials
+
+kair  = 0.0255  # [W/(m K)] air material
+kg10  =  0.608  # [W/(m K)] Thermal conductivity g10 material (http://cryogenics.nist.gov/MPropsMAY/G-10%20CR%20Fiberglass%20Epoxy/G10CRFiberglassEpoxy_rev.htm)
+kult  =  0.122  # [W/(m K)] Thermal conductivity Ultem (https://www.plasticsintl.com/datasheets/ULTEM_GF30.pdf)
 
 # Other parameters
 
