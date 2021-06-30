@@ -262,7 +262,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,ConfName,jobName,time_lim,cycle_tol,max_step_iter,max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
+def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -292,7 +292,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     # leaks_model_name <- Name of file where functions for heat leak calculations are
 
     TODO: (16/06/2021) implement new feature - each layer of MCM can have its own porosity in the same way glass sphere
-    layers and lead sphere layers have their own porosities.
+     and lead sphere layers have their own porosities.
 
     '''
 
@@ -378,9 +378,9 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
 
     # Other parameters
 
-    MOD_CL  = config.MOD_CL   # Switch for activation of usage of experimental data for heat leaks
     percGly = config.percGly  # Percentage of Glycol in the water - glycol mixture
     CL_set  = config.CL_set   # Type of model for the calculation of heat leaks
+    MOD_CL  = config.MOD_CL   # Switch for activation of usage of experimental data for heat leaks
     ch_fac  = config.ch_fac   # Factor for averaging heating and cooling properties of MCMs with hysteresis
 
 
@@ -423,8 +423,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     nt    = timesteps                    # [-] Number of time steps
     tau_c = 1/freq                       # [s] Period of AMR cycle
     dt    = 1 / (nt+1)                   # [-] The time step
-    t     = np.linspace(0, tau_c, nt+1)  # [s] Time vector from beginning, 0 [s], to the end of AMR cycle, tau [s].
     DT    = tau_c/(nt+1)                 # [s] Time step # DP comment: ok
+    t     = np.linspace(0, tau_c, nt+1)  # [s] Time vector from beginning, 0 [s], to the end of AMR cycle, tau [s].
 
     # DP comment: not sure why the denominator of dt is nt+1. Maybe it is also because there a time node for zero.
     # TODO: test what happens if DX = L_tot/(N-1) because nodes N and 0 are ghost nodes.
@@ -663,18 +663,30 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
     # This one exists everywhere.
    # appliedFieldm = np.ones((nt+1, N + 1))
    #  for i in range(N + 1):
-   #     for n in range(0, nt+1):
+   #      for n in range(0, nt+1):
    #          #Will only get the field if we find a regenerator
-   #         if (species_descriptor[i].startswith("reg")):
-   #             x_pos_w_respect_to_magnet = xloc[i] - magOffset
-   #             appliedFieldm[n, i] = hapl.appliedField(x_pos_w_respect_to_magnet, rotMag[n])[0, 0]*CMCE
-   #         else:
-   #             appliedFieldm[n, i] = 0
+   #          if (species_descriptor[i].startswith("reg")):
+   #              x_pos_w_respect_to_magnet = xloc[i] - magOffset
+   #              appliedFieldm[n, i] = hapl.appliedField(x_pos_w_respect_to_magnet, rotMag[n])[0, 0]*CMCE
+   #          else:
+   #              appliedFieldm[n, i] = 0
+    rotMag = np.linspace(0, 360, nt+1)
+    appliedFieldm = np.ones((nt+1, N + 1))
+    from sourcefiles.device import polo_mag_field
+    for i in range(N + 1):
+       for n in range(0, nt+1):
+            #Will only get the field if we find a regenerator
+           if (species_descriptor[i].startswith("reg")):
+               x_pos_w_respect_to_magnet = xloc[i] - 0.10532 / 2
+               appliedFieldm[n, i] = polo_mag_field.appliedField(rotMag[n], x_pos_w_respect_to_magnet)[0, 0]*CMCE
+           else:
+               appliedFieldm[n, i] = 0
 
     # Applied field profile (Input of the model)
     #from sourcefiles.device import FAME_app_field
     #appliedFieldm = FAME_app_field.app_field(nt, N)
-    appliedFieldm = app_field  # Matrix nt rows and N columns describing the magnetic field along the reg as a f(t)
+    # TODO decide what is the best approach for magnetic field. For now for POLO it is the one above
+    #appliedFieldm = app_field  # Matrix nt rows and N columns describing the magnetic field along the reg as a f(t)
 
     for i in range(N + 1):
         if (not species_descriptor[i].startswith("reg")):
@@ -683,14 +695,10 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
 
     ########################## START THE LOOP #########################
 
-    # Some housekeeping to make this looping work
-
-    #
     # Initial temperature
-    y1 = np.linspace(0,1, N + 1) # DP comment: Initial fluid temperature. Linear distribution from Tcold to Thot
-    s1 = np.linspace(0, 1, N + 1) # DP comment: Initial solid temperature. Linear distribution from Tcold to Thot
+    y1 = np.linspace(0, 1, N + 1)  # DP comment: Initial fluid temperature. Linear distribution from Tcold to Thot
+    s1 = np.linspace(0, 1, N + 1)  # DP comment: Initial solid temperature. Linear distribution from Tcold to Thot
 
-    #
     # Check is there is some pickeled data
     PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName,int(caseNum))
     print("Pickle Data File: {}".format(PickleFileName))
@@ -700,8 +708,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
         print("we are loading the pickle file!")
         # load the object from the file into var b
         bbb = pickle.load(fileObject)
-        y   = bbb[0]
-        s   = bbb[1]
+        y = bbb[0]
+        s = bbb[1]
         stepTolInt = bbb[2]
         iyCycle = bbb[3]
         isCycle = bbb[4]
@@ -964,7 +972,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         # Spres[i] = Spres[i]*2.7
 
                         # Loss term
-                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, 0, 0, 0, casing_th, freq, air_th)  # TODO change the zeros for r1, r2, r3
+                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
 
                         # Effective Conduction for solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
@@ -1015,7 +1023,7 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                         Smce[i] = 0
                         ### Capacitance solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
-                    else:  # TODO: change the ThermalResistance function to match the new style.
+                    else:  # TODO: change ThermalResistance function for void, void1, and void2 to match the new style.
 
                         k[i] = kf_ave
                         if species_descriptor[i] == 'void':
@@ -1026,6 +1034,8 @@ def runActive(caseNum,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,time
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs1, r1, r2, r3)
                         elif species_descriptor[i] == 'void2':
                             Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs2, r1, r2, r3)
+                        elif species_descriptor[i] == 'void4':
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, r1, r2, r3)
                         # No solid in the void
                         ks[i] = 0
                         # No interaction between solid and fluid since there is no solid.
