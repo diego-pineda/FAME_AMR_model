@@ -7,33 +7,69 @@ import numpy as np
 #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
 
 caseNumber    = 2
-Thot          = 295
-Tcold         = 292
+
+# Numerical parameters
+nodes         = 300
+timesteps     = 400
+time_limit    = 600  # [min] Time limit for the simulation in minutes
+cycle_toler   = 1e-3  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
-Tambset       = 298
-dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
-acc_period    = 10
-max_flow_per  = 45
-full_magn_ang = 30
-unbal_rat     = 1
-ff            = 1.7  # [Hz] DP: frequency of AMR cycle
+
+# Simulation temperatures
+Thot          = 300
+Tcold         = 295
+Tambset       = 300
+
+# Frequency of AMR cycle
+ff            = 0.5  # [Hz] frequency of AMR cycle
+
+# Flow profile
+
+# FAME cooler
+# dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+# acc_period    = 10
+# max_flow_per  = 45
+# full_magn_ang = 30
+# unbal_rat     = 1
+# from sourcefiles.device.FAME_V_flow import vol_flow_rate
+# volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+# POLO cooler
+dispV = 6.85e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+from sourcefiles.device.polo_V_flow import polo_vol_flow
+volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+# Magnetic field profile
+
+# FAME Cooler
+# from sourcefiles.device import FAME_app_field
+# app_field = FAME_app_field.app_field(timesteps, nodes)
+
+# POLO cooler
+from sourcefiles.device.polo_mag_field import polo_app_field
+app_field = polo_app_field(timesteps, nodes, 0.1)
+
+# Geometry of regenerator
+# Dsp           = 600e-6
+# er            = 0.36
+cName         = "polo_1"  # Name of file where the geometric configuration of the regenerator is defined
+jName         = "polo_trial" # DP: It is better to use underline to connect words because this is used as file name
+
+# Switches for activating and deactivating terms in governing equations
 CF            = 1
 CS            = 1
-CL            = 0
+CL            = 1
 CVD           = 1
 CMCE          = 1
-nodes         = 400
-timesteps     = 600
-Dsp           = 600e-6
-er            = 0.36
-cName         = "R7"
-jName         = "Int_htc" # DP: It is better to use underline to connect words because this is used as file name
-time_limit    = 600  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-1  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-maxStepIter   = 300  # Maximum time step iterations the simulation is allowed to take
-maxCycleIter  = 300  # Maximum cycle iterations the simulation is allowed to take
 
-results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit,cycle_toler, maxStepIter, maxCycleIter, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+# Heat transfer models
+htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+
+
+results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name)
 
 
 # Some useful functions for storing data.
@@ -61,11 +97,11 @@ def FileSaveVector(filename, content):
 #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
 
-fileName = "Int_htc2.txt"
+fileName = "POLO_trial_4.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
-FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
+FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
+FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17]))
 FileSave(fileNameSave, "Fluid temperatures\n")
 FileSaveMatrix(fileNameSave, results[14])
 #FileSave(fileNameSave, "\n")
@@ -75,7 +111,7 @@ FileSaveMatrix(fileNameSave, results[15])
 FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
 FileSaveVector(fileNameSave, results[16])
 #FileSave(fileNameSave, "\n")
-print(results[16])
+
 
 
 # fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
