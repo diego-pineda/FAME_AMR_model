@@ -33,14 +33,12 @@ gif_file_output = "./output/polo_low_uti_tol/Tspan_10K_f0.5Hz_Uti0.28.gif"
 
 # 3) Getting temperature data if the file only contains data corresponding to the temperature of solid or fluid
 
-# #Fluid_temp_data_file_name = '../../../Simulation results/Fluid_Temp_val_span_11K.txt'
-# #Solid_temp_data_file_name = '../../../Simulation results/Solid_Temp_val_span_11K.txt'
-# #Fluid_temp_data_file_name = '../../Ftemp_10KTspan_6mm_void.txt'
-# Fluid_temp_data_file_name = '../../Ends/9KGroup3FluidTemp.txt'
-# Solid_temp_data_file_name = '../../Ends/9KGroup3SolidTemp.txt'
+# Note: uncomment if section 3) is going to be used
 
-# fluidTemp = np.loadtxt('../../../Simulation results/Ftemp_10KTspan_6mm_void.txt')
-# solidTemp = np.loadtxt('../../Ends/9KGroupC_Tol10e-7-SolidTemp.txt')
+# fluid_temp_data_file_name = '../../Ends/9KGroup3FluidTemp.txt'
+# solid_temp_data_file_name = '../../Ends/9KGroup3SolidTemp.txt'
+# fluidTemp = np.loadtxt(fluid_temp_data_file_name)
+# solidTemp = np.loadtxt(solid_temp_data_file_name)
 
 # 4) Getting temperature data if the input file contains more than just the temp of solid or fluid
 
@@ -111,5 +109,25 @@ plt.show()
 
 # 7) Saving the animation in a .gif file
 
-# writergif = animation.PillowWriter(fps=30)
-# ani.save(gif_file_output, writer=writergif)
+print("Do you want to save the animation? y/n: ", end="")
+save_graph = input()
+
+while save_graph != 'y' and save_graph != 'n':
+    print("\nInvalid input! Do you want to save the animation? y/n: ", end="")
+    save_graph = input()
+
+if save_graph == 'y':
+    print("\nAnimation will be saved as: {}" .format(gif_file_output))
+    print('\nTo confirm press "y". To enter a new directory and file name press any other key: ', end="")
+    confirmation = input()
+    if confirmation == "y":
+        writergif = animation.PillowWriter(fps=30)
+        ani.save(gif_file_output, writer=writergif)
+    else:
+        gif_file_output = input()
+        writergif = animation.PillowWriter(fps=30)
+        ani.save(gif_file_output, writer=writergif)
+        print("\nAnimation was saved as: {}" .format(gif_file_output))
+
+elif save_graph == 'n':
+    print('\nAnimation not saved! Have a great day!')
