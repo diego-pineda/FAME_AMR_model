@@ -7,25 +7,25 @@ from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
 ######################### Data loading of Material data Si1 Material #########################
 
 # Specifc Heat
-cpdat_c   = np.loadtxt('sourcefiles/mat/Gd/gdcp_py.txt')
-cpdat_h   = np.loadtxt('sourcefiles/mat/Gd/gdcp_py.txt')
+# cpdat_c   = np.loadtxt('sourcefiles/mat/Gd/gdcp_py.txt')  # Data from Bjork et al. (2010)
+# cpdat_h   = np.loadtxt('sourcefiles/mat/Gd/gdcp_py.txt')  # Data from Bjork et al. (2010)
 
-#cpdat_c   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_c.txt') # written by DP
-#cpdat_h   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_h.txt') # written by DP
+cpdat_c   = np.loadtxt('sourcefiles/mat/Gd/Cp_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
+cpdat_h   = np.loadtxt('sourcefiles/mat/Gd/Cp_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
 
 # Magnetization
-magdata_h = np.loadtxt('sourcefiles/mat/Gd/gdmag_py.txt')
-magdata_c = np.loadtxt('sourcefiles/mat/Gd/gdmag_py.txt')
+# magdata_h = np.loadtxt('sourcefiles/mat/Gd/gdmag_py.txt')  # Data from Bjork et al. (2010)
+# magdata_c = np.loadtxt('sourcefiles/mat/Gd/gdmag_py.txt')  # Data from Bjork et al. (2010)
 
-#magdata_h = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_h.txt') # written by DP
-#magdata_c = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_c.txt') # written by DP
+magdata_h = np.loadtxt('sourcefiles/mat/Gd/M_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
+magdata_c = np.loadtxt('sourcefiles/mat/Gd/M_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
 
 # Entropy
-datstot_c = np.loadtxt('sourcefiles/mat/Gd/gdstot_py.txt')
-datstot_h = np.loadtxt('sourcefiles/mat/Gd/gdstot_py.txt')
+# datstot_c = np.loadtxt('sourcefiles/mat/Gd/gdstot_py.txt')  # Data from Bjork et al. (2010)
+# datstot_h = np.loadtxt('sourcefiles/mat/Gd/gdstot_py.txt')  # Data from Bjork et al. (2010)
 
-#datstot_c = np.loadtxt('ssi1/M1_S_Si_04_IW_G_Q20_c.txt') # written by DP
-#datstot_h = np.loadtxt('ssi1/M1_S_Si_04_IW_G_Q20_h.txt') # written by DP
+datstot_c = np.loadtxt('sourcefiles/mat/Gd/S_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
+datstot_h = np.loadtxt('sourcefiles/mat/Gd/S_Gd_Trevizoli.txt')  # Data from Trevizoli et al. (2015)
 
 ######################### Make Material Data Functions Si1 Material ##########################
 
