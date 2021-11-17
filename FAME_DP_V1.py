@@ -262,7 +262,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name):
+def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name, num_reg):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -674,13 +674,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     appliedFieldm = np.ones((nt+1, N + 1))
     from sourcefiles.device import polo_mag_field
     for i in range(N + 1):
-       for n in range(0, nt+1):
+        for n in range(0, nt+1):
             #Will only get the field if we find a regenerator
-           if (species_descriptor[i].startswith("reg")):
-               x_pos_w_respect_to_magnet = xloc[i] - 0.10532 / 2
-               appliedFieldm[n, i] = polo_mag_field.appliedField(rotMag[n], x_pos_w_respect_to_magnet)[0, 0]*CMCE
-           else:
-               appliedFieldm[n, i] = 0
+            if (species_descriptor[i].startswith("reg")):
+                x_pos_w_respect_to_magnet = xloc[i] - 0.10532 / 2
+                appliedFieldm[n, i] = polo_mag_field.appliedField(rotMag[n], x_pos_w_respect_to_magnet)[0, 0]*CMCE
+            else:
+                appliedFieldm[n, i] = 0
 
     # Applied field profile (Input of the model)
     #from sourcefiles.device import FAME_app_field
@@ -723,11 +723,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         iyCycle = np.copy(y)
         isCycle = np.copy(s)
 
-    # Magnetic Field Modifier
-    MFM = np.ones(N + 1)
-    #
+    MFM = np.ones(N + 1)  # Magnetic Field Modifier
+
     cycleTol   = 0 # DP comment: this is equivalent to a boolean False
     cycleCount = 1 # DP comment: it was defined above that the maximum number of cycle iterations is 2000
+
+    mu0     = 4 * 3.14e-7  # [Hm^-1] # # Vacuum permeability constant
 
     ########### DP comment: the iterative calculation process for the cycle starts here ###########
 
@@ -749,8 +750,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         maxTemp = Tcold # DP comment: it is weird that the max temperature is the temperature of the cold side
         minTemp = Thot
 
-        # Vacuum permeability constant
-        mu0     = 4 * 3.14e-7  # [Hm^-1] # TODO: it seems that this constant can be defined outside the loop
+        # 1) Calculation of magnetic field modifiers (MFM) at every position of the regenerator
 
         for i in range(N+1): # DP comment: This for loop intends to find a vector of Magnetic Field Modifiers for every position i along the flow path to account for the demagnetizing field in the MCM regenerators
             # Average Solid temperature
@@ -779,68 +779,72 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 #  could be calculated using the temperature that is assumed at the beginning of every time step by implementing a small iterative loop given that
                 #  magnetization is a function of the internal field.
 
-                # iteration of the cycle loop
-
         ###################### DP: The "for loop" to run over the time steps of a cycle starts here ###################
 
         for n in range(1, nt+1):  # 1->nt
-            # Run every timestep
+
             # Initial
             stepTol = 0
             stepCount = 1
             # ch_factor[i]=0 coolingcurve selected
             # ch_factor[i]=1 heatingcurve seelected
-            # Initial guess of the current step values.
-            iynext  = np.copy(y[n-1, :]) # DP: this is a vector containing the guess fluid temperature distribution along the flowing path for the current time step
-            # DP: as initial guess for the current time step, it is assumed that the temperature distribution is equal to the final temp distribution in the previous time step
-            isnext  = np.copy(s[n-1, :])
-            # current and previous temperature in [K]
-            pfT     = y[n-1, :]  * (Thot - Tcold) + Tcold # DP comment: Previous time step fluid temperature in [K]
-            psT     = s[n-1, :]  * (Thot - Tcold) + Tcold # DP comment: Previous time step solid temperature in [K]
 
-            if max(pfT)>maxTemp: # DP comment: given that maxTemp is Tcold, I assume max(pfT), which must be close to Thot, is greater than maxTemp
+            # Initial guess of the current step values.
+            iynext  = np.copy(y[n-1, :])
+            isnext  = np.copy(s[n-1, :])
+            # DP: these are vectors containing the guessed values of the fluid and solid temperature distributions
+            # for the current time step. As initial guess for the current time step, it is assumed that the temperature
+            # distributions are equal to the final temp distribution of the previous time step. The guessed value will
+            # be updated to the values obtained after each time step iteration.
+
+            # current and previous temperature in [K]
+            pfT = y[n-1, :] * (Thot - Tcold) + Tcold  # DP comment: Previous time step fluid temperature in [K]
+            psT = s[n-1, :] * (Thot - Tcold) + Tcold  # DP comment: Previous time step solid temperature in [K]
+
+            if max(pfT) > maxTemp:  # DP comment: given that maxTemp is Tcold, I assume max(pfT), which must be close to Thot, is greater than maxTemp
                 maxTemp = max(pfT)
-            if min(pfT)<minTemp:
+            if min(pfT) < minTemp:
                 minTemp = min(pfT)
 
             # DP: Properties of fluid and solid initialized to zero for every time step.
             # DP: From the name of the variables, it seems to be related to the previous time step
-            cpf_prev  = np.zeros(N+1) # DP: heat capacity of fluid along the fluid path
-            rhof_prev = np.zeros(N+1) # DP: density of fluid along the fluid path
-            muf_prev  = np.zeros(N+1) # DP: viscosity of fluid along the fluid path
-            kf_prev   = np.zeros(N+1) # DP: thermal conductivity of fluid along the fluid path
-            cps_prev  = np.zeros(N+1) # DP: heat capacity of solid along the fluid path. This includes several types of solids such as glass spheres and MCM
-            Ss_prev   = np.zeros(N+1) # ??
-            S_c_past  = np.zeros(N+1) # DP: entropy of solid for a cooling protocol
-            S_h_past  = np.zeros(N+1) # DP: entropy of solid for a heating protocol
-            Sirr_prev = np.zeros(N+1) # DP: entropy of solid irreversible part?
-            Sprev     = np.zeros(N+1) # DP: Anhysteretic entropy of the MCM for the previous time step
+            cpf_prev  = np.zeros(N+1)  # DP: heat capacity of fluid along the fluid path
+            rhof_prev = np.zeros(N+1)  # DP: density of fluid along the fluid path
+            muf_prev  = np.zeros(N+1)  # DP: viscosity of fluid along the fluid path
+            kf_prev   = np.zeros(N+1)  # DP: thermal conductivity of fluid along the fluid path
+            cps_prev  = np.zeros(N+1)  # DP: heat capacity of solid along the fluid path. This includes several types of solids such as glass spheres and MCM
+            Ss_prev   = np.zeros(N+1)  # ??
+
+            S_c_past  = np.zeros(N+1)  # DP: entropy of solid for a cooling protocol
+            S_h_past  = np.zeros(N+1)  # DP: entropy of solid for a heating protocol
+            Sirr_prev = np.zeros(N+1)  # DP: entropy of solid irreversible part?
+            Sprev     = np.zeros(N+1)  # DP: Anhysteretic entropy of the MCM for the previous time step
             prevHintNew  = np.zeros(N+1) # ??
 
-
-            for i in range(N+1): # DP: this goes from i=0 to i=N
+            for i in range(N+1):  # cps_prev Ss_prev are calculated in this for loop
+                # DP: this goes from i=0 to i=N
                 if species_descriptor[i].startswith("reg"):
                     # Internal field
-                    prevHint        = appliedFieldm[n-1,i]*MFM[i]
-                    prevHintNew[i]  = appliedFieldm[n-1,i]*MFM[i]
-                    # DP: loading heat capacity and entropy data of the MCM
-                    if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h
-                    elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h
-                    elif species_descriptor[i]== 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h
-                    elif species_descriptor[i]== 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h
-                    elif species_descriptor[i]== 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h
-                    elif species_descriptor[i]== 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h
+                    prevHint       = appliedFieldm[n-1,i]*MFM[i]
+                    prevHintNew[i] = appliedFieldm[n-1,i]*MFM[i]
+                    # Heat capacity and entropy data of the MCM
+                    if   species_descriptor[i] == 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h
+                    elif species_descriptor[i] == 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h
+                    elif species_descriptor[i] == 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h
+                    elif species_descriptor[i] == 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h
+                    elif species_descriptor[i] == 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h
+                    elif species_descriptor[i] == 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h
                     # Previous specific heat
                     Tr=psT[i]
                     dT=.5 # DP: this could be any small value given that it is just for calculating the derivative
-                    dsdT = (ms_c(Tr+dT, prevHint)[0, 0]*(.5)  +  ms_h(Tr+dT, prevHint)[0, 0]*(.5)) - (ms_c(Tr-dT, prevHint)[0, 0]*(.5)  +  ms_h(Tr-dT, prevHint)[0, 0]*(.5))
+                    dsdT = (ms_c(Tr+dT, prevHint)[0, 0] * 0.5 + ms_h(Tr+dT, prevHint)[0, 0] * 0.5) - (ms_c(Tr-dT, prevHint)[0, 0] * 0.5 + ms_h(Tr-dT, prevHint)[0, 0] * 0.5)
                     cps_prev[i]  = psT[i]*(np.abs(dsdT)/(dT*2)) # DP: why not calculating the Cp from the available data?
                     # DP: 2 in the denominator obeys to the fact that the derivative is taken as [f(x+dx)-f(x-dx)]/(2*dx) instead of [f(x+dx)-f(x)]/(dx)
                     # Entropy position of the previous value
                     S_c_past[i]   = ms_c(Tr, prevHint)[0, 0]
                     S_h_past[i]   = ms_h(Tr, prevHint)[0, 0]
                     Sirr_prev[i]  = S_c_past[i] *(1-ch_factor[i])  -  S_h_past[i] *ch_factor[i] # DP: this corresponds to the irreversible part. It is not useful
-                    Sprev[i]      = S_c_past[i] *(1-ch_factor[i])  +  S_h_past[i] *ch_factor[i] # DP: this is the anhysteretic entropy
+                    Sprev[i]      = S_c_past[i] *(1-ch_factor[i]) + S_h_past[i] *ch_factor[i] # DP: this is the anhysteretic entropy
                     # old code
                     Ss_prev[i]     = ms_c(psT[i], prevHint)[0, 0]*(1-ch_factor[i]) + ms_h(psT[i], prevHint)[0, 0]*ch_factor[i] # DP: this is equivalent to Sprev[i]
                     if prevHint > maxPrevHint:
@@ -855,131 +859,134 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         minMagTemp  = psT[i]
                         minCpPrev   = cps_prev[i]
                         minSSprev   = Ss_prev[i]
-                elif species_descriptor[i]== 'gs':
+                elif species_descriptor[i]== 'gs':  # This is where the gs stuff will go
                     cps_prev[i]    = gsCp
                     Ss_prev[i]     = 0
-                    # This is where the gs stuff will go
-                elif species_descriptor[i]== 'ls':
+                elif species_descriptor[i]== 'ls':  # This is where the ls stuff will go
                     cps_prev[i]    = lsCp
                     Ss_prev[i]     = 0
-                    # This is where the gs stuff will go
-                else:
+                else: # This is where the void stuff will go
                     cps_prev[i]    = 0
                     Ss_prev[i]     = 0
-                    # This is where the void stuff will go
-                # liquid calculations
-                # Calculate Specific heat
-                cpf_prev[i]    = fCp(pfT[i],percGly)
-                # Calculate Density
-                rhof_prev[i]   = fRho(pfT[i],percGly)
-                # Calculate Dynamic Viscosity
-                muf_prev[i]    = fMu(pfT[i],percGly)
-                # Calculate Conduction
-                kf_prev[i]     = fK(pfT[i],percGly)
-            ##################### DP: here is where the iteration at every time step begins ######################
-            # Loop until stepTol is found or maxSteps is hit.
-            while ( not stepTol and stepCount <= maxSteps):
 
+                # liquid calculations
+
+                cpf_prev[i]  = fCp(pfT[i], percGly)  # Fluid specific heat at position i at temp. of previous time step
+                rhof_prev[i] = fRho(pfT[i], percGly)  # Fluid Density at position i at temp. of previous time step
+                muf_prev[i]  = fMu(pfT[i], percGly)  # Fluid Dynamic Visc. at position i at temp. of previous time step
+                kf_prev[i]   = fK(pfT[i], percGly)  # Fluid thermal conduct. at position i at temp. of prev. time step
+
+            ##################### DP: here is where the iteration at every time step begins ######################
+
+            while not stepTol and stepCount <= maxSteps:  # Loop until stepTol is found or maxSteps is hit.
+                # Note:
                 # iynext is the guess n Fluid
                 # isnext is the guess n Solid
                 # y[n-1,:] is the n-1 Fluid solution
                 # s[n-1,:] is the n-1 Solid solution
-                ################################################################
+
                 # Grab Current State properties
-                fT = iynext * (Thot - Tcold) + Tcold # DP: this is a vector containing the guess fluid temperatures for all positions along the flow path for the current time step
-                sT = isnext * (Thot - Tcold) + Tcold # DP: this is a vector containing the guess solid temperatures for all positions along the flow path for the current time step
+                fT = iynext * (Thot - Tcold) + Tcold # DP: guess fluid temperatures for the current time step
+                sT = isnext * (Thot - Tcold) + Tcold # DP: guess solid temperatures for the current time step
 
-                # DP: The following variables are used in the construction of the system of algebraic equations, the solid and fluid tridiagonal matrices
+                # DP: The following variables are used in the construction of the system of algebraic equations,
+                # the solid and fluid tridiagonal matrices
 
-                Cs = np.zeros(N + 1)
-                ks = np.zeros(N + 1)
-                Smce = np.zeros(N + 1)
-                k = np.zeros(N + 1)
+                Cs     = np.zeros(N + 1)
+                ks     = np.zeros(N + 1)
+                Smce   = np.zeros(N + 1)
+                k      = np.zeros(N + 1)
                 Omegaf = np.zeros(N + 1)
-                Spres = np.zeros(N + 1)
-                Lf = np.zeros(N + 1)
+                Spres  = np.zeros(N + 1)
+                Lf     = np.zeros(N + 1)
 
-                Cf = np.zeros(N + 1)
+                Cf          = np.zeros(N + 1)
                 rhof_cf_ave = np.zeros(N + 1)
                 rhos_cs_ave = np.zeros(N + 1)
-                Ff = np.zeros(N + 1)
-                Sp = np.zeros(N + 1)
+                Ff          = np.zeros(N + 1)
+                Sp          = np.zeros(N + 1)
 
-                # Weighted guess value
-                ww = 0.5
-                # Int the pressure
-                pt[n] = 0
+                ww = 0.5  # Weighted guess value
+                pt[n] = 0  # Int the pressure
                 dP = 0
-                for i in range(N + 1):
+                for i in range(N + 1):  # Calculate coefficients of system of algebraic equations
 
-                    # DP: properties are calculated at the temperatures of the previous and current (assumed, which changes at every iteration) time steps
-                    # and the average is taken. I said average because the weighting value is 0.5. There are actually three options here: one is to calculate
-                    # the properties at the temperature of the current time step, the second is to calculate the properties at the temperature of the previous
-                    # time step, and the third is to take the average of both as it was chosen here.
+                    # DP: properties are calculated at the temperatures of the previous and current time steps
+                    # (assumed temperature, which changes at every iteration) and the average is taken. I said average
+                    # because the weighting value is 0.5. There are actually three options here: one is to calculate
+                    # the properties at the temperature of the current time step, the second is to calculate the
+                    # properties at the temperature of the previous time step, and the third is to take the average of
+                    # both as it was chosen here.
 
-                    # Calculate Specific heat fluid
-                    cpf_ave  = fCp(fT[i], percGly) * ww + cpf_prev[i] * (1 - ww)
-                    # Calculate Density fluid
-                    rhof_ave = fRho(fT[i], percGly) * ww + rhof_prev[i] * (1 - ww)
-                    # Calculate Dynamic Viscosity fluid
-                    muf_ave  = fMu(fT[i], percGly) * ww + muf_prev[i] * (1 - ww)
-                    # Calculate Conduction fluid
-                    kf_ave   = fK(fT[i], percGly) * ww + kf_prev[i] * (1 - ww)
-                    # Combined rhof cf
-                    rhof_cf_ave[i] = cpf_ave * rhof_ave
+                    # Properties of fluid at location i and temperature of current time step
+                    cpf_ave        = fCp(fT[i], percGly) * ww + cpf_prev[i] * (1 - ww)  # Specific heat
+                    rhof_ave       = fRho(fT[i], percGly) * ww + rhof_prev[i] * (1 - ww)  # Density
+                    muf_ave        = fMu(fT[i], percGly) * ww + muf_prev[i] * (1 - ww)  # Dynamic Viscosity
+                    kf_ave         = fK(fT[i], percGly) * ww + kf_prev[i] * (1 - ww)  # Thermal conductivity
+                    rhof_cf_ave[i] = cpf_ave * rhof_ave  # Combined rhof cf
+
                     if species_descriptor[i].startswith("reg"):
-                        if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct     = 0.55;
-                        elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct     = 0.77;
-                        elif species_descriptor[i]== 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct     = 0.73;
-                        elif species_descriptor[i]== 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct     = 0.75;
-                        elif species_descriptor[i]== 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct     = 0.72;
-                        elif species_descriptor[i]== 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h;  T_h=Gd.mTemp_h;  T_c = Gd.mTemp_c;  Reduct     = 1;
-                        # Field
-                        Hint = appliedFieldm[n, i]*MFM[i]
-                        # rho*cs fluid
-                        dT=1
-                        Tr         = psT[i] # TODO: should not this be sT[i]?
-                        aveField = (Hint+prevHintNew[i])/2 # DP: average between the internal field of the previous and current time steps
-                        dsdT = (ms_c(sT[i]+dT, aveField)[0, 0]*(.5)  +  ms_h(sT[i]+dT, aveField)[0, 0]*(.5)) - (ms_c(sT[i]-dT, aveField)[0, 0]*(.5)  +  ms_h(sT[i]-dT, aveField)[0, 0]*(.5))
-                        # TODO: not clear why aveField is used instead of Hint (current time step). Conversely, temperature is for the current time step.
-                        cps_curr   = Tr*(np.abs(dsdT)/(dT*2)) # DP: it is not clear why it uses the temperature of the previous time step instead of that of the current time step
-                        cps_ave = cps_curr  * ww + cps_prev[i] * (1 - ww) # DP: this is equation B.9 of Theo's thesis
+                        if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.55;
+                        elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.77;
+                        elif species_descriptor[i]== 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.73;
+                        elif species_descriptor[i]== 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.75;
+                        elif species_descriptor[i]== 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.72;
+                        elif species_descriptor[i]== 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h;  T_h=Gd.mTemp_h;  T_c = Gd.mTemp_c;  Reduct = 1;
+                        # --- Calculation of internal magnetic field
+                        Hint = appliedFieldm[n, i] * MFM[i]
+                        # --- Calculation of rho*cs fluid
+                        dT = 1
+                        Tr = psT[i]
+                        aveField = (Hint + prevHintNew[i]) / 2  # current and previous time step average
+                        dsdT = (ms_c(sT[i]+dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]+dT, aveField)[0, 0] * 0.5) - (ms_c(sT[i]-dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]-dT, aveField)[0, 0] * 0.5)
+                        # TODO: not clear why aveField is used instead of Hint (current time step).
+                        cps_curr = Tr * (np.abs(dsdT) / (dT * 2))  # TODO: should not sT[i] be used insetead of Tr?
+                        cps_ave = cps_curr * ww + cps_prev[i] * (1 - ww)  # DP: this is equation B.9 of Theo's thesis
                         rhos_cs_ave[i] = cps_ave * mRho
-                        # Smce DP: it seems that the MCE is calculated as an isothermal entropy change because the entropy of current and previous steps
-                        # are calculated at the temperature of the previous step.
-                        # The anhysteretic entropy of the current time step is calculated at the magnetic field of the current time step
+                        # --- Calculation of Smce
+                        # DP: the heat delivered due to the MCE during the time step is calculated as an isothermal
+                        # entropy change. So, the entropy of current and previous steps are calculated at the temp
+                        # of the previous step.
+                        # The anhysteretic entropy of the current time step is calculated at the magnetic field of the
+                        # current time step
 
-                        S_c_curr   = ms_c(Tr, Hint)[0, 0] # DP: for the calculation of the MCE is clear that the initial temperature must be that of the previous time step
-                        S_h_curr   = ms_h(Tr, Hint)[0, 0] # DP: there are 3 optns: to use T° of the current time step (assumed), T° of previous time step, or a combination
-                        Sirr_cur   = S_c_curr *(1-ch_factor[i])  -  S_h_curr *ch_factor[i]
-                        Scur       = S_c_curr *(1-ch_factor[i])  +  S_h_curr *ch_factor[i] # DP: this is the anhysteretic entropy calculated from cooling high field and heating high field entropy curves
+                        S_c_curr   = ms_c(Tr, Hint)[0, 0]
+                        S_h_curr   = ms_h(Tr, Hint)[0, 0]
+                        Sirr_cur   = S_c_curr * (1 - ch_factor[i]) - S_h_curr * ch_factor[i]
+                        # Anhysteretic entropy calculated from cooling high field and heating high field entropy curves
+                        Scur       = S_c_curr * (1 - ch_factor[i]) + S_h_curr * ch_factor[i]
                         #Mod        = 0.5*(Sirr_cur+Sirr_prev[i])*np.abs((2*dT)/dsdT)
-                        Smce[i]    = (Reduct*A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i]-Scur))/ (DT* (Thot - Tcold))
-                        # TODO: eq. B.20 of Theo's thesis states that the entropy difference should be Scur-Sprev. So, the question is: is there an inconsistency here?
-                        # DP: the properties of the fluid in the following functions were calculated above as the average of the properties at the
-                        # temperatures of current and previous time steps
-                        # Effective Conduction for fluid
+                        Smce[i] = (Reduct*A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i] - Scur)) / (DT * (Thot - Tcold))
+                        # Eq. B.20 of Theo's thesis states that the entropy difference should be Scur-Sprev. So, there
+                        # is a error in the thesis cuz it is ignoring the minus sign in front of the Qmce expression.
+
+                        # DP: the properties of the fluid in the following functions were calculated above as the
+                        # average of the properties at the temperatures of current and previous time steps
+
+                        # --- Calculation of effective thermal conductivity for fluid
                         k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
-                        # Forced convection term east of the P node
+                        # --- Calculation of coefficient of heat transfer by convection term east of the P node
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
-                        # Pressure drop
+                        # --- Calculation of the coefficient of the viscous dissipation term and pressure drop
                         Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,A_c[i] * e_r[i])
 
                         # DP: for spherical particles the following correction is not needed
 
-                        # dP = dP * 2.7 # DP: from the paper, this factor is to compensate for the additional pressure drop occurring in beds of irregular
-                        # shaped particles given that Ergun's correlation is for beds of spherical particles
+                        # dP = dP * 2.7
                         # Spres[i] = Spres[i]*2.7
 
-                        # Loss term
-                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
+                        # DP: this factor is to compensate for the additional pressure drop occurring in beds of
+                        # irregular shaped particles given that Ergun's correlation is for beds of spherical particles
 
-                        # Effective Conduction for solid
+                        # --- Calculation of the coefficient of the heat leaks term
+                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
+                        # --- Calculation of the effective thermal conductivity for the solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
-                        ### Capacitance solid
-                        Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq  # DP: freq is used here because in the..
-                        # SolveSolid function Cs is divided by dt = 1/(nt+1). So, this way dt becomes DT
-                        # TODO for glass and lead spheres change the ThermalResistance function
+                        # --- Calculation of capacitance of solid
+                        Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
+                        # DP: freq is used here because in the SolveSolid function Cs is divided by dt = 1/(nt+1).
+                        # So, this way dt becomes DT
+                        # TODO: for glass and lead spheres change the ThermalResistance function
                     elif species_descriptor[i] == 'gs':
                         # This is where the gs stuff will go
                         # Effective Conduction for solid
@@ -1065,39 +1072,48 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 # is divided by dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
                 Sp = Spres / (Thot - Tcold)
 
-                for i in range(N - 1): # DP: this runs from 0 to N-2, ghost nodes are excluded, aligns with 1->N-1
+                for i in range(N - 1):  # Calculates the coefficients of the conduction terms
+                    # DP: this runs from 0 to N-2, ghost nodes are excluded, aligns with 1->N-1
+
                     # Fluid Conduction term west of the P node
+
                     Kfw[i] = ((1 - fr[i]) / (A_c[i] * e_r[i] * k[i])
                               + (fr[i]) / (A_c[i+1] * e_r[i+1] * k[i+1])) ** -1
                     # DP: the first element in the vector Kfw includes info about the ghost node 0 and the last term
-                    # includes info of the last node of the regenerator and the one to its left. The ghost node N is excluded
+                    # includes info of the last node of the regenerator and the one to its left. The ghost node N is
+                    # excluded
+
                     # Fluid Conduction term east of the P node
+
                     Kfe[i] = ((1 - fr[i+1]) / (A_c[i+1] * e_r[i+1] * k[i+1])
                               + (fr[i+1]) / (A_c[i+2] * e_r[i+2] * k[i+2])) ** -1
                     # DP: the first element of vector Kfe (index 0) includes info of node 1 and node 2 (spatial domain)
-                    # and the last element of vector Kfe (index N-2) includes info of node N-1, last node of the regenerator
-                    # and the node to its right, ghost node N.
-                    # Solid Conduction term
-                    if ks[i]==0 or ks[i+1]==0: # DP: when the node corresponds to a void space
-                        Ksw[i] =0
+                    # and the last element of vector Kfe (index N-2) includes info of node N-1, last node of the
+                    # regenerator and the node to its right, ghost node N.
+
+                    # Solid Conduction term west of the P node
+
+                    if ks[i] == 0 or ks[i+1] == 0:  # DP: when the node corresponds to a void space
+                        Ksw[i] = 0
                     else:
-                        # Conduction term west of the P node
                         Ksw[i] = ((1 - fr[i]) / (A_c[i] * (1-e_r[i]) * ks[i])
                                 + (fr[i]) / (A_c[i+1] * (1-e_r[i+1]) * ks[i+1])) ** -1
-                    if ks[i+1]==0 or ks[i+2]==0:
-                        Kse[i] =0
+
+                    # Solid Conduction term east of the P node
+
+                    if ks[i+1] == 0 or ks[i+2] == 0:  # DP: when the node corresponds to a void space
+                        Kse[i] = 0
                     else:
-                        # Conduction term east of the P node
                         Kse[i] = ((1 - fr[i+1]) / (A_c[i+1] * (1-e_r[i+1]) * ks[i+1])
                                 + (fr[i+1]) / (A_c[i+2] * (1-e_r[i+2]) * ks[i+2])) ** -1
-                # TODO: an apparent error in the solid conduction terms was corrected because e_r was used instead of (1-e_r)
+                # TODO: an apparent error in the solid conduction terms was corrected. e_r was used instead of (1-e_r)
                 # TODO: check if fr is used correctly
                 Omegas = np.copy(Omegaf) # DP: this is the coefficient of the convection term, which is equal for both fluid and solid
-                Kfw = Kfw / (DX*L_tot)  # DP: L_tot is included here because in SolveFluid function Kfw is multiplied by dx = 1/(N+1)
+                Kfw = Kfw / (DX*L_tot)
                 Kfe = Kfe / (DX*L_tot)
                 Ksw = Ksw / (DX*L_tot)
                 Kse = Kse / (DX*L_tot)
-
+                # DP: L_tot is included in these terms because in solve functions they are multiplied by dx = 1/(N+1)
 
                 ################################################################
                 ####################### SOLVE FLUID EQ      ####################
@@ -1170,11 +1186,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 heatPn = freq*fCp((tF_h+tF1_h)/2,percGly)*fRho((tF_h+tF1_h)/2,percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
-            qc = coolingpowersum # DP: 2 changed by 7 to account for the number of regenerators of the device
-            qh = heatingpowersum
+            qc = num_reg * coolingpowersum # DP: 2 changed by 7 to account for the number of regenerators of the device
+            qh = num_reg * heatingpowersum
             print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {3:2.5e} y-tol {4:2.5e} s-tol {5:2.5e} run time {6:4.1f} [min]".format(int(caseNum),cycleCount,qc,qh,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60 ))
 
-        if ((time.time()-t0)/60)>time_lim: # DP: if the for loop was broken above, then do...
+        if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
             coolingpowersum=0
             heatingpowersum=0
             startint=0
@@ -1190,8 +1206,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 heatPn = freq*fCp((tF_h+tF1_h)/2,percGly)*fRho((tF_h+tF1_h)/2,percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
-            qc = coolingpowersum # DP: changed from 2 to 7. Number of regenerators
-            qh = heatingpowersum # Added by DP
+            qc = num_reg * coolingpowersum # DP: changed from 2 to 7. Number of regenerators
+            qh = num_reg * heatingpowersum # Added by DP
             print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {6:2.5e} y-tol {3:2.5e} s-tol {4:2.5e} run time {5:4.1f} [min]".format(int(caseNum),cycleCount,qc,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60,qh ))
             # Pickle data
             aaa = (y, s, stepTolInt, iyCycle, isCycle)
@@ -1279,21 +1295,24 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold
         coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
         coolingpowersum = coolingpowersum + coolPn
-    qc = coolingpowersum # DP: cooling power of the device
 
-    coolingpowersum=0 # DP: to avoid confusions, this variable should have been named heatingpowersum
+    qc = num_reg * coolingpowersum  # [W] Gross cooling power of the device
+
+    heatingpowersum=0
     startint=0
     for n in range(startint, nt):
         tF = y[n, -1] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, -1] * (Thot - Tcold) + Tcold
-        coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2-Thot)
-        coolingpowersum = coolingpowersum + coolPn
-    qh = coolingpowersum # DP: heating power of the device
-    # DP: cooling power of FAME device is 7 times the cooling power of one regenerator.
+        heatPn = freq * fCp((tF+tF1)/2, percGly) * fRho((tF+tF1)/2, percGly) * V[n] * DT * ((tF+tF1)/2-Thot)
+        heatingpowersum = heatingpowersum + heatPn
+
+    qh = num_reg * heatingpowersum  # [W] Heating power of the device
+
+    # Cooling power of FAME cooler is 7 times the cooling power of one regenerator.
     # Demonstrated in the file Cooling_capacity_calc.py
 
-    Kamb = 2.5 # DP: This has to be measured experimentally for the
-    qccor = 7*qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
+    Kamb = 2.5  # DP: This has to be measured experimentally for the
+    qccor = qc - Kamb * (Tambset-Tcold)  # DP: this corresponds to the net power output, equation 3.34 of Theo's thesis.
     # It includes a correction to account for additional heat leaks in the CHEX
 
     # Calculation of average pressure drop across the regenerator
@@ -1337,8 +1356,4 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
 
 
-# TODO: magnetic field and volume flow rate are defined in functions that are external to this piece of code. So, it
-#  would be nicer if the file could be defined as an input of the model. This way, different types of profiles can be
-#  easily implemented. For example, I am using now a trapezoidal profile. After implementing this, I could easily
-#  switch from a trapezoidal shape to a sinusoidal and so on.
 
