@@ -43,8 +43,7 @@ from closure.dynamic_conduction import kDyn_P  # Dynamic conduction
 from closure.static_conduction import kStat  # Static conduction
 #from closure.inter_heat import beHeff_I, beHeff_E  # Internal Heat transfer coefficient * Specific surface area
 from closure.pressure_drop import SPresM  # pressure Drop
-from closure.resistance import ThermalResistance,ThermalResistanceVoid  # Resistance Term in the Regenerator and void
-from closure.FAME_resistance import FAME_ThermalResistance, FAME_ThermalResistance2, FAME_ThermalResistanceVoid
+from closure.heat_leaks.resistance import ThermalResistance  # Resistance Term in the Regenerator and void
 
 # ----------------------- SOLVER ---------------------------------
 
@@ -1030,18 +1029,18 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Smce[i] = 0
                         ### Capacitance solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
-                    else:  # TODO: change ThermalResistance function for void, void1, and void2 to match the new style.
+                    else:
 
                         k[i] = kf_ave
-                        if species_descriptor[i] == 'void':
-                            Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs, r1, r2, r3)
-                        elif species_descriptor[i] == 'void3':
-                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)  # TODO change the zeros for kUlt, r0, r1, r2, r3
-                        elif species_descriptor[i] == 'void1':
-                            Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs1, r1, r2, r3)
-                        elif species_descriptor[i] == 'void2':
-                            Lf[i] = P_c[i] * ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs2, r1, r2, r3)
-                        elif species_descriptor[i] == 'void4':
+                        if species_descriptor[i] == 'void':  # Used for PM1 device
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs, r1, r2, r3)
+                        elif species_descriptor[i] == 'void1':  # Used for PM1 device
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs1, r1, r2, r3)
+                        elif species_descriptor[i] == 'void2':  # Used for PM1 device
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs2, r1, r2, r3)
+                        elif species_descriptor[i] == 'void3':  # Used for FAME cooler and 8Mag device
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)
+                        elif species_descriptor[i] == 'void4':  # Used for POLO device
                             Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, r1, r2, r3)
                         # No solid in the void
                         ks[i] = 0
