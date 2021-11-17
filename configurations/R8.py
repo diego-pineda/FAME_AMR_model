@@ -4,8 +4,6 @@ import numpy as np
 
 # ---- Overall shape: single regenerator rectangular cross section in the gap of a C-shaped rotational magnet
 
-# Note: set to zero all parameters if not applicable
-
 W_reg     = 0.045  # [m] Width of regenerator bed
 H_reg     = 0.013  # [m] Height of regenerator bed
 L_reg1    = 0.060  # [m] Length of regenerator bed 1
@@ -15,13 +13,11 @@ air_gap   = 0.026  # [m] Air gap between magnets: space for placing the AMRs
 
 air_th    = air_gap - H_reg - 2 * casing_th  # [m] Thickness of the air layer in between regenerator casing and magnets
 
-# Note: When working in a dynamic way, e.g. using a GUI for the inputs, the following can be implemented
+# TODO: When working in a dynamic way, e.g. using a GUI for the inputs, the following can be implemented
 # if air_th < 0:
 #     print("Regenerator plus casing dimensions exceed air gap")
 
-# ---- Overal shape: series regenerators of cylindrical shape in the core of a halbach cilynder
-
-# NOTE!: set to zero all parameters if not applicable
+# ---- Overal shape: series regenerators of cylindrical shape in the core of a Halbach cylinder
 
 r1      = 0       # [m] Inner Radius of regenerator casing
 r2      = 0       # [m] Outer Radius of regenerator casing
@@ -56,28 +52,6 @@ elif r1 == 0 and W_reg != 0:
 Nd     = 0.36  # [-] Demagnetization coefficient
 
 # ------- Description of layers: materials and lengths -------
-
-# Note: this is very device specific. The following species can be used.
-
-# void: for voids of cylindrical shape surrounded by two annular layers of materials,
-# ultem and G11, before the air gap with the magnet
-
-# void1: for voids of cylindrical shape surrounded by two annular layers of materials,
-# ultem and G11, before the air gap with the magnet. Generally used in the middle of two beds.
-# Useful if a different geometry than "void" is needed.
-
-# void2: for voids of cylindrical shape surrounded by two annular layers of materials,
-# # ultem and G11, before the air gap with the magnet. Generally used in the middle of two beds.
-# # Useful if a different geometry than "void" and "void1" is needed.
-
-# void3: for voids of cuboid shape surrounded by one layer of insulating material,
-# G11, before the air gap with the magnet. The casing has the same dimensions around the void and around a bed
-
-# gs: packed bed of glass spheres
-
-# ls: packed bed of lead spheres
-
-# reg-MCM: packed bed of MCM
 
 species_discription = ['void', 'reg-Gd', 'void']  # Different species found along the axis of the regenerator assembly
 x_discription       = [0, 0.006, 0.066, 0.072]    # [m] position of each species in the assembly
