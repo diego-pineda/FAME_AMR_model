@@ -34,6 +34,37 @@ if __name__ == '__main__':
         Thotarr = np.linspace(273+27, 273+27, hotResolution)
         casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
+        # ------- Parameters that change for the cases to study -------
+
+        # Note: place in this section the parameter that is to be changed in the simulations. The number of 'if'
+        # conditions must be at least equal to the number of cases (numCases) to run. The frequency of the
+        # AMR cycle is set to be the changing parameter in what follows. It can be any of the input parameters listed
+        # above. Please remember that the changing parameter must be commented out in the section above.
+
+        if casenum == 0:
+            # Frequency of AMR cycle
+            ff = 0.25
+
+        if casenum == 1:
+            # Frequency of AMR cycle
+            ff = 0.5
+
+        if casenum == 2:
+            # Frequency of AMR cycle
+            ff = 0.75
+
+        if casenum == 3:
+            # Frequency of AMR cycle
+            ff = 1
+
+        if casenum == 4:
+            # Frequency of AMR cycle
+            ff = 1.25
+
+        if casenum == 5:
+            # Frequency of AMR cycle
+            ff = 1.5
+
         # ------- Input parameters common to all cases -------
 
         fileName      = "{}.txt".format(jobName)
@@ -95,45 +126,8 @@ if __name__ == '__main__':
         htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
         leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
-        # ------- Parameters that change for the cases to study -------
 
-        # Note: place in this section the parameter that is to be changed in the simulations. The number of 'if'
-        # conditions must be at least equal to the number of cases (numCases) to run. The frequency of the
-        # AMR cycle is set to be the changing parameter in what follows. It can be any of the input parameters listed
-        # above. Please remember that the changing parameter must be commented out in the section above.
-
-        if casenum == 0:
-
-            # Frequency of AMR cycle
-            ff = 0.25
-
-        if casenum==1:
-
-            # Frequency of AMR cycle
-            ff = 0.5
-
-        if casenum==2:
-
-            # Frequency of AMR cycle
-            ff = 0.75
-
-        if casenum==3:
-
-            # Frequency of AMR cycle
-            ff = 1
-
-        if casenum==4:
-
-            # Frequency of AMR cycle
-            ff = 1.25
-
-        if casenum==5:
-
-            # Frequency of AMR cycle
-            ff = 1.5
-
-
-        # Setting values of Thot and Tcold for simulation
+        # -------- Setting values of Thot and Tcold for simulation -------
 
         Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
         Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
@@ -141,7 +135,9 @@ if __name__ == '__main__':
         print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
         print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
-        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,cName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name,num_reg)
+        results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,cName,jobName,
+                            time_limit,cycle_toler,maxStepIter,maxCycleIter, volum_flow_profile, app_field,
+                            htc_model_name, leaks_model_name,num_reg)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
