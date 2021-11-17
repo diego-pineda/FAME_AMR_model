@@ -5,34 +5,67 @@ if __name__ == '__main__':
 
     # The following section can be used to run an array of cases in a single computer, one after another
 
-    # runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-
     caseNumber    = 10
+    jName         = "Validation_Gd_no_voids_er0.45_Tspan20"  # DP: It is better to use underline to connect words because this is used as file name
+
+    # Numerical parameters
+    nodes         = 400
+    timesteps     = 600
+    time_limit    = 600  # [min] Time limit for the simulation in minutes
+    cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+    maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
+    maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+    cen_loc       = 0
+
+    # Temperatures
     Thot          = 294.8  # [K]
     Tcold         = 274.8
-    cen_loc       = 0
-    Tambset       = 298  # [K] Temperature of room reported between 296 K to 300 K
-    dispV         = 12.94e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min. 2.37 regenerators with simultaneous flow.
+    Tambset       = 300
+
+    # Frequency of AMR cycle
+    ff            = 0.25
+
+    # Flow profile
+
+    # - FAME cooler
+    dispV         = 30.52e-6
     acc_period    = 10
     max_flow_per  = 45
     full_magn_ang = 30
     unbal_rat     = 1
-    ff            = 1.2  # [Hz] DP: frequency of AMR cycle
-    CF            = 1
-    CS            = 1
-    CL            = 0  # Switch for heat leaks in the fluid GE. Set to 1 in the runActive function when CL_set="Tamb"
-    CVD           = 1
-    CMCE          = 1
-    nodes         = 400
-    timesteps     = 600
-    Dsp           = 600e-6  # [m] Bowei reported that he used spheres in between 400 and 800 micrometers
-    er            = 0.36
-    cName         = "R7"
-    jName         = "Validation_Gd_no_voids_er0.45_Tspan20"  # DP: It is better to use underline to connect words because this is used as file name
-    time_limit    = 600  # [min] Time limit for completing the calculations of the runActive function in minutes
-    cycle_toler   = 1e-4 # User defined criterion for convergence
-    maxStepIter   = 400  # Maximum time step iterations the simulation is allowed to take
-    maxCycleIter  = 600  # Maximum cycle iterations the simulation is allowed to take
+    from sourcefiles.device.FAME_V_flow import vol_flow_rate
+    volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+
+    # - POLO cooler
+    # dispV = 4.74e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+    # from sourcefiles.device.polo_V_flow import polo_vol_flow
+    # volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+
+    # Magnetic field profile
+
+    # - FAME cooler
+    # from sourcefiles.device import FAME_app_field
+    # app_field = FAME_app_field.app_field(timesteps, nodes)
+
+    # - POLO cooler
+    from sourcefiles.device.polo_mag_field import polo_app_field
+    app_field = polo_app_field(timesteps, nodes, 0.1)
+
+    # Geometric parameters
+    cName = "polo_1"
+    num_reg = 1
+
+    # Switches for activating and deactivating terms in governing equations
+    CF   = 1
+    CS   = 1
+    CL   = 1
+    CVD  = 1
+    CMCE = 1
+
+    # Heat transfer model
+    htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
+    leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+
 
     # Some useful functions for storing data
 
@@ -55,7 +88,9 @@ if __name__ == '__main__':
     Qc_data = []
 
     while Qc > 0:
-        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, dispV, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, Dsp, er, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+        results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes,
+                            timesteps, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter,
+                            volum_flow_profile, app_field, htc_model_name, leaks_model_name,num_reg)
         #  runActive():  returns
         #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
         #  0       1   2   3     4         5     6           7      8    9      10        11       12
@@ -63,7 +98,7 @@ if __name__ == '__main__':
         #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
         Tspan = Thot-Tcold
         Tspan_data.append(Tspan)
-        Qc = 7*results[2]  # [W] Cooling capacity of the device without thermal losses correction
+        Qc = results[2]  # [W] Cooling capacity of the device without thermal losses correction
         Qc_data.append(Qc)
         Qc_corr = results[3]  # [W] Cooling capacity of the device corrected for thermal losses in CHEX
         Qc_corr_data.append(Qc_corr)

@@ -54,22 +54,25 @@ app_field = polo_app_field(timesteps, nodes, 0.1)
 # Geometry of regenerator
 # Dsp           = 600e-6
 # er            = 0.36
-cName         = "polo_1"  # Name of file where the geometric configuration of the regenerator is defined
-jName         = "polo_trial" # DP: It is better to use underline to connect words because this is used as file name
+cName   = "polo_1"  # Name of file where the geometric configuration of the regenerator is defined
+jName   = "polo_trial" # DP: It is better to use underline to connect words because this is used as file name
+num_reg = 1
 
 # Switches for activating and deactivating terms in governing equations
-CF            = 1
-CS            = 1
-CL            = 1
-CVD           = 1
-CMCE          = 1
+CF   = 1
+CS   = 1
+CL   = 1
+CVD  = 1
+CMCE = 1
 
 # Heat transfer models
 htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
 leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
 
-results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field, htc_model_name, leaks_model_name)
+results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
+                    jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
+                    htc_model_name, leaks_model_name,num_reg)
 
 
 # Some useful functions for storing data.
