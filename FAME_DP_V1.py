@@ -760,7 +760,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 MFM[i] = 0 # DP comment: MFM -> Magnetic Field Modifier, which was previously set to a matrix of ones
             else:
                 # Maximum Magnetization at the maximum field
-                if   species_descriptor[i]== 'reg-si1': mag_c = si1.mMag_c; mag_h = si1.mMag_h # DP comment: mMag_c and mMag_h interpolating functions are renamed
+                if   species_descriptor[i]== 'reg-si1': mag_c = si1.mMag_c; mag_h = si1.mMag_h  # DP comment: mMag_c and mMag_h interpolating functions are renamed
                 elif species_descriptor[i]== 'reg-si2': mag_c = si2.mMag_c; mag_h = si2.mMag_h
                 elif species_descriptor[i]== 'reg-si3': mag_c = si3.mMag_c; mag_h = si3.mMag_h
                 elif species_descriptor[i]== 'reg-si4': mag_c = si4.mMag_c; mag_h = si4.mMag_h
@@ -1045,12 +1045,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # No solid in the void
                         ks[i] = 0
                         # No interaction between solid and fluid since there is no solid.
-                        Omegaf[i] = 0 #
+                        Omegaf[i] = 0  #
                         # This will just make the plots nicer by having the temperature of the solid be the fluid temperature.
                         Cs[i] = 1
                         Smce[i] = (iynext[i]-s[n-1,i])/DT
                         #neglect pressure term.
-                        Spres[i]= 0
+                        Spres[i] = 0
                         dP = 0
                         # This is where the void stuff will go
                     pt[n] = dP * DX + pt[n] # DP: it seems that the term dP is actually dP/dx

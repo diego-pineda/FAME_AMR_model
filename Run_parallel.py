@@ -22,8 +22,6 @@ if __name__ == '__main__':
             f.write(" ".join("{:9.6f}\t".format(x) for x in content))
             f.write("\n")
 
-    # TODO: add number of regenerators as one input parameter
-
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
 
         numCases       = 6
@@ -122,7 +120,7 @@ if __name__ == '__main__':
         CVD  = 1
         CMCE = 1
 
-        # Heat transfer model
+        # Heat transfer models
         htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
         leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
 
