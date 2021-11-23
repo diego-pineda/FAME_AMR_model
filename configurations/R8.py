@@ -40,7 +40,7 @@ rvs     = np.sqrt(Vvoid/(3.14*Lvoid))    # [m] Cold side void equivalent radius
 rvs1    = np.sqrt(Vvoid1/(3.14*Lvoid1))  # [m] Hot  side void equivalent radius
 rvs2    = np.sqrt(Vvoid2/(3.14*Lvoid2))  # [m] Intermediate void equivalent radius
 
-# Parameters common to all geometries
+# ------- Cross sectional area and perimeter. Parameters common to all geometries
 
 if r1 != 0 and W_reg == 0:
     Ac = np.pi * r1 ** 2  # [m^2] Cross sectional area of one regenerator
@@ -53,8 +53,9 @@ Nd     = 0.36  # [-] Demagnetization coefficient
 
 # ------- Description of layers: materials and lengths -------
 
-species_discription = ['void', 'reg-Gd', 'void']  # Different species found along the axis of the regenerator assembly
+species_discription = ['void', 'reg-M0', 'void']  # Different species found along the axis of the regenerator assembly
 x_discription       = [0, 0.006, 0.066, 0.072]    # [m] position of each species in the assembly
+reduct_coeff        = dict(M0=1)  # [-] Reduction coefficients used for taking into account thermal hysteresis
 
 # Active bed of MCM
 
