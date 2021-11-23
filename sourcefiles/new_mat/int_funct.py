@@ -8,14 +8,14 @@ def material_data(mat_name):
     # the material, which according to the adopted convention must start with M followed by a consecutive number.
 
     # Specifc Heat
-    cpdat_c   = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_cp_c.txt')
-    cpdat_h   = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_cp_h.txt')
+    cpdat_c   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_c.txt')
+    cpdat_h   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_h.txt')
     # Magnetization
-    magdata_c = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_Mag_c.txt')
-    magdata_h = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_Mag_h.txt')
+    magdata_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_c.txt')
+    magdata_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_h.txt')
     # Entropy
-    datstot_c = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_S_c.txt')
-    datstot_h = np.loadtxt('sourcefiles/mat/'+mat_name+'/'+mat_name+'_S_h.txt')
+    datstot_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_c.txt')
+    datstot_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_h.txt')
 
     return cpdat_c, cpdat_h, magdata_c, magdata_h, datstot_c, datstot_h
 
