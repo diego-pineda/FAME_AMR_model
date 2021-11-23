@@ -31,10 +31,10 @@ Vvoid   = 458.24e-9 + rv**2*3.14*L_add  # [m^3]
 Lvoid   = 14.6e-3 + L_add               # [m] Length of void volume and connecting pipe together
 
 Vvoid1  = 0     # [m^3] Void volume between the cold side of the regenerators and the CHEX
-Lvoid1  = 0     # [m] Length of void volume 1
+Lvoid1  = 1     # [m] Length of void volume 1
 
 Vvoid2  = 0     # [m^3] Void volume between the two regenerators located in the bore of the magnet
-Lvoid2  = 0     # [m] Length of void volume 2
+Lvoid2  = 1     # [m] Length of void volume 2
 
 rvs     = np.sqrt(Vvoid/(3.14*Lvoid))    # [m] Cold side void equivalent radius
 rvs1    = np.sqrt(Vvoid1/(3.14*Lvoid1))  # [m] Hot  side void equivalent radius
@@ -52,36 +52,38 @@ elif r1 == 0 and W_reg != 0:
 Nd     = 0.36  # [-] Demagnetization coefficient
 
 # ------- Description of layers: materials and lengths -------
+# Note: the order maters! to the left of this list go the materials on the cold side of the AMR.
+species_discription = ['void3', 'reg-M2', 'reg-M1', 'void3']  # Different species found along the axis of the regenerator assembly
+x_discription       = [0, 0.006, 0.036, 0.066, 0.072]    # [m] position of each species in the assembly
+reduct_coeff        = dict(M0=1, M1=0.55, M2=0.77)  # [-] Reduction coefficients used for taking into account thermal hysteresis
 
-species_discription = ['void', 'reg-M0', 'void']  # Different species found along the axis of the regenerator assembly
-x_discription       = [0, 0.006, 0.066, 0.072]    # [m] position of each species in the assembly
-reduct_coeff        = dict(M0=1)  # [-] Reduction coefficients used for taking into account thermal hysteresis
+# reduct_coeff = dict(M0=1,M1=0.55,M2=0.77,M3=0.73,M4=0.75,M5=0.72)
 
 # Active bed of MCM
 
 Dsp  = 600e-6  # [m] Diameter of MCM spheres
-er   = 0.53    # [-]
+er   = 0.36    # [-]
 mK   = 10.5      # [W/(m K)]...DP: this was 6 and is an assumed thermal conductivity of the MCM
 mRho = 7900    # [kg/m^3]... DP: This was 6100 and is an assumed MCM density to calculate porosity of bed
 
 # (BOROSILICATE) Glass spheres
 
-Dspgs = 0.003175  # [m]
-egs     = 0.43    # [-]
-gsCp  = 800       # [J/(kg K)]
-gsK   = 1.2       # [W/(m K)]
-gsRho = 2230      # [kg/m^3]
+Dspgs = 0.003175  # [m] Diameter
+egs     = 0.43    # [-] Porosity
+gsCp  = 800       # [J/(kg K)] Heat Capacity
+gsK   = 1.2       # [W/(m K)] Thermal Conductivity
+gsRho = 2230      # [kg/m^3] Density
 # http://www.scientificglass.co.uk/contents/en-uk/d115_Physical_Properties_of_Borosilicate_Glass.html
 # http://www.schott.com/borofloat/english/attribute/thermic/index.html
 # http://www.schott.com/d/tubing/9a0f5126-6e35-43bd-bf2a-349912caf9f2/schott-algae-brochure-borosilicate.pdf
 
 # Lead spheres
 
-Dspls = 300e-6  # [m]
-els   = 0.36    # [-]
-lsCp  = 830     # [J/(kg K)]
-lsK   = 1.005   # [W/(m K)]
-lsRho = 2230    # [kg/m^3]
+Dspls = 300e-6  # [m] Diameter
+els   = 0.36    # [-] Porosity
+lsCp  = 830     # [J/(kg K)] Heat Capacity
+lsK   = 1.005   # [W/(m K)] Thermal conductivity
+lsRho = 2230    # [kg/m^3] Density
 
 # Casing and insulating materials
 
