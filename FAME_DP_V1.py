@@ -14,14 +14,16 @@ import os
 import time
 import importlib
 
-# -------------------------- Si Material properties -----------------------------
+# -------------------------- Material properties -----------------------------
 
-from sourcefiles.mat import si1
-from sourcefiles.mat import si2
-from sourcefiles.mat import si3
-from sourcefiles.mat import si4
-from sourcefiles.mat import si5
-from sourcefiles.mat import Gd
+# from sourcefiles.mat import si1
+# from sourcefiles.mat import si2
+# from sourcefiles.mat import si3
+# from sourcefiles.mat import si4
+# from sourcefiles.mat import si5
+# from sourcefiles.mat import Gd
+
+from sourcefiles.new_mat.int_funct import material_data, matCp_c, matCp_h, matMag_c, matMag_h, matS_c, matS_h
 
 # -------------------- Naming convention for MCM properties -----------------
 
@@ -345,6 +347,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     species_discription = config.species_discription  # [-] Different species found in the axial direction
     x_discription       = config.x_discription        # [m] Position of the different species relative to a zero
+    reduct_coeff        = config.reduct_coeff         # [-] Dictionary with reduction coefficients of MCMs
 
     # About the active beds of magnetocaloric material
 
@@ -382,6 +385,32 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     MOD_CL  = config.MOD_CL   # Switch for activation of usage of experimental data for heat leaks
     ch_fac  = config.ch_fac   # Factor for averaging heating and cooling properties of MCMs with hysteresis
 
+    # Creating list of interpolating functions depending on selected materials
+
+    materials = list(set([i for i in species_discription if i.startswith('reg')]))
+    # First remove no reg elements, then remove repeated elements with set(), and make the resulting set a list
+
+    cp_c_if_list  = []
+    cp_h_if_list  = []
+    Mag_c_if_list = []
+    Mag_h_if_list = []
+    S_c_if_list   = []
+    S_h_if_list   = []
+
+    for material in materials:
+        cp_c_if_list.append(matCp_c(material_data(material.split('-')[1])[0]))
+        cp_h_if_list.append(matCp_h(material_data(material.split('-')[1])[1]))
+        Mag_c_if_list.append(matMag_c(material_data(material.split('-')[1])[2]))
+        Mag_h_if_list.append(matMag_h(material_data(material.split('-')[1])[3]))
+        S_c_if_list.append(matS_c(material_data(material.split('-')[1])[4]))
+        S_h_if_list.append(matS_h(material_data(material.split('-')[1])[5]))
+
+    # Note:
+    # The function material_data loads .txt files containing experimental data and returns numpy arrays with these data.
+    # The input of this function is a string like 'M0', which represents a specific material. The split method is used
+    # to remove the 'reg' part coming from the species_description vector. The functions starting with mat, such as
+    # matCp_c() return an interpolating function. So, this for loop creates a list of interpolating functions for the
+    # materials listed in the list 'materials'.
 
     # Import the configuration (Old style)
     # if ConfName == "R1":
@@ -760,12 +789,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 MFM[i] = 0 # DP comment: MFM -> Magnetic Field Modifier, which was previously set to a matrix of ones
             else:
                 # Maximum Magnetization at the maximum field
-                if   species_descriptor[i]== 'reg-si1': mag_c = si1.mMag_c; mag_h = si1.mMag_h  # DP comment: mMag_c and mMag_h interpolating functions are renamed
-                elif species_descriptor[i]== 'reg-si2': mag_c = si2.mMag_c; mag_h = si2.mMag_h
-                elif species_descriptor[i]== 'reg-si3': mag_c = si3.mMag_c; mag_h = si3.mMag_h
-                elif species_descriptor[i]== 'reg-si4': mag_c = si4.mMag_c; mag_h = si4.mMag_h
-                elif species_descriptor[i]== 'reg-si5': mag_c = si5.mMag_c; mag_h = si5.mMag_h
-                elif species_descriptor[i]== 'reg-Gd':  mag_c = Gd.mMag_c;  mag_h = Gd.mMag_h
+                mag_c = Mag_c_if_list[materials.index(species_descriptor[i])]
+                mag_h = Mag_h_if_list[materials.index(species_descriptor[i])]
+                # Old style [------
+                # if   species_descriptor[i]== 'reg-si1': mag_c = si1.mMag_c; mag_h = si1.mMag_h  # DP comment: mMag_c and mMag_h interpolating functions are renamed
+                # elif species_descriptor[i]== 'reg-si2': mag_c = si2.mMag_c; mag_h = si2.mMag_h
+                # elif species_descriptor[i]== 'reg-si3': mag_c = si3.mMag_c; mag_h = si3.mMag_h
+                # elif species_descriptor[i]== 'reg-si4': mag_c = si4.mMag_c; mag_h = si4.mMag_h
+                # elif species_descriptor[i]== 'reg-si5': mag_c = si5.mMag_c; mag_h = si5.mMag_h
+                # elif species_descriptor[i]== 'reg-Gd':  mag_c = Gd.mMag_c;  mag_h = Gd.mMag_h
+                # -------]
                 maxMagLoc= mag_c(Ts_ave,maxApliedField)[0, 0]*(1-ch_factor[i])+mag_h(Ts_ave,maxApliedField)[0, 0]*ch_factor[i] # DP comment: ch factors for all i positions were set to 0.5 previously
                 # The resulting internal field
                 Hint = maxApliedField - mRho * Nd * maxMagLoc * mu0 # DP comment: Nd comes from the configuration files. For the case of R1, Nd = 0.36
@@ -827,12 +860,18 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     prevHint       = appliedFieldm[n-1,i]*MFM[i]
                     prevHintNew[i] = appliedFieldm[n-1,i]*MFM[i]
                     # Heat capacity and entropy data of the MCM
-                    if   species_descriptor[i] == 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h
-                    elif species_descriptor[i] == 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h
-                    elif species_descriptor[i] == 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h
-                    elif species_descriptor[i] == 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h
-                    elif species_descriptor[i] == 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h
-                    elif species_descriptor[i] == 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h
+                    cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
+                    cp_h = cp_h_if_list[materials.index(species_descriptor[i])]
+                    ms_c = Mag_c_if_list[materials.index(species_descriptor[i])]
+                    ms_h = Mag_h_if_list[materials.index(species_descriptor[i])]
+                    # Old style [-------
+                    # if   species_descriptor[i] == 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h
+                    # elif species_descriptor[i] == 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h
+                    # elif species_descriptor[i] == 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h
+                    # elif species_descriptor[i] == 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h
+                    # elif species_descriptor[i] == 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h
+                    # elif species_descriptor[i] == 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h
+                    # -------]
                     # Previous specific heat
                     Tr=psT[i]
                     dT=.5 # DP: this could be any small value given that it is just for calculating the derivative
@@ -925,12 +964,20 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     rhof_cf_ave[i] = cpf_ave * rhof_ave  # Combined rhof cf
 
                     if species_descriptor[i].startswith("reg"):
-                        if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.55;
-                        elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.77;
-                        elif species_descriptor[i]== 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.73;
-                        elif species_descriptor[i]== 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.75;
-                        elif species_descriptor[i]== 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.72;
-                        elif species_descriptor[i]== 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h;  T_h=Gd.mTemp_h;  T_c = Gd.mTemp_c;  Reduct = 1;
+                        cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
+                        cp_h = cp_h_if_list[materials.index(species_descriptor[i])]
+                        ms_c = Mag_c_if_list[materials.index(species_descriptor[i])]
+                        ms_h = Mag_h_if_list[materials.index(species_descriptor[i])]
+                        # Note: T_c and T_h are not used thus they are not included here.
+                        Reduct = reduct_coeff(species_descriptor[i].split('-')[1])
+                        # Old style [-----------
+                        # if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.55;
+                        # elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.77;
+                        # elif species_descriptor[i]== 'reg-si3': cp_c = si3.mCp_c; cp_h = si3.mCp_h; ms_c = si3.mS_c; ms_h = si3.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.73;
+                        # elif species_descriptor[i]== 'reg-si4': cp_c = si4.mCp_c; cp_h = si4.mCp_h; ms_c = si4.mS_c; ms_h = si4.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.75;
+                        # elif species_descriptor[i]== 'reg-si5': cp_c = si5.mCp_c; cp_h = si5.mCp_h; ms_c = si5.mS_c; ms_h = si5.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.72;
+                        # elif species_descriptor[i]== 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h;  T_h=Gd.mTemp_h;  T_c = Gd.mTemp_c;  Reduct = 1;
+                        # ------------]
                         # --- Calculation of internal magnetic field
                         Hint = appliedFieldm[n, i] * MFM[i]
                         # --- Calculation of rho*cs fluid
