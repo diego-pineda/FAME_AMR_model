@@ -698,23 +698,25 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
    #              appliedFieldm[n, i] = hapl.appliedField(x_pos_w_respect_to_magnet, rotMag[n])[0, 0]*CMCE
    #          else:
    #              appliedFieldm[n, i] = 0
-    rotMag = np.linspace(0, 360, nt+1)
-    appliedFieldm = np.ones((nt+1, N + 1))
-    from sourcefiles.device import polo_mag_field
-    for i in range(N + 1):
-        for n in range(0, nt+1):
-            #Will only get the field if we find a regenerator
-            if (species_descriptor[i].startswith("reg")):
-                x_pos_w_respect_to_magnet = xloc[i] - 0.10532 / 2
-                appliedFieldm[n, i] = polo_mag_field.appliedField(rotMag[n], x_pos_w_respect_to_magnet)[0, 0]*CMCE
-            else:
-                appliedFieldm[n, i] = 0
+
+    # For the POLO device
+    # rotMag = np.linspace(0, 360, nt+1)
+    # appliedFieldm = np.ones((nt+1, N + 1))
+    # from sourcefiles.device import polo_mag_field
+    # for i in range(N + 1):
+    #     for n in range(0, nt+1):
+    #         #Will only get the field if we find a regenerator
+    #         if (species_descriptor[i].startswith("reg")):
+    #             x_pos_w_respect_to_magnet = xloc[i] - 0.10532 / 2
+    #             appliedFieldm[n, i] = polo_mag_field.appliedField(rotMag[n], x_pos_w_respect_to_magnet)[0, 0]*CMCE
+    #         else:
+    #             appliedFieldm[n, i] = 0
 
     # Applied field profile (Input of the model)
     #from sourcefiles.device import FAME_app_field
     #appliedFieldm = FAME_app_field.app_field(nt, N)
     # TODO decide what is the best approach for magnetic field. For now for POLO it is the one above
-    #appliedFieldm = app_field  # Matrix nt rows and N columns describing the magnetic field along the reg as a f(t)
+    appliedFieldm = app_field  # Matrix nt rows and N columns describing the magnetic field along the reg as a f(t)
 
     for i in range(N + 1):
         if (not species_descriptor[i].startswith("reg")):
@@ -862,8 +864,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     # Heat capacity and entropy data of the MCM
                     cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
                     cp_h = cp_h_if_list[materials.index(species_descriptor[i])]
-                    ms_c = Mag_c_if_list[materials.index(species_descriptor[i])]
-                    ms_h = Mag_h_if_list[materials.index(species_descriptor[i])]
+                    ms_c = S_c_if_list[materials.index(species_descriptor[i])]
+                    ms_h = S_h_if_list[materials.index(species_descriptor[i])]
                     # Old style [-------
                     # if   species_descriptor[i] == 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h
                     # elif species_descriptor[i] == 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h
@@ -966,10 +968,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     if species_descriptor[i].startswith("reg"):
                         cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
                         cp_h = cp_h_if_list[materials.index(species_descriptor[i])]
-                        ms_c = Mag_c_if_list[materials.index(species_descriptor[i])]
-                        ms_h = Mag_h_if_list[materials.index(species_descriptor[i])]
+                        ms_c = S_c_if_list[materials.index(species_descriptor[i])]
+                        ms_h = S_h_if_list[materials.index(species_descriptor[i])]
                         # Note: T_c and T_h are not used thus they are not included here.
-                        Reduct = reduct_coeff(species_descriptor[i].split('-')[1])
+                        Reduct = reduct_coeff[species_descriptor[i].split('-')[1]]
                         # Old style [-----------
                         # if   species_descriptor[i]== 'reg-si1': cp_c = si1.mCp_c; cp_h = si1.mCp_h; ms_c = si1.mS_c; ms_h = si1.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.55;
                         # elif species_descriptor[i]== 'reg-si2': cp_c = si2.mCp_c; cp_h = si2.mCp_h; ms_c = si2.mS_c; ms_h = si2.mS_h; T_h=si1.mTemp_h; T_c = si1.mTemp_c; Reduct = 0.77;
