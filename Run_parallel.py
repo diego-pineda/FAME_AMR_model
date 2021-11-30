@@ -143,8 +143,8 @@ if __name__ == '__main__':
         #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
         fileNameSave = './output/' + str(case) + fileName
-        FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
-        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17]))
+        FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]','Thot [K]', 'Tcold [K]'))
+        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
         FileSave(fileNameSave, "Fluid temperatures\n")
         FileSaveMatrix(fileNameSave, results[14])
         FileSave(fileNameSave, "Solid temperatures\n")
