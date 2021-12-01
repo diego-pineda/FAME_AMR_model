@@ -27,9 +27,17 @@ if __name__ == '__main__':
         numCases       = 6
         hotResolution  = 1
         coldResolution = 6
+        xResolution    = 1
+        # Note: In principle any variable could become x in xResolution, e.g. dispV. It does not mean that
+        # the name xResolution needs to be adjusted. hotResolution must be 1 when xResolution is different than 1.
+        # For each case to simulate, the value of the variable that is going to take the place of x, must be defined in
+        # the same way Thot is defined, i.e. by using the following equation taking as an example the variable dispV:
+        # dispV = xArr[int(np.floor(case/coldResolution)%xResolution)]. This variable has to be defined outside the if
+        # conditions, if casenum == 0, 1, 2, etc.
 
-        maxcase = numCases * hotResolution * coldResolution
+        maxcase = numCases * hotResolution * coldResolution * xResolution
         Thotarr = np.linspace(273+27, 273+27, hotResolution)
+        xArr    = []
         casenum=int(np.floor(case/(hotResolution*coldResolution)))
 
         # ------- Parameters that change for the cases to study -------
