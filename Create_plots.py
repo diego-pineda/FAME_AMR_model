@@ -42,15 +42,11 @@ dP = np.ones((cases, variable_1_range, cold_resolution))
 for files in os.listdir(directory):  # Goes over all files in the directory
 
     if '.txt' in files:
-        if 'uti' in files:
-            continue
-        if 'pen' in files:
-            continue
         case = int(files.split('-')[1].split('.')[0])
-        z = int(np.floor(case / (cold_resolution * hot_resolution)))
+        z = int(np.floor(case / (cold_resolution * variable_1_range)))
         y = case % cold_resolution
-        x = int(np.floor(case / cold_resolution) % hot_resolution)
-        # print(case,z,x,y)
+        x = int(np.floor(case / cold_resolution) % variable_1_range)
+        # print(case, z, x, y)
         myfile = open(directory + '/' + files, "rt")
         contents = myfile.read()
         myfile.close()
@@ -68,35 +64,38 @@ col = ["orangered", "blue", "green", "orange", "brown", "red", 'black', 'yellow'
 
 # ------ Plotting Tspan vs Qc ------ one figure for each value of variable_1
 
-for i in range(variable_1_range):
-    for k in range(cases):
-        plt.figure(i+1)  # This is in order to not plot over any of the previous figures
-        plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[k], color=col[k])
-        legends.append('{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units))
+if cases != 1:
 
-    # plt.title('Influence of aspect ratio')
-    plt.xlabel('Cooling capacity [W]')
-    plt.ylabel('$T_{span}$ [K]')
-    plt.grid(which='major', axis='both')
-    plt.legend(legends, title='{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units)) # Use when there is more than one Thot in the results
-    # plt.legend(legends)  # Use when there is only one Thot in the results
+    for i in range(variable_1_range):
+        for k in range(cases):
+            plt.figure(i+1)  # This is in order to not plot over any of the previous figures
+            plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[k], color=col[k])
+            legends.append('{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units))
+
+        # plt.title('Influence of aspect ratio')
+        plt.xlabel('Cooling capacity [W]')
+        plt.ylabel('$T_{span}$ [K]')
+        # plt.xlim(0, np.amax(Qc[:, :, :])+2)
+        plt.grid(which='major', axis='both')
+        plt.legend(legends, title='{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units)) # Use when there is more than one Thot in the results
+        # plt.legend(legends)  # Use when there is only one Thot in the results
 
 # ------ Plotting Tspan vs Qc ------ one figure for each value of variable_2
 
-for k in range(cases):
-    for i in range(variable_1_range):
-        plt.figure(k+variable_1_range+1)  # This is in order to not plot over any of the previous figures
-        plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[i], color=col[i])
-        legends2.append('{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units))
+    for k in range(cases):
+        for i in range(variable_1_range):
+            plt.figure(k+variable_1_range+1)  # This is in order to not plot over any of the previous figures
+            plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[i], color=col[i])
+            legends2.append('{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units))
 
-    # plt.title('Influence of aspect ratio')
-    plt.xlabel('Cooling capacity [W]')
-    plt.ylabel('$T_{span}$ [K]')
-    plt.grid(which='major', axis='both')
-    plt.legend(legends2, title='{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units)) # Use when there is more than one Thot in the results
-    # plt.legend(legends2)  # Use when there is only one Thot in the results
+        # plt.title('Influence of aspect ratio')
+        plt.xlabel('Cooling capacity [W]')
+        plt.ylabel('$T_{span}$ [K]')
+        # plt.xlim(0, np.amax(Qc[:, :, :])+2)
+        plt.grid(which='major', axis='both')
+        plt.legend(legends2, title='{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units)) # Use when there is more than one Thot in the results
+        # plt.legend(legends2)  # Use when there is only one Thot in the results
 
-# plt.show()
 
 # ------------- Contour plot of Qc vs Vflow and Thot
 
@@ -135,11 +134,14 @@ if variable_1_range != 1 and variable_2_values != []:
         plt.ylabel('{} [{}]'.format(variable_2_name, variable_2_units))
         plt.title('Qc [W] for Tspan = {} [K]'.format(Tspan_contour))
         plt.show()
+        '''Check the following documentation for further details on how to make contour plots and colorbars:
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
+        https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
+        https://matplotlib.org/stable/api/contour_api.html#matplotlib.contour.ContourLabeler.clabel'''
 
-'''Check the following documentation for further details on how to make contour plots and colorbars:
-https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.contour.html
-https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.colorbar.html
-https://matplotlib.org/stable/api/contour_api.html#matplotlib.contour.ContourLabeler.clabel'''
+else:
+    plt.show()
+
 
 # ------------- Surface plot of Qc vs Lreg and Vflow
 
