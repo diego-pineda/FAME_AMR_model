@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
 
-        casenum  = int(np.floor(case/(hotResolution*coldResolution)))
+        casenum  = int(np.floor(case/(hotResolution * coldResolution * xResolution)))
         fileName = "{}.txt".format(jobName)
 
         # ------- Parameters that change for the cases to study -------
