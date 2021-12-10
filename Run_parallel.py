@@ -2,7 +2,7 @@ from FAME_DP_V1 import runActive
 import numpy as np
 import sys
 from configurations import R8
-
+# 'Changed precision of output matrices from 6f to 4f.'
 # ------- Some useful functions for storing data --------
 
 def FileSave(filename, content):
@@ -13,33 +13,56 @@ def FileSave(filename, content):
 def FileSaveMatrix(filename, content):
     with open(filename, "a") as f:
         for line in content:
-            f.write(" ".join("{:9.6f}\t".format(x) for x in line))
+            f.write(" ".join("{:9.4f}\t".format(x) for x in line))
             f.write("\n")
 
 
 def FileSaveVector(filename, content):
     with open(filename, "a") as f:
-        f.write(" ".join("{:9.6f}\t".format(x) for x in content))
+        f.write(" ".join("{:9.4f}\t".format(x) for x in content))
         f.write("\n")
 
 
-# ------- Definition of main variables of the cases to simulate -------
+# ------- Definition of the variables that change for the cases to simulate -------
 
-'''Note: In principle any variable could become x in xResolution, e.g. dispV. It does not mean that
-the name xResolution needs to be adjusted. hotResolution must be 1 when xResolution is different than 1, but they both
-can be 1 simultaneously. For each case to simulate, the value of the variable that is going to take the place of x, 
-must be defined in the same way Thot is defined, i.e. by using the following equation (taking as an example the 
-variable dispV): dispV = xArr[int(np.floor(case/coldResolution)%xResolution)]. This variable has to be defined outside 
-the if conditions (if casenum == 0, 1, 2, etc).'''
+'''Note: In principle any parameter could become one of the changing variables, i.e. vble1, vble2, and vble3. '''
 
-numCases       = 6
-hotResolution  = 1
-coldResolution = 6
-xResolution    = 1
+Thotlow = 273+27  # [K]
+Thothigh = 273+37  # [K]
+hotResolution = 6
 
-Thotarr = np.linspace(273+27, 273+27, hotResolution)
-xArr    = []
-maxcase = numCases * hotResolution * coldResolution * xResolution
+MinTspan = 2  # [K]
+MaxTSpan = 12  # [K]
+TspanResolution = 6
+
+vble1name = 'Vflow'
+vble1units = 'Lpm'
+vble1lowvalue = 0.5
+vble1highvalue = 4.5
+vble1resolution = 9
+
+vble2name = 'fAMR'
+vble2units = 'Hz'
+vble2lowvalue = 1
+vble2highvalue = 2
+vble2resolution = 11
+
+vble3name = 'Dsp'
+vble3units = 'm'
+vble3lowvalue = 600e-6
+vble3highvalue = 600e-6
+vble3resolution = 1
+
+Thotarr = np.linspace(Thotlow, Thothigh, hotResolution)
+Tspanarr = np.linspace(MinTspan, MaxTSpan, TspanResolution)
+
+vble1values = np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
+vble2values = np.linspace(vble2lowvalue, vble2highvalue, vble2resolution)
+vble3values = np.linspace(vble3lowvalue, vble3highvalue, vble3resolution)
+
+numGroups = vble1resolution * vble2resolution * vble3resolution
+maxcase = numGroups * hotResolution * TspanResolution
+
 
 # ------- Input parameters common to all cases -------
 
@@ -62,13 +85,13 @@ Tambset       = 300
 # Flow profile
 
 # - FAME cooler
-dispV         = 30.52e-6
+# dispV         = 30.52e-6
 acc_period    = 10
 max_flow_per  = 45
 full_magn_ang = 30
 unbal_rat     = 1
 from sourcefiles.device.FAME_V_flow import vol_flow_rate
-volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+# volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
 
 # - POLO cooler
 # dispV = 4.74e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
@@ -114,46 +137,34 @@ if __name__ == '__main__':
 
     def RunCaseThotTcold(case, jobName):  # DP: this is necessary for running arrays of tasks in the cluster
 
-        casenum  = int(np.floor(case/(hotResolution * coldResolution * xResolution)))
+        casegroup  = int(np.floor(case/(hotResolution * TspanResolution)))
         fileName = "{}.txt".format(jobName)
+
+        Thotindex = int(np.floor(case / TspanResolution) % hotResolution)
+        Tspanindex = int(case % TspanResolution)
+        vble1index = int(np.floor((casegroup - vble1resolution * int(np.floor(casegroup / vble1resolution))) / 1))
+        vble2index = int(np.floor((casegroup - vble1resolution * vble2resolution * int(np.floor(casegroup / (vble1resolution * vble2resolution)))) / vble1resolution))
+        vble3index = int(np.floor((casegroup - vble1resolution * vble2resolution * vble3resolution * int(np.floor(casegroup / (vble1resolution * vble2resolution * vble3resolution)))) / (vble1resolution * vble2resolution)))
 
         # ------- Parameters that change for the cases to study -------
 
-        # Note: place in this section the parameter that is to be changed in the simulations. The number of 'if'
-        # conditions must be at least equal to the number of cases (numCases) to run. The frequency of the
-        # AMR cycle is set to be the changing parameter in what follows. It can be any of the input parameters listed
-        # above. Please remember that the changing parameter must be commented out in the section above.
+        # Note: place in this section the parameters that change in the simulations. The volume displacement and
+        # frequency of the AMR cycle are taken as changing parameters in what follows, but it can be any of the input
+        # parameters listed above. Please remember that the changing parameters must be commented out in the section
+        # above. It is not necessary to provide three changing parameters necessarily
 
-        if casenum == 0:
-            # Frequency of AMR cycle
-            ff = 0.25
+        dispV = vble1values[vble1index] * 16.667e-6
+        ff = vble2values[vble2index]
+        R8.Dsp = vble3values[vble3index]
 
-        if casenum == 1:
-            # Frequency of AMR cycle
-            ff = 0.5
-
-        if casenum == 2:
-            # Frequency of AMR cycle
-            ff = 0.75
-
-        if casenum == 3:
-            # Frequency of AMR cycle
-            ff = 1
-
-        if casenum == 4:
-            # Frequency of AMR cycle
-            ff = 1.25
-
-        if casenum == 5:
-            # Frequency of AMR cycle
-            ff = 1.5
+        volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
 
         # -------- Setting values of Thot and Tcold for simulation -------
 
-        Thot = Thotarr[int(np.floor(case/coldResolution)%hotResolution)]
-        Tcold = Thot - MaxTSpan*(case%(coldResolution))/(coldResolution)-0.1
+        Thot = Thotarr[Thotindex]
+        Tcold = Thot - Tspanarr[Tspanindex]
 
-        print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casenum, Thot, Tcold))
+        print("Iteration: {}/{} Case number: {} Thot: {} Tcold: {}".format(case, maxcase, casegroup, Thot, Tcold))
         print("Tamb = {} [K], V_flow_rate = {} [m3/s], Freq AMR = {} [Hz]".format(Tambset, dispV, ff))
 
         results = runActive(case,Thot,Tcold,cen_loc,Tambset,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,cName,jobName,
