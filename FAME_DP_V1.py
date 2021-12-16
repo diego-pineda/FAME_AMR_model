@@ -503,7 +503,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
     print("The volume displace in one blowing process is: {} [m^3]".format(vol_disp))
 
-    pdrop = lambda at, dP, sf: (dP) * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
+    pdrop = lambda at, dP, sf: dP * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
     dPreg    = 5.2 * 6894.7572931783/2
     Lreg_exp = 22.5e-3
@@ -513,15 +513,15 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     # Calculate the utilization as defined by Armando's paper
     #Uti     = (Vd * 1000 * 4200) / (1000 * Ac * (1  - er) * 6100 * (L_reg1+L_reg2))
-    Uti = (vol_disp * 1000 * 4200) / (235 * Ac * (1 - er) * mRho * (L_reg1+L_reg2)) # DP: 0.012 is the length of the voids
+    Uti = (vol_disp * 1000 * 4200) / (235 * Ac * (1 - er) * mRho * (L_reg1+L_reg2))
     # TODO: the heat capacity of the MCM should be read from an input file or calculated somehow
-    # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 in the numerator is the density of water.
+    # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 is the density of water.
     # DP comment: 235 in the denominator is an average value of Cp of Gd.
-    print('Utilization: {0:1.3f} Frequency: {1:1.2f} [Hz]'.format(Uti,freq))
-    #print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
+    print('Utilization: {0:1.3f} Frequency: {1:1.2f} [Hz]'.format(Uti, freq))
+    # print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
 
     # Initial ch-factor
-    ch_factor = np.ones(N + 1)*ch_fac # DP comment: ch_fac = 0.5 is set in the configuration file. This is the averaging cooling and heating factor
+    ch_factor = np.ones(N + 1)*ch_fac  # ch_fac is defined in configuration file for averaging cooling and heating props
 
     # This is modification of the casing BC. DP comment: in the configuration file, CL_set = "grad" and MOD_CL=0
     if CL_set=="Tamb":
