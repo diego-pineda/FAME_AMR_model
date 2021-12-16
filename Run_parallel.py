@@ -2,7 +2,7 @@ from FAME_DP_V1 import runActive
 import numpy as np
 import sys
 from configurations import R8
-# 'Changed precision of output matrices from 6f to 4f.'
+
 # ------- Some useful functions for storing data --------
 
 def FileSave(filename, content):
@@ -27,25 +27,25 @@ def FileSaveVector(filename, content):
 
 '''Note: In principle any parameter could become one of the changing variables, i.e. vble1, vble2, and vble3. '''
 
-Thotlow = 273+27  # [K]
-Thothigh = 273+37  # [K]
-hotResolution = 6
+Thotlow = 273+33 # [K]
+Thothigh = 273+41  # [K]
+hotResolution = 5
 
-MinTspan = 2  # [K]
-MaxTSpan = 12  # [K]
-TspanResolution = 6
+MinTspan = 3  # [K]
+MaxTSpan = 30  # [K]
+TspanResolution = 10
 
 vble1name = 'Vflow'
 vble1units = 'Lpm'
-vble1lowvalue = 0.5
-vble1highvalue = 4.5
-vble1resolution = 9
+vble1lowvalue = 0.1
+vble1highvalue = 4
+vble1resolution = 13
 
 vble2name = 'fAMR'
 vble2units = 'Hz'
 vble2lowvalue = 1
-vble2highvalue = 2
-vble2resolution = 11
+vble2highvalue = 1
+vble2resolution = 1
 
 vble3name = 'Dsp'
 vble3units = 'm'
@@ -53,12 +53,12 @@ vble3lowvalue = 600e-6
 vble3highvalue = 600e-6
 vble3resolution = 1
 
-Thotarr = np.linspace(Thotlow, Thothigh, hotResolution)
-Tspanarr = np.linspace(MinTspan, MaxTSpan, TspanResolution)
-
-vble1values = np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
+vble1values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4] #np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
 vble2values = np.linspace(vble2lowvalue, vble2highvalue, vble2resolution)
 vble3values = np.linspace(vble3lowvalue, vble3highvalue, vble3resolution)
+
+Thotarr = np.linspace(Thotlow, Thothigh, hotResolution)
+Tspanarr = np.linspace(MinTspan, MaxTSpan, TspanResolution)
 
 numGroups = vble1resolution * vble2resolution * vble3resolution
 maxcase = numGroups * hotResolution * TspanResolution
@@ -67,7 +67,7 @@ maxcase = numGroups * hotResolution * TspanResolution
 # ------- Input parameters common to all cases -------
 
 # Numerical parameters
-nodes         = 400
+nodes         = 600
 timesteps     = 600
 time_limit    = 600  # [min] Time limit for the simulation in minutes
 cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
@@ -76,7 +76,7 @@ maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to tak
 cen_loc       = 0
 
 # Temperatures
-MaxTSpan      = 30
+
 Tambset       = 300
 
 # Frequency of AMR cycle
@@ -86,7 +86,7 @@ Tambset       = 300
 
 # - FAME cooler
 # dispV         = 30.52e-6
-acc_period    = 10
+acc_period    = 5
 max_flow_per  = 45
 full_magn_ang = 30
 unbal_rat     = 1
@@ -129,8 +129,8 @@ CVD  = 1
 CMCE = 1
 
 # Heat transfer models
-htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
-leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
+leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
 
 
 if __name__ == '__main__':
@@ -142,6 +142,7 @@ if __name__ == '__main__':
 
         Thotindex = int(np.floor(case / TspanResolution) % hotResolution)
         Tspanindex = int(case % TspanResolution)
+
         vble1index = int(np.floor((casegroup - vble1resolution * int(np.floor(casegroup / vble1resolution))) / 1))
         vble2index = int(np.floor((casegroup - vble1resolution * vble2resolution * int(np.floor(casegroup / (vble1resolution * vble2resolution)))) / vble1resolution))
         vble3index = int(np.floor((casegroup - vble1resolution * vble2resolution * vble3resolution * int(np.floor(casegroup / (vble1resolution * vble2resolution * vble3resolution)))) / (vble1resolution * vble2resolution)))
