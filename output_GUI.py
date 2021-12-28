@@ -245,28 +245,6 @@ class Window:
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION I - Contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        # %%%%%%%%%%  Drop down menus (Deprecated) %%%%%%%%%%%%%
-
-
-        # self.hor_axis = StringVar(self.root)
-        # self.hor_axis.set(self.vbles_used[0])
-        # Label(self.root, text = "Horizontal axis").grid(row=5, column=0)
-        # self.hor_menu = OptionMenu(self.root, self.hor_axis, *self.vbles_used)
-        # self.hor_menu.grid(row=5, column=1)
-        #
-        # self.ver_axis = StringVar(self.root)
-        # self.ver_axis.set(self.vbles_used[1])
-        # Label(self.root, text = "Vertical axis").grid(row=6, column=0)
-        # self.ver_menu = OptionMenu(self.root, self.ver_axis, *self.vbles_used)
-        # self.ver_menu.grid(row=6, column=1)
-
-        # %%%%%%%%%%%%%%%% Entry (Deprecated) %%%%%%%%%%%%%%%%%%
-
-        # self.label_slice_vble = Label(self.root, text = 'Choose one slice.' + self.vbles_used[2] + '=' + str(variable_2_values)).grid(row=7, column=0)
-        # self.slice_entry = Entry(self.root, width = 5)
-        # self.slice_entry.insert(END, str(variable_2_values[0]))
-        # self.slice_entry.grid(row=7, column = 1)
-
         # %%%%%%%%%%%%%%%%% Top grid labels %%%%%%%%%%%%%%%%%%%
 
         Label(self.root, text="Variables", font='Helvetica 10 bold').grid(row=7, column=0, sticky='w', pady=10, ipadx=10)
@@ -346,28 +324,6 @@ class Window:
         self.menus[2].configure(width=6)
         self.menus[3].configure(width=6)
         self.menus[4].configure(width=6)
-
-        # %%%%%%%%%%%%%%%% Entries (Deprecated) %%%%%%%%%%%%%%%%%
-
-        # self.entries = [Entry(self.frames[0], width=5), Entry(self.frames[1], width=5), Entry(self.frames[2], width=5), Entry(self.frames[3], width=5), Entry(self.frames[4], width=5)]
-        # self.entries[0].grid(row=8, column=3)
-        # self.entries[1].grid(row=8, column=3)
-        # self.entries[2].grid(row=8, column=3)
-        # self.entries[3].grid(row=8, column=3)
-        # self.entries[4].grid(row=8, column=3)
-
-        # self.Tspan_frame = Frame(self.root)
-        # self.Tspan_frame.grid(row=8, column=3)
-        # self.Thot_frame = Frame(self.root)
-        # self.Thot_frame.grid(row=9, column=3)
-
-        # self.Tspan_entry = Entry(self.Tspan_frame, width=5).grid(row=8, column=3)
-        # self.Tspan_entry = Entry(self.frames[0], width=5).grid(row=8, column=3)
-        # self.Thot_entry = Entry(self.Thot_frame, width=5).grid(row=9, column=3)
-        # self.Thot_entry = Entry(self.frames[1], width=5).grid(row=9, column=3)
-        # self.vble1_entry = Entry(self.frames[2], width=5).grid(row=10, column=3)
-        # self.vble2_entry = Entry(self.frames[3], width=5).grid(row=11, column=3)
-        # self.vble3_entry = Entry(self.frames[4], width=5).grid(row=12, column=3)
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION II - Tspan vs Qcool plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
