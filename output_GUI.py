@@ -187,26 +187,26 @@ legends2 = []
 Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
 Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
 
-# for files in os.listdir(directory):  # Goes over all files in the directory
-#
-#     if '.txt' in files:
-#         if 'index' in files:
-#             continue
-#         # case = int(files.split('-')[1].split('.')[0])
-#         case = int(files.split('.')[0])
-#         casegroup = int(np.floor(case / (span_resolution * hot_resolution)))
-#
-#         a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
-#         b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
-#         c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
-#         y = int(np.floor(case / span_resolution) % hot_resolution)
-#         x = case % span_resolution
-#         # print(case, z, x, y)
-#         myfile = open(directory + '/' + files, "rt")
-#         contents = myfile.read()
-#         myfile.close()
-#         Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
-#         Qh[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[1])
+for files in os.listdir(directory):  # Goes over all files in the directory
+
+    if '.txt' in files:
+        if 'index' in files:
+            continue
+        # case = int(files.split('-')[1].split('.')[0])
+        case = int(files.split('.')[0])
+        casegroup = int(np.floor(case / (span_resolution * hot_resolution)))
+
+        a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
+        b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
+        c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
+        y = int(np.floor(case / span_resolution) % hot_resolution)
+        x = case % span_resolution
+        # print(case, z, x, y)
+        myfile = open(directory + '/' + files, "rt")
+        contents = myfile.read()
+        myfile.close()
+        Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
+        Qh[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[1])
 
 
 
@@ -227,6 +227,7 @@ parameter_values = [Tspan, Thot, variable_1_values, variable_2_values, variable_
 vble_names = ['Tspan', 'Thot', variable_1_name, variable_2_name, variable_3_name]
 vble_units = ['K', 'K', variable_1_units, variable_2_units, variable_3_units]
 Qc_indices = [0, 0, 0, 0, 0]
+Qc_indices1 = [0, 0, 0, 0, 0]
 Qc_indices2 = [0, 0, 0, 0, 0]
 
 
@@ -334,7 +335,7 @@ class Window:
 
         self.Z_option = IntVar(self.root)
         # self.Y_option = IntVar(self.root)
-        self.Z_option.set(2)  # Note: the default X variable is set to be Tspan
+        self.Z_option.set(2)  # Note: the default X variable is set to be Thot
         # self.Y_option.set(2)  # Note: the default Y variable is set to be Thot
 
         # Radiobutton(self.root, variable=self.Z_option, value=1, command=self.deactivate_entries).grid(row=8, column=5)
@@ -385,6 +386,67 @@ class Window:
         self.menus2[3].configure(width=6)
         self.menus2[4].configure(width=6)
 
+        # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION III - Qcool vs X plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        Label(self.root, text="Variable in X", font='Helvetica 10 bold').grid(row=7, column=7, sticky='e', pady=10, ipadx=30)
+        Label(self.root, text="Series", font='Helvetica 10 bold').grid(row=7, column=8, sticky='w', pady=10, ipadx=35)
+        Label(self.root, text="Parameters", font='Helvetica 10 bold').grid(row=7, column=9, sticky='w', pady=10)
+
+        # %%%%%%%%%%%%%%%%%%% Radiobuttons %%%%%%%%%%%%%%%%%%%%
+
+        self.Qc_X_option = IntVar(self.root)
+        self.Qc_Z_option = IntVar(self.root)
+        self.Qc_X_option.set(1)  # Note: the default X variable is set to be Tspan
+        self.Qc_Z_option.set(2)  # Note: the default Y variable is set to be Thot
+
+        Radiobutton(self.root, variable=self.Qc_X_option, value=1, command=self.deactivate_menus3).grid(row=8, column=7, sticky='e', ipadx=50)
+        Radiobutton(self.root, variable=self.Qc_Z_option, value=1, command=self.deactivate_menus3).grid(row=8, column=8, sticky='w', ipadx=50)
+
+        Radiobutton(self.root, variable=self.Qc_X_option, value=2, command=self.deactivate_menus3).grid(row=9, column=7, sticky='e', ipadx=50)
+        Radiobutton(self.root, variable=self.Qc_Z_option, value=2, command=self.deactivate_menus3).grid(row=9, column=8, sticky='w', ipadx=50)
+
+        Radiobutton(self.root, variable=self.Qc_X_option, value=3, command=self.deactivate_menus3).grid(row=10, column=7, sticky='e', ipadx=50)
+        Radiobutton(self.root, variable=self.Qc_Z_option, value=3, command=self.deactivate_menus3).grid(row=10, column=8, sticky='w', ipadx=50)
+
+        Radiobutton(self.root, variable=self.Qc_X_option, value=4, command=self.deactivate_menus3).grid(row=11, column=7, sticky='e', ipadx=50)
+        Radiobutton(self.root, variable=self.Qc_Z_option, value=4, command=self.deactivate_menus3).grid(row=11, column=8, sticky='w', ipadx=50)
+
+        Radiobutton(self.root, variable=self.Qc_X_option, value=5, command=self.deactivate_menus3).grid(row=12, column=7, sticky='e', ipadx=50)
+        Radiobutton(self.root, variable=self.Qc_Z_option, value=5, command=self.deactivate_menus3).grid(row=12, column=8, sticky='w', ipadx=50)
+
+        # %%%%%%%%%%%%%%%%%%% Drop down menus %%%%%%%%%%%%%%%%%
+
+        # Note: the following frames are necessary for deactivating the dropdown menus of the selected radio-buttons
+        self.frames3 = [Frame(self.root), Frame(self.root), Frame(self.root), Frame(self.root), Frame(self.root)]
+        # self.frames[0].grid(row=8, column=3)  # Note: not included because Qc_X_option is set to 1
+        # self.frames[1].grid(row=9, column=3)  # Note: not included because Qc_Z_option is set to 2
+        self.frames3[2].grid(row=10, column=9, sticky='ew')
+        self.frames3[3].grid(row=11, column=9, sticky='ew')
+        self.frames3[4].grid(row=12, column=9, sticky='ew')
+
+        self.menu_vbles3 = [StringVar(self.root), StringVar(self.root), StringVar(self.root), StringVar(self.root), StringVar(self.root)]
+        self.menu_vbles3[2].set(parameter_values[2][0])
+        self.menu_vbles3[3].set(parameter_values[3][0])
+        self.menu_vbles3[4].set(parameter_values[4][0])
+
+        self.menus2 = [OptionMenu(self.frames3[0], self.menu_vbles3[0], *parameter_values[0]),
+                       OptionMenu(self.frames3[1], self.menu_vbles3[1], *parameter_values[1]),
+                       OptionMenu(self.frames3[2], self.menu_vbles3[2], *parameter_values[2]),
+                       OptionMenu(self.frames3[3], self.menu_vbles3[3], *parameter_values[3]),
+                       OptionMenu(self.frames3[4], self.menu_vbles3[4], *parameter_values[4])]
+
+        self.menus2[0].grid(row= 8, column=9)
+        self.menus2[1].grid(row= 9, column=9)
+        self.menus2[2].grid(row=10, column=9)
+        self.menus2[3].grid(row=11, column=9)
+        self.menus2[4].grid(row=12, column=9)
+
+        self.menus2[0].configure(width=6)
+        self.menus2[1].configure(width=6)
+        self.menus2[2].configure(width=6)
+        self.menus2[3].configure(width=6)
+        self.menus2[4].configure(width=6)
+
         # %%%%%%%%%%%%%%%%%%% Contour plot update button %%%%%%%%%%%%%%%%%%%%
 
         button1 = Button(self.root, text="Update contour plot", font='Helvetica 10 bold', command=self.update_values)
@@ -395,9 +457,15 @@ class Window:
         button2 = Button(self.root, text="Update Tspan vs Qc plot", font='Helvetica 10 bold', command=self.update_values)
         button2.grid(row=13, column=5, columnspan=2, pady=15)
 
+        # %%%%%%%%%%%%%%%%%%%%% Qc vs X update button %%%%%%%%%%%%%%%%%%%%%%%
+
+        button3 = Button(self.root, text="Update Qc vs X plot", font='Helvetica 10 bold', command=self.update_values)
+        button3.grid(row=13, column=7, columnspan=3, pady=15)
+
         self.root.bind("<Return>", self.update_values)
         self.plot_values()
         self.plot_Tspan_vs_Qc()
+        self.plot_Qc_vs_X()
         pass
 
     def deactivate_entries(self):
@@ -428,9 +496,24 @@ class Window:
             self.frames2[index-1].grid(row=7+index, column=6, sticky='ew')
         return None
 
+    def deactivate_menus3(self):
+        indices = [1, 2, 3, 4, 5]
+        a = self.Qc_X_option.get()
+        b = self.Qc_Z_option.get()
+        indices.remove(a)
+        if b in indices:
+            indices.remove(b)
+        # print(b)
+        self.frames3[a-1].grid_forget()
+        self.frames3[b-1].grid_forget()
+        for index in indices:
+            self.frames3[index-1].grid(row=7+index, column=9, sticky='ew')
+        return None
+
     def update_values(self, event=None):
         self.plot_values()
         self.plot_Tspan_vs_Qc()
+        self.plot_Qc_vs_X()
         return None
 
     def plot_values(self):
@@ -481,8 +564,8 @@ class Window:
         indices = [2, 3, 4, 5]
         aa = self.Z_option.get()
         # bb = self.Y_option.get()
-        Qc_indices2[0] = slice(0, len(parameter_values[0]), None)
-        Qc_indices2[aa-1] = slice(0, len(parameter_values[aa-1]), None)
+        Qc_indices1[0] = slice(0, len(parameter_values[0]), None)
+        Qc_indices1[aa-1] = slice(0, len(parameter_values[aa-1]), None)
         # Qc_indices[bb-1] = slice(0, len(parameter_values[bb-1]), None)
 
         indices.remove(aa)
@@ -490,12 +573,12 @@ class Window:
         #     indices.remove(bb)
         legend_title = []
         for index in indices:
-            Qc_indices2[index-1] = list(parameter_values[index-1]).index(float(self.menu_vbles2[index-1].get()))
+            Qc_indices1[index-1] = list(parameter_values[index-1]).index(float(self.menu_vbles2[index-1].get()))
             legend_title.append('{} = {} [{}]'.format(vble_names[index-1], self.menu_vbles2[index-1].get(), vble_units[index-1]))
 
         print(Qc_indices)
 
-        x_for_plot = Qc[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+        x_for_plot = Qc[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
         # if bb < aa:
         #     Z = np.transpose(Z)
         # X, Y = np.meshgrid(parameter_values[aa-1], parameter_values[bb-1])
@@ -530,6 +613,58 @@ class Window:
         axes.set_xlabel("Qc [W]")
         axes.set_ylabel("Tspan [K]")
 
+    def plot_Qc_vs_X(self):
+        indices = [1, 2, 3, 4, 5]
+        aa = self.Qc_X_option.get()
+        bb = self.Qc_Z_option.get()
+        # Qc_indices2[0] = slice(0, len(parameter_values[0]), None)
+        Qc_indices2[aa-1] = slice(0, len(parameter_values[aa-1]), None)
+        Qc_indices2[bb-1] = slice(0, len(parameter_values[bb-1]), None)
+
+        indices.remove(aa)
+        if bb in indices:
+            indices.remove(bb)
+        legend_title = []
+        for index in indices:
+            Qc_indices2[index-1] = list(parameter_values[index-1]).index(float(self.menu_vbles3[index-1].get()))
+            legend_title.append('{} = {} [{}]'.format(vble_names[index-1], self.menu_vbles3[index-1].get(), vble_units[index-1]))
+
+        print(Qc_indices)
+
+        y_for_plot = Qc[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+        if bb < aa:
+            y_for_plot = np.transpose(y_for_plot)
+        # X, Y = np.meshgrid(parameter_values[aa-1], parameter_values[bb-1])
+        print(y_for_plot)
+
+        xlab = "{} [{}]".format(vble_names[aa-1], vble_units[aa-1])
+        # ylab = vble_names[bb-1]
+        legends = []
+
+        figure = plt.figure(figsize=(6, 4), dpi=100)
+        for i in range(len(parameter_values[bb-1])):
+            figure.add_subplot(111).plot(parameter_values[aa-1], y_for_plot[i, :])
+            legends.append("{}".format(parameter_values[bb-1][i]))
+
+        # CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, np.amax(Z), 100), extend='neither', cmap='jet')
+        # plt.colorbar(mappable=CS, aspect=10)
+        chart = FigureCanvasTkAgg(figure, self.root)
+        chart.get_tk_widget().grid(row=14, column=7, columnspan=3, padx=10)
+
+        toolbar = NavigationToolbar2Tk(chart, self.root, pack_toolbar=False)
+        toolbar.update()
+        toolbar.grid(row=15, column=7, columnspan=3, sticky='w', padx=10)
+
+        # plt.grid(True)
+        axes = plt.axes()
+        axes.set_ylim([0, np.amax(y_for_plot)+2])
+        # axes.set_ylim([-3, 3])
+        # axes.set_xlabel(xlab)
+        # axes.set_ylabel(ylab)
+        axes.legend(legends, title="{} [{}]".format(vble_names[bb-1], vble_units[bb-1]))  # , title=legend_title
+        axes.grid(True)
+        axes.set_xlabel(xlab)
+        axes.set_ylabel("Qc [W]")
 
         # index = list(Tspan[0, 0, :]).index(Tspan_contour)
         #
