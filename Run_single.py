@@ -1,61 +1,67 @@
 from FAME_DP_V1 import runActive
 import numpy as np
 
-
 # ---------------------------------- Calculation of just one case --------------------------------------
 
 #runActive(caseNum,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,ConfName,jobName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
 
-caseNumber    = 2
+caseNumber    = 1
 
 # Numerical parameters
 nodes         = 300
 timesteps     = 400
 time_limit    = 600  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-3  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
 
 # Simulation temperatures
-Thot          = 300
-Tcold         = 295
+Thot          = 295
+Tcold         = 290
 Tambset       = 300
 
 # Frequency of AMR cycle
-ff            = 0.5  # [Hz] frequency of AMR cycle
+ff            = 1  # [Hz] frequency of AMR cycle
 
 # Flow profile
 
 # FAME cooler
-# dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
-# acc_period    = 10
-# max_flow_per  = 45
-# full_magn_ang = 30
-# unbal_rat     = 1
-# from sourcefiles.device.FAME_V_flow import vol_flow_rate
-# volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+acc_period    = 5
+max_flow_per  = 45
+full_magn_ang = 30
+unbal_rat     = 1
+from sourcefiles.device.FAME_V_flow import vol_flow_rate
+volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
 
 # POLO cooler
-dispV = 6.85e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
-from sourcefiles.device.polo_V_flow import polo_vol_flow
-volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
+# dispV = 6.85e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+# from sourcefiles.device.polo_V_flow import polo_vol_flow
+# volum_flow_profile = polo_vol_flow(timesteps, dispV, ff)
 
 # Magnetic field profile
 
 # FAME Cooler
-# from sourcefiles.device import FAME_app_field
-# app_field = FAME_app_field.app_field(timesteps, nodes)
+from sourcefiles.device import FAME_app_field
+app_field = FAME_app_field.app_field(timesteps, nodes)
 
 # POLO cooler
-from sourcefiles.device.polo_mag_field import polo_app_field
-app_field = polo_app_field(timesteps, nodes, 0.1)
+# from sourcefiles.device.polo_mag_field import polo_app_field
+# app_field = polo_app_field(timesteps, nodes, 0.1)
 
 # Geometry of regenerator
-# Dsp           = 600e-6
-# er            = 0.36
-cName   = "polo_1"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "polo_trial" # DP: It is better to use underline to connect words because this is used as file name
+'''Geometric parameters that differ from the configuration from case to case can be adjusted here. This way it is not
+necessary to create a new configuration file each time a single parameter need to be changed. Take the following lines
+starting with R8 as an example.'''
+from configurations import R8
+R8.species_discription = ['reg-M6', 'reg-M7', 'reg-M8', 'reg-M9', 'reg-M10', 'reg-M11', 'reg-M12', 'reg-M13', 'reg-M14', 'reg-M15']
+R8.x_discription = [0, 0.006, 0.012, 0.018, 0.024, 0.030, 0.036, 0.042, 0.048, 0.054, 0.060]
+R8.reduct_coeff = dict(M0=1, M1=0.55, M2=0.77, M6=1, M7=1, M8=1, M9=1, M10=1, M11=1, M12=1, M13=1, M14=1, M15=1)
+R8.mK = 6
+R8.mRho = 6100
+cName   = "R8"  # Name of file where the geometric configuration of the regenerator is defined
+jName   = "Testing_multi_layer_function"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
 
 # Switches for activating and deactivating terms in governing equations
@@ -66,13 +72,13 @@ CVD  = 1
 CMCE = 1
 
 # Heat transfer models
-htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
-leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
+htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
+leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
 
 
 results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                     jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
-                    htc_model_name, leaks_model_name,num_reg)
+                    htc_model_name, leaks_model_name, num_reg)
 
 
 # Some useful functions for storing data.
@@ -100,7 +106,7 @@ def FileSaveVector(filename, content):
 #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
 
 
-fileName = "POLO_trial_4.txt"
+fileName = "Test_new_multi_layer_function.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
 FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
