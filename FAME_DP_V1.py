@@ -309,13 +309,20 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     config = importlib.import_module('configurations.' + ConfName)
 
-    # !IMPORTANT! All configurations MUST have the same variables.
-    # If new variables are needed they must be added also here and to any configuration file to be used afterwards
-    # The advantage of importing the configuration variables in this way is to avoid having to add the import statement
-    # for any new configuration file that is needed. This way any number of configuration files can be created,
-    # and they will never have to be added here again.
-    # Any variable in the configuration file can be now changed to study its influence on AMR performance. In order to
-    # do so, as many configuration files as values of that variable are wanted need to be created.
+    ''' README. !IMPORTANT! 
+    - All configurations MUST have the same variables.
+    - If new variables are needed they must be added also here and to any configuration file to be used afterwards
+    - The advantage of importing the configuration variables in this way is to avoid having to add the import statement
+    for any new configuration file that is needed. This way any number of configuration files can be created,
+    and they will never have to be added here again.
+    - (Deprecated 03/01/2022) Any variable in the configuration file can be now changed to study its influence on AMR 
+    performance. In order to do so, as many configuration files as values of that variable are wanted need to be created
+    - (03/01/2022) Variables in the configuration file can now be modified from the inputs file, Run_parallel.py, 
+    Run_single.py, or Run_series.py. This means that in order to simulate different configurations it is no longer 
+    needed to add as many configuration files as values of the variable to be changed are wanted. Only one configuration 
+    file is needed and the variable to be changed will be modified from the inputs file by using a syntax similar to: 
+    R8.Dsp = 150e-6, where R8 would be the configuration file where the other configuration parameters are defined.
+    '''
 
     # For a cuboid regenerator
 
@@ -385,6 +392,36 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     MOD_CL  = config.MOD_CL   # Switch for activation of usage of experimental data for heat leaks
     ch_fac  = config.ch_fac   # Factor for averaging heating and cooling properties of MCMs with hysteresis
 
+    # Printing to .out file the input parameters for control purposes
+
+    print("\nThe current case uses the following AMR configuration:\n",
+          "\n{:<30}{:>10.3f}\t{:<6}".format("AMR length", L_reg1, "[m]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("AMR width", W_reg, "[m]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("AMR height", H_reg, "[m]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Particle diameter", Dsp, "[m]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("AMR porosity", er, "[-]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("MCM thermal conductivity", mK, "[W/(m*K)]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("MCM density", mRho, "[kg/m3]"),
+          "\n\n{:<30}{}".format("Species in AMR configuration", species_discription),
+          "\n{:<30}{}".format("Layer positions", x_discription))
+
+    print("\nThe current case uses the following operating parameters:\n",
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Thot", Thot, "[K]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Tcold", Tcold, "[K]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Tspan", Thot-Tcold, "[K]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Tamb", Tambset, "[K]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Max. Vol flow rate", np.amax(vol_flow_profile) / 16.667e-6, "[Lpm]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("AMR frequency", ff, "[Hz]"),
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Max. applied magnetic field", np.amax(app_field), "[T]"))
+
+    print("\nNumerical simulation parameters:\n",
+          "\n{:<30}{:>10d}\t{:<6}".format("Nodes", nodes, "[-]"),
+          "\n{:<30}{:>10d}\t{:<6}".format("Time steps", timesteps, "[-]"),
+          "\n{:<30}{:>10d}\t{:<6}".format("Maximum cycle iterations", max_cycle_iter, "[-]"),
+          "\n{:<30}{:>10d}\t{:<6}".format("Maximum time step iterations", max_step_iter, "[-]"),
+          "\n{:<30}{:>10d}\t{:<6}".format("Time limit", time_lim, "[min]"),
+          "\n{:<30}{:>10.0e}\t{:<6}".format("Cycle tolerance", cycle_tol, "[-]"))
+
     # Creating list of interpolating functions depending on selected materials
 
     materials = list(set([i for i in species_discription if i.startswith('reg')]))
@@ -435,10 +472,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # if ConfName == "R7":
     #     from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, L_reg
 
-    # TODO: check if the variables left out in configuration R7 are necessary or not.
-
-    print("Hot Side: {} Cold Side: {}".format(Thot,Tcold))
-
     # Start Timer
     t0 = time.time()
     # The space discretization considers all layers in the regenerator assembly including voids and passive layers
@@ -474,9 +507,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     maxSteps  = max_step_iter   # Maximum allowed number of time step iterations. Time step iteration breaks if reached.
     maxCycles = max_cycle_iter  # Maximum allowed number of cycle iterations. Simulation breaks if reached.
 
-    print("Number of cycle iterations: {}\nNumber of time step iterations: {}".format(maxCycles, maxSteps))
-
-
     # Build darcy velocity for all n steps
     # Sine wave (See notebook pg. 33 Theo Christiaanse Sept 2017)
     #vf = lambda at, Ac, Vd, sf: (Vd) * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at))*sys.float_info.epsilon*2
@@ -501,7 +531,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for i in range(int(np.floor((nt+1)/2))):
         v_disp = V[i]*DT  # Integration using the rectangle rule
         vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
-    print("The volume displace in one blowing process is: {} [m^3]".format(vol_disp))
+    print("\nVolume displaced in one blowing process: {:.3e} [L]".format(vol_disp*1000))
 
     pdrop = lambda at, dP, sf: dP * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
@@ -517,7 +547,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # TODO: the heat capacity of the MCM should be read from an input file or calculated somehow
     # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 is the density of water.
     # DP comment: 235 in the denominator is an average value of Cp of Gd.
-    print('Utilization: {0:1.3f} Frequency: {1:1.2f} [Hz]'.format(Uti, freq))
+    print('Utilization: {0:1.3f}'.format(Uti))
     # print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
 
     # Initial ch-factor
@@ -602,7 +632,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # We need to distribute the space identifiers along a matrix to use it later.
     # This funcion cycles through x_discription until it finds a new domain then sets acording
     # to the int_discription
-    int_discription = np.zeros(N+1,dtype=np.int)
+    int_discription = np.zeros(N+1, dtype=np.int)
     species_descriptor = []
     xloc = np.zeros(N+1)
     # Set the rest of the nodes to id with geoDis(cription)
@@ -730,12 +760,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     s1 = np.linspace(0, 1, N + 1)  # DP comment: Initial solid temperature. Linear distribution from Tcold to Thot
 
     # Check is there is some pickeled data
-    PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName,int(caseNum))
+    PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName, int(caseNum))
     print("Pickle Data File: {}".format(PickleFileName))
     try:
         # we open the file for reading
         fileObject = open(PickleFileName,'rb')
-        print("we are loading the pickle file!")
+        print("Loading the pickle file...")
         # load the object from the file into var b
         bbb = pickle.load(fileObject)
         y = bbb[0]
@@ -745,15 +775,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         isCycle = bbb[4]
     except FileNotFoundError:
         # Keep preset values
-        print("started normal")
-        y = np.ones((nt+1, N + 1))*y1 # DP comment: initial temperature distribution for every time step is set to a linear distribution from Tcold to Thot
-        s = np.ones((nt+1, N + 1))*s1
+        print("Started normal!\n")
+        y = np.ones((nt+1, N+1))*y1 # DP comment: initial temperature distribution for every time step is set to a linear distribution from Tcold to Thot
+        s = np.ones((nt+1, N+1))*s1
         stepTolInt = 0
         # Initial guess of the cycle values.
         iyCycle = np.copy(y)
         isCycle = np.copy(s)
 
     MFM = np.ones(N + 1)  # Magnetic Field Modifier
+    int_field = np.zeros((nt+1, N+1))  # Matrix to store internal magnetic field values for every time step and node
 
     cycleTol   = 0 # DP comment: this is equivalent to a boolean False
     cycleCount = 1 # DP comment: it was defined above that the maximum number of cycle iterations is 2000
@@ -982,6 +1013,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # ------------]
                         # --- Calculation of internal magnetic field
                         Hint = appliedFieldm[n, i] * MFM[i]
+                        int_field[n, i] = Hint
                         # --- Calculation of rho*cs fluid
                         dT = 1
                         Tr = psT[i]
@@ -1184,8 +1216,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 # Check if we have hit the max steps
                 if (stepCount == maxSteps):
                     print("Hit max step count")
-                    print(AbsTolFunc(ynext,iynext,maxStepTol[stepTolInt]))
-                    print(AbsTolFunc(snext,isnext,maxStepTol[stepTolInt]))
+                    print(AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt]))
+                    print(AbsTolFunc(snext, isnext, maxStepTol[stepTolInt]))
                     print(stepTol)
                 # Copy current values to new guess and current step.
                 s[n, :] = np.copy(snext)  # DP: updated the current time step solid Temp distrib in the matrix containing all time steps temperature distributions
@@ -1229,14 +1261,19 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 coolingpowersum = coolingpowersum + coolPn
 
                 # DP: Heating power
-                tF_h = y[n,-1]*(Thot - Tcold) + Tcold
-                tF1_h = y[n+1,-1]*(Thot - Tcold) + Tcold
-                heatPn = freq*fCp((tF_h+tF1_h)/2,percGly)*fRho((tF_h+tF1_h)/2,percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
+                tF_h = y[n, -1]*(Thot - Tcold) + Tcold
+                tF1_h = y[n+1, -1]*(Thot - Tcold) + Tcold
+                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly)*fRho((tF_h+tF1_h)/2, percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
-            qc = num_reg * coolingpowersum # DP: 2 changed by 7 to account for the number of regenerators of the device
+            qc = num_reg * coolingpowersum  # DP: 2 changed by 7 to account for the number of regenerators of the device
             qh = num_reg * heatingpowersum
-            print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {3:2.5e} y-tol {4:2.5e} s-tol {5:2.5e} run time {6:4.1f} [min]".format(int(caseNum),cycleCount,qc,qh,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60 ))
+
+            print("{0:<13} {1:<15} {2:<29} {3:<29} {4:20} {5:20} {6:<20}"
+                  .format("Case num {:d}".format(int(caseNum)), "CycleCount {:d}".format(cycleCount),
+                          "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
+                          "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
+                          "Run time {:4.1f} [min]".format((time.time()-t0)/60)))
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
             coolingpowersum=0
@@ -1249,24 +1286,30 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 coolingpowersum = coolingpowersum + coolPn
 
                 # DP: Heating power
-                tF_h = y[n,-1]*(Thot - Tcold) + Tcold
-                tF1_h = y[n+1,-1]*(Thot - Tcold) + Tcold
-                heatPn = freq*fCp((tF_h+tF1_h)/2,percGly)*fRho((tF_h+tF1_h)/2,percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
+                tF_h = y[n, -1]*(Thot - Tcold) + Tcold
+                tF1_h = y[n+1, -1]*(Thot - Tcold) + Tcold
+                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly)*fRho((tF_h+tF1_h)/2, percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
-            qc = num_reg * coolingpowersum # DP: changed from 2 to 7. Number of regenerators
-            qh = num_reg * heatingpowersum # Added by DP
-            print("Case num {0:d} CycleCount {1:d} Cooling Power {2:2.5e} Heating Power {6:2.5e} y-tol {3:2.5e} s-tol {4:2.5e} run time {5:4.1f} [min]".format(int(caseNum),cycleCount,qc,max_val_y_diff,max_val_s_diff,(time.time()-t0)/60,qh ))
+            qc = num_reg * coolingpowersum  # DP: changed from 2 to 7. Number of regenerators
+            qh = num_reg * heatingpowersum  # Added by DP
+
+            print("{0:<13} {1:<15} {2:<29} {3:<29} {4:20} {5:20} {6:<20}"
+                  .format("Case num {:d}".format(int(caseNum)), "CycleCount {:d}".format(cycleCount),
+                          "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
+                          "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
+                          "Run time {:4.1f} [min]".format((time.time()-t0)/60)))
+
             # Pickle data
             aaa = (y, s, stepTolInt, iyCycle, isCycle)
             # open the file for writing
-            fileObject = open(PickleFileName,'wb')
+            fileObject = open(PickleFileName, 'wb')
             # this writes the object a to the
             # file named 'testfile'
-            pickle.dump(aaa,fileObject)
+            pickle.dump(aaa, fileObject)
             # here we close the fileObject
             fileObject.close()
-            print("saving pickle file")
+            print("Saving pickle file...")
             # Quit Program
             sys.exit()
         # Copy last value to the first of the next cycle.
@@ -1275,7 +1318,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # Add Cycle
         cycleCount = cycleCount + 1
         # Did we hit the maximum number of cycles
-        if (cycleCount == maxCycles):
+        if cycleCount == maxCycles:
             print("Hit max cycle count\n")
         # Copy current cycle to the stored value
         isCycle = np.copy(s)
@@ -1300,11 +1343,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # startwith("reg"). This array is of the same length as species_descriptor
     # DP: np.argwhere returns an array with the positions of the True values obtained from [val.startswith("reg") for val in species_descriptor].
     # DP: Finally, np.min gives the position of the first node at which the word reg is found, i.e. where the regenerator starts along the flow path
-    hot_end_node   = np.max(np.argwhere([val.startswith("reg") for val in species_descriptor])) # -1
-    eff_HB_CE = np.trapz((1-y[halft:,  cold_end_node]),x=t[halft:]) /(tau_c/2) # DP: this is in agreement with equation 8-373 of the book of Nellis and Klein
+    hot_end_node   = np.max(np.argwhere([val.startswith("reg") for val in species_descriptor]))  # -1
+    eff_HB_CE = np.trapz((1-y[halft:,  cold_end_node]), x=t[halft:]) / (tau_c/2) # DP: this is in agreement with equation 8-373 of the book of Nellis and Klein
     # DP: Effectiveness over the hot blow, which apparently occurs during the second half of the period
     # DP: this function integrates the first element over the domain given by the second element.
-    eff_CB_HE = np.trapz(y[:halft+1,  hot_end_node],x=t[:halft+1])/ (tau_c/2) # DP: Effectiveness over the cold blow
+    eff_CB_HE = np.trapz(y[:halft+1,  hot_end_node], x=t[:halft+1]) / (tau_c/2)  # DP: Effectiveness over the cold blow
     # TODO: the blow periods in the FAME cooler are shorter than tau_c/2 because the volumetric flow rate profile is not sinusoidal
     tFce = np.zeros(nt+1)
     tFhe = np.zeros(nt+1)
@@ -1367,40 +1410,41 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     pave = np.trapz(pt[halft:], x=t[halft:]) / (tau_c/2)  # DP: average pressure drop across the regenerator
 
-    print("{0:3.1f} {1:3.1f} {2:1.2f} {3:1.2f} Cycle Count: {4:d} Tol-y: {5:1.4e} Tol-s {6:1.4e}".format(float(Thot), float(Tcold), float(Uti), float(freq), int(cycleCount), float(max_val_y_diff), float(max_val_s_diff)))
-    print('Utilization: {0:1.3f} Frequency: {1:1.2f}'.format(Uti, freq))
-    print("Run time: {0:3.2f} [min]".format((t1 - t0) / 60))
-    print("Hot Side: {} Cold Side: {}".format(Thot, Tcold))
-    print('Effectiveness HB-CE {} CB-HE {}'.format(eff_HB_CE, eff_CB_HE))
-    print('Cooling power {}'.format(qc))
-    print('Corrected Cooling Power {}'.format(qccor))
-    print('Pressure drop {} (kPa)'.format(pave/1000))
+    print("\n{:<15} {:<29} {:<29} {:20} {:20} {:<20}"
+          .format("CycleCount {:d}".format(cycleCount),
+                  "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
+                  "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
+                  "Run time {:4.1f} [min]".format((t1-t0)/60)))
 
-    print('Values found at minimal field')
-    print('min Applied Field {}'.format(minAplField))
-    print('min Internal Field {}'.format(minPrevHint))
-    print('min Magnetic Temperature {}'.format(minMagTemp))
-    print('min Cp: {}'.format(minCpPrev))
-    print('min SS:{}'.format(minSSprev))
-    print('Lowest Temperature found in the SS cycle: {}'.format(minTemp))
+    # print('Effectiveness HB-CE {} CB-HE {}'.format(eff_HB_CE, eff_CB_HE)) # TODO check whether effectiveness is useful
+    print('\nMaximum pressure drop: {:.3f} (kPa)'.format(np.amax(pt)/1000))
+    print('Average pressure drop: {:.3f} (kPa)'.format(pave/1000))
 
-    print('Values found at maximum field')
-    print('max Applied Field {}'.format(maxAplField))
-    print('max Internal Field {}'.format(maxPrevHint))
-    print('max Magnetic Temperature {}'.format(maxMagTemp)) # DP: this probably refers to Max MCM Temperature
-    print('max Cp: {}'.format(maxCpPrev))
-    print('max SS:{}'.format(maxSSprev))
-    print('highest Temperature found in the SS cycle: {}'.format(maxTemp))
+    print('\nValues found at minimal field')
+    print('min Applied Field: {:.3f}'.format(minAplField))
+    print('min Internal Field: {:.3f}'.format(minPrevHint))
+    print('min Magnetic Temperature: {:.3f}'.format(minMagTemp))
+    print('min Cp: {:.3f}'.format(minCpPrev))
+    print('min SS:{:.3f}'.format(minSSprev))
+    print('Lowest Temperature found in the SS cycle: {:.3f}'.format(minTemp))
+
+    print('\nValues found at maximum field')
+    print('max Applied Field: {:.3f}'.format(maxAplField))
+    print('max Internal Field: {:.3f}'.format(maxPrevHint))
+    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp)) # DP: this probably refers to Max MCM Temperature
+    print('max Cp: {:.3f}'.format(maxCpPrev))
+    print('max SS:{:.3f}'.format(maxSSprev))
+    print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp))
 
     # Remove Pickle
     try:
         os.remove(PickleFileName)
-        print("We removed the pickle file")
+        print("\nWe removed the pickle file")
     except FileNotFoundError:
-        print('Hey! It was done very fast.')
+        print('\nHey! It was done very fast.')
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount
-
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field
+    # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
 
 
