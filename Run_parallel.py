@@ -172,13 +172,16 @@ if __name__ == '__main__':
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
                             htc_model_name, leaks_model_name, num_reg)
         #  runActive():  returns
-        #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
-        #  0       1   2   3     4         5     6           7      8    9      10        11       12
-        # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
-        #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
+        # Thot          0   eff_HB_CE   6   sHalfBlow   12  Uti         18  sMaxCBlow   24  fluid_dens  30
+        # Tcold         1   eff_CB_HE   7   sEndBlow    13  freq        19  sMaxHBlow   25  mass_flow   31
+        # qc            2   tFce        8   y           14  t           20  qh          26
+        # qccor         3   tFhe        8   s           15  xloc        21  cycleCount  27
+        # (t1-t0)/60    4   yHalfBlow   10  pt          16  yMaxCBlow   22  int_field   28
+        # pave          5   yEndBlow    11  np.max(pt)  17  yMaxHBlow   23  htc_fs      29
 
-        fileNameSave = './output/' + str(case) + fileName
-        FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]'))
+        fileNameSave = './output/' + str(case) + fileName  # This is for the HPC11 cluster at TU Delft
+        # fileNameSave = '/scratch/dpineda/' + str(case) + fileName  # This is for the THCHEM cluster at RU Nijmegen
+        FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]'))
         FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
         FileSave(fileNameSave, "Fluid temperatures\n")
         FileSaveMatrix(fileNameSave, results[14])
@@ -186,5 +189,11 @@ if __name__ == '__main__':
         FileSaveMatrix(fileNameSave, results[15])
         FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
         FileSaveVector(fileNameSave, results[16])
+        FileSave(fileNameSave, "\nInternal Magnetic Field\n")
+        FileSaveMatrix(fileNameSave, results[28])
+        FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
+        FileSaveMatrix(fileNameSave, results[29])
+        FileSave(fileNameSave, "\nMass flow rate\n")
+        FileSaveMatrix(fileNameSave, results[31])
 
     RunCaseThotTcold(float(sys.argv[1]), sys.argv[2])
