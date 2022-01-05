@@ -155,14 +155,13 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
     b = np.zeros(N-1)
     c = np.zeros(N-1)
     d = np.zeros(N-1)
-    ynext = np.zeros(N+1) # DP: this creates a position for the temperature of every node including the ghost nodes.
+    ynext = np.zeros(N+1)  # DP: this creates a position for the temperature of every node including the ghost nodes.
 
-
-    if Vd>0:
+    if Vd > 0:
         # Add a value at the start
         # Add bc, value to the start of the flow
         # Dirichlet ghost node
-        ynext[0]=0
+        ynext[0] = 0
         for j in range(N-1):  # This will loop through 1 to N+1 which aligns with 0->N.
             # DP: this actually loops from indices 0 to N-2. The system of algebraic equations to solve has the form:
             # DP: a[j]y[i-1]+b[j]y[i]+c[j]y[i+1]=d[j]
@@ -172,8 +171,8 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
             # side terms of the following equations.
             # Build tridagonal matrix coefficients
             # pg 112-113 Theo Christiaanse 2017
-            Aw=alpha_pow(Ff[j]/Kfw[j]) # TODO: determine why using this?
-            Ae=alpha_pow(Ff[j+1]/Kfe[j])
+            Aw = alpha_pow(Ff[j]/Kfw[j])  # TODO: determine why using this?
+            Ae = alpha_pow(Ff[j+1]/Kfe[j])
             a[j] = -Ff[j]/(dx)-Aw*CF*Kfw[j]/(dx*2)+Omegaf[j+1]/2 # DP: indices coincide with thesis. Kfw is defined from node index i=1 to N-1
             # DP: Omegaf[0] is ignored, Kfw[0] corresponds to node i=1, Ff[0] corresponds to node i=0
             b[j] = Cf[j+1]/(dt)+Aw*CF*Kfw[j]/(2*dx)+Ae*CF*Kfe[j]/(2*dx)+CL[j+1]*Lf[j+1]/2+Omegaf[j+1]/2+Ff[j+1]/(dx)
@@ -694,9 +693,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     #             e_r[i] = 1
     #             P_c[i] = 2*rvs2 *np.pi
 
-
-
-
     # This is the domain fraction, determining the algebraic
     # split between domains. It will ensure the variation of
     # conduction between domains is taken into account.
@@ -776,7 +772,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     except FileNotFoundError:
         # Keep preset values
         print("Started normal!\n")
-        y = np.ones((nt+1, N+1))*y1 # DP comment: initial temperature distribution for every time step is set to a linear distribution from Tcold to Thot
+        y = np.ones((nt+1, N+1))*y1 # DP: initial temperature distribution for every time step is set to a linear distribution from Tcold to Thot
         s = np.ones((nt+1, N+1))*s1
         stepTolInt = 0
         # Initial guess of the cycle values.
@@ -784,14 +780,17 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         isCycle = np.copy(s)
 
     MFM = np.ones(N + 1)  # Magnetic Field Modifier
-    int_field = np.zeros((nt+1, N+1))  # Matrix to store internal magnetic field values for every time step and node
+    int_field = np.zeros((nt+1, N+1))  # Matrix for storing internal magnetic field values for every time step and node
+    htc_fs = np.zeros((nt+1, N+1))  # Matrix for storing heat transfer coefficients between fluid and solid
+    fluid_dens = np.zeros((nt+1, N+1))  # Matrix for storing fluid density at every node and time step
+    mass_flow = np.zeros((nt+1, N+1))  # Matrix for storing mass flow rate at every node and time step
 
-    cycleTol   = 0 # DP comment: this is equivalent to a boolean False
-    cycleCount = 1 # DP comment: it was defined above that the maximum number of cycle iterations is 2000
+    cycleTol   = 0  # DP comment: this is equivalent to a boolean False
+    cycleCount = 1  # DP comment: it was defined above that the maximum number of cycle iterations is 2000
 
-    mu0     = 4 * 3.14e-7  # [Hm^-1] # # Vacuum permeability constant
+    mu0 = 4 * 3.14e-7  # [Hm^-1] Vacuum permeability constant
 
-    ########### DP comment: the iterative calculation process for the cycle starts here ###########
+    # %%%%%%%%%%%% DP: the iterative calculation process for the cycle starts here %%%%%%%%%%
 
     while (not cycleTol  and cycleCount <= maxCycles): # DP comment: "not cycleTol" evaluates if cycleTol is zero or False and return True if so...
         # Account for pressure every time step (restart every cycle)
@@ -990,11 +989,14 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     # both as it was chosen here.
 
                     # Properties of fluid at location i and temperature of current time step
-                    cpf_ave        = fCp(fT[i], percGly) * ww + cpf_prev[i] * (1 - ww)  # Specific heat
-                    rhof_ave       = fRho(fT[i], percGly) * ww + rhof_prev[i] * (1 - ww)  # Density
-                    muf_ave        = fMu(fT[i], percGly) * ww + muf_prev[i] * (1 - ww)  # Dynamic Viscosity
-                    kf_ave         = fK(fT[i], percGly) * ww + kf_prev[i] * (1 - ww)  # Thermal conductivity
+                    cpf_ave = fCp(fT[i], percGly) * ww + cpf_prev[i] * (1 - ww)  # Specific heat
+                    rhof_ave = fRho(fT[i], percGly) * ww + rhof_prev[i] * (1 - ww)  # Density
+                    muf_ave = fMu(fT[i], percGly) * ww + muf_prev[i] * (1 - ww)  # Dynamic Viscosity
+                    kf_ave = fK(fT[i], percGly) * ww + kf_prev[i] * (1 - ww)  # Thermal conductivity
                     rhof_cf_ave[i] = cpf_ave * rhof_ave  # Combined rhof cf
+
+                    fluid_dens[n, i] = fRho(fT[i], percGly)  # Added on 03/01/2022
+                    mass_flow[n, i] = fluid_dens[n, i] * V[n]  # Added on 03/01/2022
 
                     if species_descriptor[i].startswith("reg"):
                         cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
@@ -1013,7 +1015,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # ------------]
                         # --- Calculation of internal magnetic field
                         Hint = appliedFieldm[n, i] * MFM[i]
-                        int_field[n, i] = Hint
+                        int_field[n, i] = Hint  # Added on 03/04/2022
                         # --- Calculation of rho*cs fluid
                         dT = 1
                         Tr = psT[i]
@@ -1047,8 +1049,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
                         # --- Calculation of coefficient of heat transfer by convection term east of the P node
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
+                        htc_fs[n, i] = Omegaf[i] / A_c[i] / (6 * (1 - e_r[i]) / Dsp)  # Added on 03/04/2022
                         # --- Calculation of the coefficient of the viscous dissipation term and pressure drop
-                        Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,A_c[i] * e_r[i])
+                        Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
 
                         # DP: for spherical particles the following correction is not needed
 
@@ -1127,9 +1130,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         ks[i] = 0
                         # No interaction between solid and fluid since there is no solid.
                         Omegaf[i] = 0  #
-                        # This will just make the plots nicer by having the temperature of the solid be the fluid temperature.
+                        # This will just make the plots nicer by having the solid temperature be the fluid temperature.
                         Cs[i] = 1
-                        Smce[i] = (iynext[i]-s[n-1,i])/DT
+                        Smce[i] = (iynext[i]-s[n-1, i])/DT
                         #neglect pressure term.
                         Spres[i] = 0
                         dP = 0
@@ -1137,20 +1140,21 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     pt[n] = dP * DX + pt[n] # DP: it seems that the term dP is actually dP/dx
                     # DP: pt[n] returns the pressure drop along the regenerator at the current time step
 
-                # DP: In the original file, the following variables were defined before the for loop that ended a few lines above
+                ### Capacitance fluid
+                Cf = rhof_cf_ave * A_c * e_r * freq
+                # DP: in Numpy A*B is an element wise multiplication, which means that both matrices must have same size
+                # DP: Matrix multiplication in the row-by-column way is performed using np.matmul(A,B)
+                # where A is an lxm matrix and B is an mxn matrix so that A*B is an lxn matrix
+
+                ### Fluid term
+                Ff = (rhof_cf_ave * V[n]) / L_tot  # DP: this is divided by L_tot because in the FluidSolver function Ff
+                # is divided by dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
+                Sp = Spres / (Thot - Tcold)
+
                 Kfw = np.zeros(N - 1)
                 Kfe = np.zeros(N - 1)
                 Ksw = np.zeros(N - 1)
                 Kse = np.zeros(N - 1)
-
-                ### Capacitance fluid
-                Cf = rhof_cf_ave * A_c * e_r * freq # DP: in Numpy the A*B is an element wise multiplication, which means that both matrices must be of the same size.
-                # DP: Matrix multiplication in the row-by-column way is performed using np.matmul(A,B) and A is lxm and B is mxn so that A*B is lxn
-
-                ### Fluid term
-                Ff = (rhof_cf_ave * V[n]) / L_tot # DP: this is divided by L_tot because in the FluidSolver function Ff
-                # is divided by dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
-                Sp = Spres / (Thot - Tcold)
 
                 for i in range(N - 1):  # Calculates the coefficients of the conduction terms
                     # DP: this runs from 0 to N-2, ghost nodes are excluded, aligns with 1->N-1
@@ -1431,7 +1435,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     print('\nValues found at maximum field')
     print('max Applied Field: {:.3f}'.format(maxAplField))
     print('max Internal Field: {:.3f}'.format(maxPrevHint))
-    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp)) # DP: this probably refers to Max MCM Temperature
+    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp))  # DP: this probably refers to Max MCM Temperature
     print('max Cp: {:.3f}'.format(maxCpPrev))
     print('max SS:{:.3f}'.format(maxSSprev))
     print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp))
@@ -1441,11 +1445,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         os.remove(PickleFileName)
         print("\nWe removed the pickle file")
     except FileNotFoundError:
-        print('\nHey! It was done very fast.')
+        print('\nThe calculation converged!')
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field, htc_fs, fluid_dens, mass_flow
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
-
-
-
