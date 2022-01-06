@@ -397,7 +397,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           "\n{:<30}{:>10.3f}\t{:<6}".format("AMR length", L_reg1, "[m]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("AMR width", W_reg, "[m]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("AMR height", H_reg, "[m]"),
-          "\n{:<30}{:>10.3f}\t{:<6}".format("Particle diameter", Dsp, "[m]"),
+          "\n{:<30}{:>10.0e}\t{:<6}".format("Particle diameter", Dsp, "[m]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("AMR porosity", er, "[-]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("MCM thermal conductivity", mK, "[W/(m*K)]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("MCM density", mRho, "[kg/m3]"),
@@ -1273,11 +1273,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             qc = num_reg * coolingpowersum  # DP: 2 changed by 7 to account for the number of regenerators of the device
             qh = num_reg * heatingpowersum
 
-            print("{0:<13} {1:<15} {2:<29} {3:<29} {4:20} {5:20} {6:<20}"
-                  .format("Case num {:d}".format(int(caseNum)), "CycleCount {:d}".format(cycleCount),
+            print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20}"
+                  .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:4.1f} [min]".format((time.time()-t0)/60)))
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
             coolingpowersum=0
@@ -1298,11 +1298,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             qc = num_reg * coolingpowersum  # DP: changed from 2 to 7. Number of regenerators
             qh = num_reg * heatingpowersum  # Added by DP
 
-            print("{0:<13} {1:<15} {2:<29} {3:<29} {4:20} {5:20} {6:<20}"
-                  .format("Case num {:d}".format(int(caseNum)), "CycleCount {:d}".format(cycleCount),
+            print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20}"
+                  .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:4.1f} [min]".format((time.time()-t0)/60)))
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
 
             # Pickle data
             aaa = (y, s, stepTolInt, iyCycle, isCycle)
