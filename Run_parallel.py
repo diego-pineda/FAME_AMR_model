@@ -28,7 +28,7 @@ def FileSaveVector(filename, content):
 
 '''Note: In principle any parameter could become one of the changing variables, i.e. vble1, vble2, and vble3. '''
 
-Thotlow = 273+33 # [K]
+Thotlow = 273+33  # [K]
 Thothigh = 273+41  # [K]
 hotResolution = 5
 
@@ -54,7 +54,7 @@ vble3lowvalue = 600e-6
 vble3highvalue = 600e-6
 vble3resolution = 1
 
-vble1values = [0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4] #np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
+vble1values = np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
 vble2values = np.linspace(vble2lowvalue, vble2highvalue, vble2resolution)
 vble3values = np.linspace(vble3lowvalue, vble3highvalue, vble3resolution)
 
@@ -70,10 +70,10 @@ maxcase = numGroups * hotResolution * TspanResolution
 # Numerical parameters
 nodes         = 600
 timesteps     = 600
-time_limit    = 600  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-5  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+time_limit    = 7200  # [min] Time limit for the simulation in minutes
+cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
+maxCycleIter  = 1000  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
 
 # Temperatures
@@ -103,7 +103,8 @@ from sourcefiles.device.FAME_V_flow import vol_flow_rate
 
 # - FAME cooler
 from sourcefiles.device import FAME_app_field
-app_field = FAME_app_field.app_field(timesteps, nodes)
+max_app_field = 0.875
+app_field = FAME_app_field.app_field(timesteps, nodes, max_app_field)
 
 # - POLO cooler
 # from sourcefiles.device.polo_mag_field import polo_app_field
@@ -166,7 +167,7 @@ if __name__ == '__main__':
         Thot = Thotarr[Thotindex]
         Tcold = Thot - Tspanarr[Tspanindex]
 
-        print("Iteration: {}/{} Case number: {}".format(case, maxcase, casegroup))
+        print("Iteration: {}/{} Case group number: {}".format(case, maxcase-1, casegroup))
 
         results = runActive(case, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
