@@ -1,4 +1,4 @@
-####### FAME Cooler applied field function #######
+# %%%%%%%%% FAME Cooler applied field function %%%%%%%%%%
 
 # Assumptions
 # 1) The whole regenerator is magnetized simultaneously. This is necessary because of the 1D nature of the model
@@ -16,41 +16,44 @@
 # is completed in a rotation angle of 180°
 
 import numpy as np
+# max_app_field = 0.875
 
-def app_field(nt,N):
-    ap_fld = np.zeros((nt+1,N+1))
+
+def app_field(nt, N, max_app_field):
+    ap_fld = np.zeros((nt+1, N+1))
     angle = 0
     full_mag_ang = 30
     max_field_period = 45
-    max_app_field = 0.875
-    for n in range(0,nt+1):
-        if angle<full_mag_ang:
-            ap_fld[n,:] = (max_app_field/full_mag_ang)*(180*(n/nt)) # [T]. Applied field as a function of time during the magnetization ramp
+
+    for n in range(0, nt+1):
+        if angle < full_mag_ang:
+            ap_fld[n, :] = (max_app_field/full_mag_ang)*(180*(n/nt))  # [T]. Applied field as a function of time during the magnetization ramp
         elif full_mag_ang <= angle < (full_mag_ang + max_field_period):
-            ap_fld[n,:] = max_app_field # [T] Applied field as a function of time during the cold to hot blow process
+            ap_fld[n, :] = max_app_field # [T] Applied field as a function of time during the cold to hot blow process
         elif (full_mag_ang + max_field_period) <= angle < (2 * full_mag_ang + max_field_period):
-            ap_fld[n,:] = (max_app_field/full_mag_ang)*((2 * full_mag_ang + max_field_period)-180*n/nt) # [T] Applied field during the demagnetization ramp
+            ap_fld[n, :] = (max_app_field/full_mag_ang)*((2 * full_mag_ang + max_field_period)-180*n/nt) # [T] Applied field during the demagnetization ramp
         else:
-            ap_fld[n,:] = 0 # [T] Applied field during the hot to cold blow process
+            ap_fld[n, :] = 0 # [T] Applied field during the hot to cold blow process
         angle = 180*(n+1)/nt
     return ap_fld
 
 
 if __name__ == '__main__':
 
-    ########## The following lines are for testing the function ##########
+    # %%%%%%%%%%%%%%%% The following lines are for testing the function %%%%%%%%%%%%%%%%
 
-    nt = 600 # number of nodes in the time domain
-    N = 200 # number of nodes in the spatial domain
+    nt = 600  # number of nodes in the time domain
+    N = 200  # number of nodes in the spatial domain
+    mag_field = 1.4
 
-    ap_field = app_field(nt, N)
-    print(ap_field)
+    ap_field = app_field(nt, N, mag_field)
+    # print(ap_field)
 
     import matplotlib.pyplot as plt
     from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
 
     fig, plot1 = plt.subplots()
-    plt.plot(np.linspace(0,180,nt+1),ap_field[:,0])
+    plt.plot(np.linspace(0, 180, nt+1), ap_field[:, 0])
     plt.xlabel("Angle [°]")
     plt.ylabel("Applied field [T]")
     plt.title("Applied magnetic field as a function of rotation angle")
@@ -58,7 +61,7 @@ if __name__ == '__main__':
     plot1.xaxis.set_major_locator(MultipleLocator(15))
     plt.show()
 
-    ###### Ploting the results of Bowei's simulation about magnetic field ######
+    # %%%%%%%%% Ploting the results of Bowei's simulation about magnetic field %%%%%%%%%%
 
     # import matplotlib.pyplot as plt
     # from matplotlib import cm
@@ -71,7 +74,7 @@ if __name__ == '__main__':
     # Y = mag_field_data[0, 1:]
     # X, Y = np.meshgrid(X, Y)
     # Z = np.matrix.transpose(mag_field_data[1:, 1:])
-    #
+    # print(Z)
     #
     # # Plot the surface.
     # fig = plt.figure(1)
