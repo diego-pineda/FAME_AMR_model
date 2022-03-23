@@ -109,3 +109,6 @@ numpy 1.20.0
 scipy 1.6.0
 numba 0.52.0
 
+Testing of the codebase
+
+Testing can be easily performed by using the script Run_single.py 
