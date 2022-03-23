@@ -11,14 +11,14 @@ caseNumber    = 1
 nodes         = 300
 timesteps     = 400
 time_limit    = 600  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
-maxStepIter   = 500  # Maximum time step iterations the simulation is allowed to take
-maxCycleIter  = 500  # Maximum cycle iterations the simulation is allowed to take
+cycle_toler   = 1e-1  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
+maxCycleIter  = 1000  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
 
 # Simulation temperatures
-Thot          = 295
-Tcold         = 290
+Thot          = 312
+Tcold         = 298
 Tambset       = 300
 
 # Frequency of AMR cycle
@@ -27,7 +27,7 @@ ff            = 1  # [Hz] frequency of AMR cycle
 # Flow profile
 
 # FAME cooler
-dispV         = 30.52e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+dispV         = 1.1 * 16.667e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
 acc_period    = 5
 max_flow_per  = 45
 full_magn_ang = 30
@@ -44,7 +44,8 @@ volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, f
 
 # FAME Cooler
 from sourcefiles.device import FAME_app_field
-app_field = FAME_app_field.app_field(timesteps, nodes)
+mag_field = 1.4  # [T]
+app_field = FAME_app_field.app_field(timesteps, nodes, mag_field)
 
 # POLO cooler
 # from sourcefiles.device.polo_mag_field import polo_app_field
@@ -61,7 +62,7 @@ R8.reduct_coeff = dict(M0=1, M1=0.55, M2=0.77, M6=1, M7=1, M8=1, M9=1, M10=1, M1
 R8.mK = 6
 R8.mRho = 6100
 cName   = "R8"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "Testing_multi_layer_function"  # DP: use underlines to connect words because this is used as file name
+jName   = "Test_write_new_matrices"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
 
 # Switches for activating and deactivating terms in governing equations
@@ -108,7 +109,7 @@ def FileSaveVector(filename, content):
 # pave          5   yEndBlow    11  np.max(pt)  17  yMaxHBlow   23  htc_fs      29
 
 
-fileName = "Test_new_multi_layer_function.txt"
+fileName = "Test_write_new_matrices.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
 FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
@@ -127,8 +128,8 @@ FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in t
 FileSaveMatrix(fileNameSave, results[29])
 FileSave(fileNameSave, "\nMass flow rate\n")
 FileSaveMatrix(fileNameSave, results[31])
-#FileSave(fileNameSave, "\n")
 
+#FileSave(fileNameSave, "\n")
 
 
 # fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
