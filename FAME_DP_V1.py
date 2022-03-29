@@ -124,11 +124,11 @@ def SolveSolid(iynext, isnext, yprev, sprev, Vd,    Cs,   Kse,   Ksw, Omegas,  S
         return snext
 
 
-@jit(f8(f8),nopython=True)
+@jit(f8(f8), nopython=True)
 def alpha_pow(Pe):
     # Powerlaw
     val = (1-0.1*abs(Pe))**5
-    return max(0,val)
+    return 1  # max(0, val)
 
 
 # -------------------------- FLUID SOLVER ---------------------------------
@@ -173,6 +173,7 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
             # pg 112-113 Theo Christiaanse 2017
             Aw = alpha_pow(Ff[j]/Kfw[j])  # TODO: determine why using this?
             Ae = alpha_pow(Ff[j+1]/Kfe[j])
+            # print(Aw, Ae)
             a[j] = -Ff[j]/(dx)-Aw*CF*Kfw[j]/(dx*2)+Omegaf[j+1]/2 # DP: indices coincide with thesis. Kfw is defined from node index i=1 to N-1
             # DP: Omegaf[0] is ignored, Kfw[0] corresponds to node i=1, Ff[0] corresponds to node i=0
             b[j] = Cf[j+1]/(dt)+Aw*CF*Kfw[j]/(2*dx)+Ae*CF*Kfe[j]/(2*dx)+CL[j+1]*Lf[j+1]/2+Omegaf[j+1]/2+Ff[j+1]/(dx)
@@ -193,14 +194,15 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
         # d\dx=0 ghost node.
         ynext[-1] = ynext[-2]
         return ynext
-    elif Vd<0:
+    elif Vd < 0:
         # Add a value at the end
-        ynext[-1]=1
+        ynext[-1] = 1
         for j in range(N-1):  # This will loop through 1 to N+1 which aligns with 0->N
             # Build tridagonal matrix coefficients
             # pg 112-113 Theo Christiaanse 2017
             Aw=alpha_pow(Ff[j+1]/Kfw[j])
             Ae=alpha_pow(Ff[j+2]/Kfe[j])
+            # print(Aw, Ae)
             a[j] = -Aw*CF*Kfw[j]/(2*dx)
             b[j] = Cf[j+1]/dt+Aw*CF*Kfw[j]/(2*dx)+Ae*CF*Kfe[j]/(2*dx)+CL[j+1]*Lf[j+1]/2+Omegaf[j+1]/2-Ff[j+1]/(dx)
             c[j] = Ff[j+2]/(dx)-Ae*CF*Kfe[j]/(2*dx)+Omegaf[j+1]/2
@@ -213,7 +215,7 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
         # Solve the unknown matrix 0->N-1
         ynext[1:-1] = TDMAsolver(a[1:], b, c[:-1], d)
         # d\dx=0 ghost node.
-        ynext[0]=ynext[1]
+        ynext[0] = ynext[1]
         return ynext
     else:
 
@@ -224,6 +226,7 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
 
             Aw=alpha_pow(Ff[j]/Kfw[j]) # TODO: determine why using this?
             Ae=alpha_pow(Ff[j+1]/Kfe[j])
+            # print(Aw, Ae)
             a[j] = -Ff[j]/(dx)-Aw*CF*Kfw[j]/(dx*2) # DP: indices coincide with thesis. Kfw is defined from node index i=1 to N-1
             # DP: Omegaf[0] is ignored, Kfw[0] corresponds to node i=1, Ff[0] corresponds to node i=0
             b[j] = Cf[j+1]/(dt)+Aw*CF*Kfw[j]/(2*dx)+Ae*CF*Kfe[j]/(2*dx)+CL[j+1]*Lf[j+1]/2+Omegaf[j+1]/2+Ff[j+1]/(dx)
@@ -760,8 +763,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     print("Pickle Data File: {}".format(PickleFileName))
     try:
         # we open the file for reading
-        fileObject = open(PickleFileName,'rb')
-        print("Loading the pickle file...")
+        fileObject = open(PickleFileName, 'rb')
+        print("Loading the pickle file...\n")
         # load the object from the file into var b
         bbb = pickle.load(fileObject)
         y = bbb[0]
@@ -905,18 +908,18 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     # elif species_descriptor[i] == 'reg-Gd':  cp_c = Gd.mCp_c;  cp_h = Gd.mCp_h;  ms_c = Gd.mS_c;  ms_h = Gd.mS_h
                     # -------]
                     # Previous specific heat
-                    Tr=psT[i]
-                    dT=.5 # DP: this could be any small value given that it is just for calculating the derivative
+                    Tr = psT[i]
+                    dT = .5  # DP: this could be any small value given that it is just for calculating the derivative
                     dsdT = (ms_c(Tr+dT, prevHint)[0, 0] * 0.5 + ms_h(Tr+dT, prevHint)[0, 0] * 0.5) - (ms_c(Tr-dT, prevHint)[0, 0] * 0.5 + ms_h(Tr-dT, prevHint)[0, 0] * 0.5)
                     cps_prev[i]  = psT[i]*(np.abs(dsdT)/(dT*2)) # DP: why not calculating the Cp from the available data?
                     # DP: 2 in the denominator obeys to the fact that the derivative is taken as [f(x+dx)-f(x-dx)]/(2*dx) instead of [f(x+dx)-f(x)]/(dx)
                     # Entropy position of the previous value
                     S_c_past[i]   = ms_c(Tr, prevHint)[0, 0]
                     S_h_past[i]   = ms_h(Tr, prevHint)[0, 0]
-                    Sirr_prev[i]  = S_c_past[i] *(1-ch_factor[i])  -  S_h_past[i] *ch_factor[i] # DP: this corresponds to the irreversible part. It is not useful
-                    Sprev[i]      = S_c_past[i] *(1-ch_factor[i]) + S_h_past[i] *ch_factor[i] # DP: this is the anhysteretic entropy
+                    Sirr_prev[i]  = S_c_past[i] * (1-ch_factor[i]) - S_h_past[i] * ch_factor[i]  # DP: this corresponds to the irreversible part. It is not useful
+                    Sprev[i]      = S_c_past[i] * (1-ch_factor[i]) + S_h_past[i] * ch_factor[i]  # DP: this is the anhysteretic entropy
                     # old code
-                    Ss_prev[i]     = ms_c(psT[i], prevHint)[0, 0]*(1-ch_factor[i]) + ms_h(psT[i], prevHint)[0, 0]*ch_factor[i] # DP: this is equivalent to Sprev[i]
+                    Ss_prev[i]     = ms_c(psT[i], prevHint)[0, 0]*(1-ch_factor[i]) + ms_h(psT[i], prevHint)[0, 0]* ch_factor[i]  # DP: this is equivalent to Sprev[i]
                     if prevHint > maxPrevHint:
                         maxPrevHint = prevHint
                         maxAplField = appliedFieldm[n-1,i]
@@ -929,10 +932,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         minMagTemp  = psT[i]
                         minCpPrev   = cps_prev[i]
                         minSSprev   = Ss_prev[i]
-                elif species_descriptor[i]== 'gs':  # This is where the gs stuff will go
+                elif species_descriptor[i] == 'gs':  # This is where the gs stuff will go
                     cps_prev[i]    = gsCp
                     Ss_prev[i]     = 0
-                elif species_descriptor[i]== 'ls':  # This is where the ls stuff will go
+                elif species_descriptor[i] == 'ls':  # This is where the ls stuff will go
                     cps_prev[i]    = lsCp
                     Ss_prev[i]     = 0
                 else: # This is where the void stuff will go
@@ -1022,7 +1025,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         aveField = (Hint + prevHintNew[i]) / 2  # current and previous time step average
                         dsdT = (ms_c(sT[i]+dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]+dT, aveField)[0, 0] * 0.5) - (ms_c(sT[i]-dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]-dT, aveField)[0, 0] * 0.5)
                         # TODO: not clear why aveField is used instead of Hint (current time step).
-                        cps_curr = Tr * (np.abs(dsdT) / (dT * 2))  # TODO: should not sT[i] be used insetead of Tr?
+                        cps_curr = Tr * (np.abs(dsdT) / (dT * 2))  # TODO: should not sT[i] be used instead of Tr?
                         cps_ave = cps_curr * ww + cps_prev[i] * (1 - ww)  # DP: this is equation B.9 of Theo's thesis
                         rhos_cs_ave[i] = cps_ave * mRho
                         # --- Calculation of Smce
@@ -1038,7 +1041,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # Anhysteretic entropy calculated from cooling high field and heating high field entropy curves
                         Scur       = S_c_curr * (1 - ch_factor[i]) + S_h_curr * ch_factor[i]
                         #Mod        = 0.5*(Sirr_cur+Sirr_prev[i])*np.abs((2*dT)/dsdT)
-                        Smce[i] = (Reduct*A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i] - Scur)) / (DT * (Thot - Tcold))
+                        Smce[i] = (Reduct * A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i] - Scur)) / (DT * (Thot - Tcold))
                         # Eq. B.20 of Theo's thesis states that the entropy difference should be Scur-Sprev. So, there
                         # is a error in the thesis cuz it is ignoring the minus sign in front of the Qmce expression.
 
