@@ -8,6 +8,7 @@
 # the same file. If they are in different files, section 3) can be used to read the files, otherwise section 4) must be
 # used.
 
+# TODO: convert this into a GUI
 
 # 0) Importing libraries
 
@@ -18,18 +19,18 @@ import numpy as np
 
 # 1) Simulation parameters
 
-Thot        = 300    # [K]
-Tcold       = 290    # [K]
-dThot       = 4      # [K]
-dTcold      = 2      # [K]
-Reng_Length = 105.2  # [mm]
-nodes       = 400    # [-]
-time_steps  = 600    # [-]
+Thot        = 312    # [K]
+Tcold       = 285    # [K]
+dThot       = 3      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
+dTcold      = 3      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
+Reng_Length = 60     # [mm]
+nodes       = 600    # [-]
+time_steps  = 200    # [-]
 
 # 2) Input and output file names
 
-text_file_input = "./output/polo_low_uti_tol/8.0polo_low_uti_tol.sh-8.txt"
-gif_file_output = "./output/polo_low_uti_tol/Tspan_10K_f0.5Hz_Uti0.28.gif"
+text_file_input = "./output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4/3725.0FAME_Dsp300um_B1400mT_ff_vfl4_reused.txt"  # "./3725.0FAME_Dsp300um_B1400mT_hys_ff_vfl.txt"
+gif_file_output = "./output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4/3725.0FAME_Dsp300um_B1400mT_ff_vfl4_reused_animation.gif"
 
 # 3) Getting temperature data if the file only contains data corresponding to the temperature of solid or fluid
 
@@ -62,12 +63,12 @@ solidTemp = solidTemp*(Thot-Tcold)+Tcold
 
 # 6) Plotting temperature of node at cold side of regenerator for verification purposes
 
-cold = plt.figure(1)
-plt.plot(fluidTemp[:, 0])
-plt.xlabel("Time steps [-]")
-plt.ylabel("T° of node on cold side of AMR [K]")
-plt.title("Temperature of cold side as a function of time")
-plt.grid(which='both',axis='both')
+# cold = plt.figure(1)
+# plt.plot(fluidTemp[:, 0])
+# plt.xlabel("Time steps [-]")
+# plt.ylabel("T° of node on cold side of AMR [K]")
+# plt.title("Temperature of cold side as a function of time")
+# plt.grid(which='both',axis='both')
 
 
 # 6) Plotting the animated figure
@@ -99,11 +100,11 @@ def update(frame):
     return ln, sn
 
 
-ani = animation.FuncAnimation(fig, update, frames=f, init_func=init, blit=True, interval=50,repeat=True)
+ani = animation.FuncAnimation(fig, update, frames=f, init_func=init, blit=True, interval=50, repeat=True)
 plt.ylabel("Temperature [K]")
 plt.xlabel("Regenerator length [mm]")
 plt.title("Temperature distributions along the regenerator")
-plt.legend(["Fluid temperature", "Solid temperature"])
+plt.legend(["Fluid temperature", "Solid temperature"], loc='upper left')
 plt.grid(which='both', axis='both')
 plt.show()
 
@@ -121,10 +122,13 @@ if save_graph == 'y':
     print('\nTo confirm press "y". To enter a new directory and file name press any other key: ', end="")
     confirmation = input()
     if confirmation == "y":
+        print("\nPlease wait a few seconds. We are saving your file...")
         writergif = animation.PillowWriter(fps=30)
         ani.save(gif_file_output, writer=writergif)
+        print("\nAnimation was saved as: {}" .format(gif_file_output))
     else:
         gif_file_output = input()
+        print("\nPlease wait a few seconds. We are saving your file...")
         writergif = animation.PillowWriter(fps=30)
         ani.save(gif_file_output, writer=writergif)
         print("\nAnimation was saved as: {}" .format(gif_file_output))
