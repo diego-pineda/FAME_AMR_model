@@ -10,8 +10,8 @@ temperatures'''
 
 # Model material
 
-S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_S_anhys.txt')
-S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_S_anhys.txt')
+S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_S_h.txt')
+S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_S_c.txt')
 
 Mag_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_Mag_h.txt')
 Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_Mag_c.txt')
@@ -19,13 +19,34 @@ Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_Mag_c.txt')
 Cp_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_cp_h.txt')
 Cp_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_cp_c.txt')
 
+# Information required for creating the new data sets with shifted Tc
+
+dT_span = 27  # Difference in Tc of hottest and coldest layers
+Tc_cold = 281  # Transition temperature of the coldest layer
 T_offset = 16.2  # [K] Temperature offset of coldest layer w.r.t the original Tc of the model material
-# Note: this is based on the peak of the cooling dM/dT, which coincides aprox. with the peak of cooling Cp at 1.4 T
-num_mat = 18
-T_shift = 27/17  # [K] Separation in Tc between adjacent layers. This is for a linear distrib. of Tc along the length
-ini = 250  # Material numbering starts at
+num_mat = 30  # Number of layers in the AMR
+ini = 268  # Material numbering starts at
+L = 60  # [m] Total length of AMR
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Define the shift in Tc of each layer with respect to the coldest one
+
+'''Note: the relation of Tc as a function of the position of the layer in the AMR, funct => Tc = f(x), must be defined. 
+This function can be linear or any other shape. In what follows a sigmoid function is presented.'''
+
+dX = L/num_mat  # [mm] Length per layer
+
+# Sigmoid function
+lin = 5  # This parameter only has to do with the curvature of the sigmoid function
+A = dT_span / ((1/(1+np.exp(-lin))) - (1/(1+np.exp(lin))))
+B = 0.5*(L-dX)
+funct = '{}/(1+np.exp(-({}/{})*(x-{}))) + {} - {}/(1+np.exp({}))'.format(A, lin, B, B+dX/2, Tc_cold, A, lin)
+
+# Calculation of shift in Tc of each layer
+x = np.linspace(dX/2, L-dX/2, num_mat)
+y = eval(funct)
+T_shift = y - Tc_cold
 
 # The peak of the in-field Cp heating curve is taken as a reference Tc for the definition of the new materials
 
@@ -52,12 +73,12 @@ for i in range(num_mat):
 
     if not os.path.exists('sourcefiles/new_mat/M'+str(i + ini)):
         os.mkdir('sourcefiles/new_mat/M'+str(i + ini))
-    Cp_model_mat_h[1:, 0] = Cp_temp_vect_h + T_shift * i
-    Cp_model_mat_c[1:, 0] = Cp_temp_vect_c + T_shift * i
-    Mag_model_mat_h[1:, 0] = Mag_temp_vect_h + T_shift * i
-    Mag_model_mat_c[1:, 0] = Mag_temp_vect_c + T_shift * i
-    S_model_mat_h[1:, 0] = S_temp_vect_h + T_shift * i
-    S_model_mat_c[1:, 0] = S_temp_vect_c + T_shift * i
+    Cp_model_mat_h[1:, 0] = Cp_temp_vect_h + T_shift[i]
+    Cp_model_mat_c[1:, 0] = Cp_temp_vect_c + T_shift[i]
+    Mag_model_mat_h[1:, 0] = Mag_temp_vect_h + T_shift[i]
+    Mag_model_mat_c[1:, 0] = Mag_temp_vect_c + T_shift[i]
+    S_model_mat_h[1:, 0] = S_temp_vect_h + T_shift[i]
+    S_model_mat_c[1:, 0] = S_temp_vect_c + T_shift[i]
 
     Mx_cp_c  = 'sourcefiles/new_mat/M'+str(i + ini)+'/M'+str(i + ini)+'_cp_c.txt'
     Mx_cp_h  = 'sourcefiles/new_mat/M'+str(i + ini)+'/M'+str(i + ini)+'_cp_h.txt'
