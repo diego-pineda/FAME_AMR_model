@@ -8,8 +8,8 @@ of Victoria, 2018.
 [2] Christiaanse T V., Trevizoli P V., Rowe A. Modelling two layer Mn–Fe–Si–P materials in an active magnetic
 regenerator. Int J Refrig 2019;106:225–35. https://doi.org/10.1016/j.ijrefrig.2019.07.002.
 
-This is a 1D model in which the energy balance equations for the solid matrix and fluid are solved simultaneously. The
-main outputs of this model are the temperature distributions of the solid MCM and the fluid along the AMR.
+This is a 1D model in which the energy balance equations for the solid matrix and fluid of an AMR are solved simultaneously. 
+The main outputs of this model are the temperature distributions of the solid MCM and the fluid along the AMR.
 
 Instructions for running the codebase
 
@@ -100,15 +100,6 @@ Functions for the calculation of themal conductivity, density, dynamic viscosity
 glycol mixture as a function of temperature and volumetric fraction of glycol in the mixture are placed in the folder
 sourcefiles/fluid/
 
-List of dependencies
-
-The codebase can be run in Python 3.6 and more recent versions. Last developments have been performed based on Python 3.8.
-Some of the packages that are needed to run the codebase are:
-
-numpy 1.20.0
-scipy 1.6.0
-numba 0.52.0
-
 Testing of the codebase
 
-Testing can be easily performed by using the script Run_single.py 
+Testing can be easily performed by using the script Run_single.py
