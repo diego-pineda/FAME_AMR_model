@@ -1020,7 +1020,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Hint = appliedFieldm[n, i] * MFM[i]
                         int_field[n, i] = Hint  # Added on 03/04/2022
                         # --- Calculation of rho*cs fluid
-                        dT = 1
+                        dT = 1  # DP (5-4-2022) This big dT value helps avoiding some noise in the backward calc of Cp
                         Tr = psT[i]
                         aveField = (Hint + prevHintNew[i]) / 2  # current and previous time step average
                         dsdT = (ms_c(sT[i]+dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]+dT, aveField)[0, 0] * 0.5) - (ms_c(sT[i]-dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]-dT, aveField)[0, 0] * 0.5)
@@ -1060,6 +1060,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
                         # dP = dP * 2.7
                         # Spres[i] = Spres[i]*2.7
+
+
+
 
                         # DP: this factor is to compensate for the additional pressure drop occurring in beds of
                         # irregular shaped particles given that Ergun's correlation is for beds of spherical particles
