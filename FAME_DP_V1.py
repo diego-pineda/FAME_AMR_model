@@ -658,7 +658,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for i in range(N+1):
         if species_descriptor[i].startswith("reg"):
             e_r[i] = er
-        elif species_descriptor[i]=='void':
+        elif species_descriptor[i].startswith('void'):
             e_r[i] = 1
     # TODO: if different descriptors are used then this for loop should include them
     # TODO: this change can generates problems if I do not eliminate the if statements for gs and ls in the rest of code
