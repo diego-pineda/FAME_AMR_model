@@ -1281,10 +1281,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
             print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20}"
                   .format("CycleCount {:d}".format(cycleCount),
-                          "Cooling Power {:2.5e}".format(qc),
-                          "Heating Power {:2.5e}".format(qh),
-                          "y-tol {:2.5e}".format(max_val_y_diff),
-                          "s-tol {:2.5e}".format(max_val_s_diff),
+                          "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
+                          "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
                           "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
