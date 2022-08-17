@@ -58,7 +58,7 @@ from core.tdma_solver import TDMAsolver
 def alpha_exp(Pe):
     # Exponential Scheme
     val = np.abs(Pe)/(np.expm1(np.abs(Pe)))
-    return np.max([0,val])
+    return np.max([0, val])
 
 
 # ------------------------ SOLID SOLVER -------------------------------
@@ -658,7 +658,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for i in range(N+1):
         if species_descriptor[i].startswith("reg"):
             e_r[i] = er
-        elif species_descriptor[i].startswith('void'):
+        elif species_descriptor[i].startswith("void"):
             e_r[i] = 1
     # TODO: if different descriptors are used then this for loop should include them
     # TODO: this change can generates problems if I do not eliminate the if statements for gs and ls in the rest of code
@@ -1143,7 +1143,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Spres[i] = 0
                         dP = 0
                         # This is where the void stuff will go
-                    pt[n] = dP * DX + pt[n] # DP: it seems that the term dP is actually dP/dx
+                    pt[n] = dP * DX + pt[n]  # DP: it seems that the term dP is actually dP/dx
                     # DP: pt[n] returns the pressure drop along the regenerator at the current time step
 
                 ### Capacitance fluid
@@ -1240,34 +1240,34 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     print(s)
                     break
                 # Break the step calculation
-                if ((time.time()-t0)/60)>time_lim: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
+                if ((time.time()-t0)/60) > time_lim: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
                     # So, the difference time.time()-t0 is in seconds, and dividing it by 60 returns a difference in minutes
                     break # DP: this breaks the while loop for every time step
                 ################################################################
                 ################### ELSE ITERATE AGAIN - WHILE LOOP FOR EVERY TIME STEP FINISHES HERE ###################
             # break the cycle calculation
-            if ((time.time()-t0)/60)>time_lim:
+            if ((time.time()-t0)/60) > time_lim:
                 break # DP: This breaks the for loop over the time steps
         # Check if current cycle is close to previous cycle.
-        [bool_y_check,max_val_y_diff]=AbsTolFunc2d(y,iyCycle,maxCycleTol)
-        [bool_s_check,max_val_s_diff]=AbsTolFunc2d(s,isCycle,maxCycleTol)
-        cycleTol = bool_y_check and bool_s_check # DP comment: this will return True if both arguments are True, otherwise it returns False, which will keep the cycle while loop running
+        [bool_y_check, max_val_y_diff] = AbsTolFunc2d(y, iyCycle, maxCycleTol)
+        [bool_s_check, max_val_s_diff] = AbsTolFunc2d(s, isCycle, maxCycleTol)
+        cycleTol = bool_y_check and bool_s_check  # DP comment: this will return True if both arguments are True, otherwise it returns False, which will keep the cycle while loop running
         # DP: change the time step tolerance
-        if (max_val_y_diff/10)<maxStepTol[stepTolInt]:
+        if (max_val_y_diff/10) < maxStepTol[stepTolInt]:
             stepTolInt = stepTolInt + 1
-            if stepTolInt == len(maxStepTol): # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
+            if stepTolInt == len(maxStepTol):  # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
                 stepTolInt=len(maxStepTol)-1
 
         # DP: it is useful to see on screen some results during the iterative calculation process
         if cycleCount % 10 == 1: # DP: this is true for cycleCount = 11 or 21 or 31 and so on. The operator % returns the modulus of the division
-            coolingpowersum=0
-            heatingpowersum=0
+            coolingpowersum = 0
+            heatingpowersum = 0
             startint=0
             for n in range(startint, nt):
                 # DP: this for loop is for the numerical integration of the equation 3.33 of Theo's thesis (which misses the integrand, dt).
-                tF = y[n, 0] * (Thot - Tcold) + Tcold # DP: temperature in [K] at the cold end at time step n
-                tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold # DP: temperature in [K] at the cold end at time step n+1
-                coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
+                tF = y[n, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n
+                tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n+1
+                coolPn = freq * fCp((tF+tF1)/2, percGly) * fRho((tF+tF1)/2, percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
                 coolingpowersum = coolingpowersum + coolPn
 
                 # DP: Heating power
@@ -1281,8 +1281,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
             print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20}"
                   .format("CycleCount {:d}".format(cycleCount),
-                          "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
-                          "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
+                          "Cooling Power {:2.5e}".format(qc),
+                          "Heating Power {:2.5e}".format(qh),
+                          "y-tol {:2.5e}".format(max_val_y_diff),
+                          "s-tol {:2.5e}".format(max_val_s_diff),
                           "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
