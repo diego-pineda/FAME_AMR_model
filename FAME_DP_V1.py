@@ -405,7 +405,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           "\n{:<30}{:>10.3f}\t{:<6}".format("MCM thermal conductivity", mK, "[W/(m*K)]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("MCM density", mRho, "[kg/m3]"),
           "\n\n{:<30}{}".format("Species in AMR configuration", species_discription),
-          "\n{:<30}{}".format("Layer positions", x_discription))
+          "\n{:<30}{}".format("Layer positions", x_discription), flush = True)
 
     print("\nThe current case uses the following operating parameters:\n",
           "\n{:<30}{:>10.3f}\t{:<6}".format("Thot", Thot, "[K]"),
@@ -414,7 +414,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           "\n{:<30}{:>10.3f}\t{:<6}".format("Tamb", Tambset, "[K]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("Max. Vol flow rate", np.amax(vol_flow_profile) / 16.667e-6, "[Lpm]"),
           "\n{:<30}{:>10.3f}\t{:<6}".format("AMR frequency", ff, "[Hz]"),
-          "\n{:<30}{:>10.3f}\t{:<6}".format("Max. applied magnetic field", np.amax(app_field), "[T]"))
+          "\n{:<30}{:>10.3f}\t{:<6}".format("Max. applied magnetic field", np.amax(app_field), "[T]"), flush = True)
 
     print("\nNumerical simulation parameters:\n",
           "\n{:<30}{:>10d}\t{:<6}".format("Nodes", nodes, "[-]"),
@@ -422,7 +422,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           "\n{:<30}{:>10d}\t{:<6}".format("Maximum cycle iterations", max_cycle_iter, "[-]"),
           "\n{:<30}{:>10d}\t{:<6}".format("Maximum time step iterations", max_step_iter, "[-]"),
           "\n{:<30}{:>10d}\t{:<6}".format("Time limit", time_lim, "[min]"),
-          "\n{:<30}{:>10.0e}\t{:<6}".format("Cycle tolerance", cycle_tol, "[-]"))
+          "\n{:<30}{:>10.0e}\t{:<6}".format("Cycle tolerance", cycle_tol, "[-]"), flush = True)
 
     # Creating list of interpolating functions depending on selected materials
 
@@ -533,7 +533,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for i in range(int(np.floor((nt+1)/2))):
         v_disp = V[i]*DT  # Integration using the rectangle rule
         vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
-    print("\nVolume displaced in one blowing process: {:.3e} [L]".format(vol_disp*1000))
+    print("\nVolume displaced in one blowing process: {:.3e} [L]".format(vol_disp*1000), flush = True)
 
     pdrop = lambda at, dP, sf: dP * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
@@ -549,7 +549,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # TODO: the heat capacity of the MCM should be read from an input file or calculated somehow
     # DP comment: 6100 is the density of the MCM. 4200 is the Cp of water-glycol mixture. 1000 is the density of water.
     # DP comment: 235 in the denominator is an average value of Cp of Gd.
-    print('Utilization: {0:1.3f}'.format(Uti))
+    print('Utilization: {0:1.3f}'.format(Uti), flush = True)
     # print('Urms: {0:3.3f}'.format((Vd / Ac*er) * freq * np.pi*1/np.sqrt(2)))
 
     # Initial ch-factor
@@ -760,11 +760,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     # Check is there is some pickeled data
     PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName, int(caseNum))
-    print("Pickle Data File: {}".format(PickleFileName))
+    print("Pickle Data File: {}".format(PickleFileName), flush = True)
     try:
         # we open the file for reading
         fileObject = open(PickleFileName, 'rb')
-        print("Loading the pickle file...\n")
+        print("Loading the pickle file...\n", flush = True)
         # load the object from the file into var b
         bbb = pickle.load(fileObject)
         y = bbb[0]
@@ -774,7 +774,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         isCycle = bbb[4]
     except FileNotFoundError:
         # Keep preset values
-        print("Started normal!\n")
+        print("Started normal!\n", flush = True)
         y = np.ones((nt+1, N+1))*y1 # DP: initial temperature distribution for every time step is set to a linear distribution from Tcold to Thot
         s = np.ones((nt+1, N+1))*s1
         stepTolInt = 0
@@ -1137,7 +1137,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # No interaction between solid and fluid since there is no solid.
                         Omegaf[i] = 0  #
                         # This will just make the plots nicer by having the solid temperature be the fluid temperature.
-                        Cs[i] = 1
+                        Cs[i] = 1 * freq
                         Smce[i] = (iynext[i]-s[n-1, i])/DT
                         #neglect pressure term.
                         Spres[i] = 0
@@ -1225,10 +1225,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 stepCount = stepCount + 1
                 # Check if we have hit the max steps
                 if (stepCount == maxSteps):
-                    print("Hit max step count")
-                    print(AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt]))
-                    print(AbsTolFunc(snext, isnext, maxStepTol[stepTolInt]))
-                    print(stepTol)
+                    print("Hit max step count", flush = True)
+                    print(AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt]), flush = True)
+                    print(AbsTolFunc(snext, isnext, maxStepTol[stepTolInt]), flush = True)
+                    print(stepTol, flush = True)
                 # Copy current values to new guess and current step.
                 s[n, :] = np.copy(snext)  # DP: updated the current time step solid Temp distrib in the matrix containing all time steps temperature distributions
                 isnext  = np.copy(snext)  # DP: uses the solid temperature just calculated for new time step iteration
@@ -1236,8 +1236,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 iynext  = np.copy(ynext)
                 if (np.any(np.isnan(y)) or np.any(np.isnan(s))):
                     # Sometimes the simulation hits a nan value. We can redo this point later.
-                    print(y)
-                    print(s)
+                    print(y, flush = True)
+                    print(s, flush = True)
                     break
                 # Break the step calculation
                 if ((time.time()-t0)/60) > time_lim: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
@@ -1283,7 +1283,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                   .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush = True)
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
             coolingpowersum=0
@@ -1308,7 +1308,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                   .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)))
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush = True)
 
             # Pickle data
             aaa = (y, s, stepTolInt, iyCycle, isCycle)
@@ -1319,7 +1319,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             pickle.dump(aaa, fileObject)
             # here we close the fileObject
             fileObject.close()
-            print("Saving pickle file...")
+            print("Saving pickle file...", flush = True)
             # Quit Program
             sys.exit()
         # Copy last value to the first of the next cycle.
@@ -1329,13 +1329,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         cycleCount = cycleCount + 1
         # Did we hit the maximum number of cycles
         if cycleCount == maxCycles:
-            print("Hit max cycle count\n")
+            print("Hit max cycle count\n", flush = True)
         # Copy current cycle to the stored value
         isCycle = np.copy(s)
         iyCycle = np.copy(y)
         if np.any(np.isnan(y)):
             # Sometimes the simulation hits a nan value. We can redo this point later.
-            print(y)
+            print(y, flush = True)
             break # DP: this breaks the while loop for the cycle calculation
         # End Cycle
     t1 = time.time()
@@ -1424,34 +1424,34 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           .format("CycleCount {:d}".format(cycleCount),
                   "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                   "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                  "Run time {:4.1f} [min]".format((t1-t0)/60)))
+                  "Run time {:4.1f} [min]".format((t1-t0)/60)), flush = True)
 
     # print('Effectiveness HB-CE {} CB-HE {}'.format(eff_HB_CE, eff_CB_HE)) # TODO check whether effectiveness is useful
-    print('\nMaximum pressure drop: {:.3f} (kPa)'.format(np.amax(pt)/1000))
-    print('Average pressure drop: {:.3f} (kPa)'.format(pave/1000))
+    print('\nMaximum pressure drop: {:.3f} (kPa)'.format(np.amax(pt)/1000), flush = True)
+    print('Average pressure drop: {:.3f} (kPa)'.format(pave/1000), flush = True)
 
-    print('\nValues found at minimal field')
-    print('min Applied Field: {:.3f}'.format(minAplField))
-    print('min Internal Field: {:.3f}'.format(minPrevHint))
-    print('min Magnetic Temperature: {:.3f}'.format(minMagTemp))
-    print('min Cp: {:.3f}'.format(minCpPrev))
-    print('min SS:{:.3f}'.format(minSSprev))
-    print('Lowest Temperature found in the SS cycle: {:.3f}'.format(minTemp))
+    print('\nValues found at minimal field', flush = True)
+    print('min Applied Field: {:.3f}'.format(minAplField), flush = True)
+    print('min Internal Field: {:.3f}'.format(minPrevHint), flush = True)
+    print('min Magnetic Temperature: {:.3f}'.format(minMagTemp), flush = True)
+    print('min Cp: {:.3f}'.format(minCpPrev), flush = True)
+    print('min SS:{:.3f}'.format(minSSprev), flush = True)
+    print('Lowest Temperature found in the SS cycle: {:.3f}'.format(minTemp), flush = True)
 
-    print('\nValues found at maximum field')
-    print('max Applied Field: {:.3f}'.format(maxAplField))
-    print('max Internal Field: {:.3f}'.format(maxPrevHint))
-    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp))  # DP: this probably refers to Max MCM Temperature
-    print('max Cp: {:.3f}'.format(maxCpPrev))
-    print('max SS:{:.3f}'.format(maxSSprev))
-    print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp))
+    print('\nValues found at maximum field', flush = True)
+    print('max Applied Field: {:.3f}'.format(maxAplField), flush = True)
+    print('max Internal Field: {:.3f}'.format(maxPrevHint), flush = True)
+    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp), flush = True)  # DP: this probably refers to Max MCM Temperature
+    print('max Cp: {:.3f}'.format(maxCpPrev), flush = True)
+    print('max SS:{:.3f}'.format(maxSSprev), flush = True)
+    print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp), flush = True)
 
     # Remove Pickle
     try:
         os.remove(PickleFileName)
-        print("\nWe removed the pickle file")
+        print("\nWe removed the pickle file", flush = True)
     except FileNotFoundError:
-        print('\nThe calculation converged!')
+        print('\nThe calculation converged!', flush = True)
 
     return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field, htc_fs, fluid_dens, mass_flow
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
