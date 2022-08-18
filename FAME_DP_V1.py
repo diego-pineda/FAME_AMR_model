@@ -44,9 +44,9 @@ from sourcefiles.fluid.conduction import fK  # Conduction
 from closure.dynamic_conduction import kDyn_P  # Dynamic conduction
 from closure.static_conduction import kStat  # Static conduction
 #from closure.inter_heat import beHeff_I, beHeff_E  # Internal Heat transfer coefficient * Specific surface area
-from closure.pressure_drop import SPresM  # pressure Drop
+#from closure.pressure_drop import SPresM  # pressure Drop
 from closure.heat_leaks.resistance import ThermalResistance  # Resistance Term in the Regenerator and void
-
+# TODO: change the way how ThermalResistance is used for glass and lead spheres
 # ----------------------- SOLVER ---------------------------------
 
 from core.tdma_solver import TDMAsolver
@@ -265,7 +265,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name, num_reg):
+def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name, pdrop_model_name, num_reg):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -293,6 +293,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # app_field        <- Matrix with applied field data for each one of the nodes and time steps considered
     # htc_model_name   <- Name of file where function for convective heat transfer coefficient model is
     # leaks_model_name <- Name of file where functions for heat leak calculations are
+    # pdrop_model_name <- Name of file where function for pressure drop is defined
 
     TODO: (16/06/2021) implement new feature - each layer of MCM can have its own porosity in the same way glass sphere
      and lead sphere layers have their own porosities.
@@ -306,6 +307,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # Import the model for the calc. of the overall htc for heat leaks through regenerator casing
 
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)
+
+    # Import the model for the calc. of the pressure drop in the AMR bed
+
+    pdrop = importlib.import_module('closure.pressure_drop.' + pdrop_model_name)
 
     # ------- Import the geometric configuration of the regenerator -------
 
@@ -1054,7 +1059,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         htc_fs[n, i] = Omegaf[i] / A_c[i] / (6 * (1 - e_r[i]) / Dsp)  # Added on 03/04/2022
                         # --- Calculation of the coefficient of the viscous dissipation term and pressure drop
-                        Spres[i], dP = SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
+                        Spres[i], dP = pdrop.SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
 
                         # DP: for spherical particles the following correction is not needed
 
@@ -1087,7 +1092,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = pdrop.SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
                         Lf[i] = P_c[i] * ThermalResistance(Dspgs, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
@@ -1108,7 +1113,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, lsCp, lsK, lsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = pdrop.SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
                         Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
