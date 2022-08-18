@@ -1,12 +1,13 @@
 from FAME_DP_V1 import runActive
+from tools.write_data_to_file import FileSave, FileSaveMatrix, FileSaveVector
+from tools.reduce_matrix import reduce_matrix
 
 
 if __name__ == '__main__':
 
     # The following section can be used to run an array of cases in a single computer, one after another
 
-    caseNumber    = 10
-    jName         = "Validation_Gd_no_voids_er0.45_Tspan20"  # DP: It is better to use underline to connect words because this is used as file name
+    jName         = "Testing_new_func_multi_layer"  # DP: It is better to use underline to connect words because this is used as file name
 
     # Numerical parameters
     nodes         = 400
@@ -18,18 +19,18 @@ if __name__ == '__main__':
     cen_loc       = 0
 
     # Temperatures
-    Thot          = 294.8  # [K]
-    Tcold         = 274.8
+    Thot          = 295  # [K]
+    Tcold         = 290
     Tambset       = 300
 
     # Frequency of AMR cycle
-    ff            = 0.25
+    ff            = 1
 
     # Flow profile
 
     # - FAME cooler
     dispV         = 30.52e-6
-    acc_period    = 10
+    acc_period    = 5
     max_flow_per  = 45
     full_magn_ang = 30
     unbal_rat     = 1
@@ -44,15 +45,16 @@ if __name__ == '__main__':
     # Magnetic field profile
 
     # - FAME cooler
-    # from sourcefiles.device import FAME_app_field
-    # app_field = FAME_app_field.app_field(timesteps, nodes)
+    from sourcefiles.device import FAME_app_field
+    mag_field = 1.4  # [T]
+    app_field = FAME_app_field.app_field(timesteps, nodes, mag_field)
 
     # - POLO cooler
-    from sourcefiles.device.polo_mag_field import polo_app_field
-    app_field = polo_app_field(timesteps, nodes, 0.1)
+    # from sourcefiles.device.polo_mag_field import polo_app_field
+    # app_field = polo_app_field(timesteps, nodes, 0.1)
 
     # Geometric parameters
-    cName = "polo_1"
+    cName = "R8"
     num_reg = 1
 
     # Switches for activating and deactivating terms in governing equations
@@ -62,40 +64,29 @@ if __name__ == '__main__':
     CVD  = 1
     CMCE = 1
 
-    # Heat transfer model
-    htc_model_name = 'wakao_and_kagei_1982'  # Name of the file containing the function of the model for htc
-    leaks_model_name = 'polo_resistance'  # Name of the file containing the function of the model for heat leaks
-
-
-    # Some useful functions for storing data
-
-    def FileSave(filename, content):
-        with open(filename, "a") as myfile:
-            myfile.write(content)
-    #
-    def FileSaveMatrix(filename, content):
-        with open(filename, "a") as f:
-            for line in content:
-                f.write(" ".join("{:9.6f}\t".format(x) for x in line))
-                f.write("\n")
-
-    fileName = jName
-    fileNameSave = './' + fileName + '.txt'
+    # Flow and Heat transfer models
+    htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
+    leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
+    pdrop_model_name = 'pb_ergun_1952'
 
     Qc = 1  # This is just for allowing the initialization of the following loop
     Qc_corr_data = []
     Tspan_data = []
     Qc_data = []
+    caseNumber = 0
 
     while Qc > 0:
         results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes,
                             timesteps, cName, jName, time_limit, cycle_toler, maxStepIter, maxCycleIter,
-                            volum_flow_profile, app_field, htc_model_name, leaks_model_name,num_reg)
+                            volum_flow_profile, app_field, htc_model_name, leaks_model_name, pdrop_model_name, num_reg)
         #  runActive():  returns
-        #  Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,
-        #  0       1   2   3     4         5     6           7      8    9      10        11       12
-        # sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh,cycleCount
-        #  13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
+        # Thot          0   eff_HB_CE   6   sHalfBlow   12  Uti         18  sMaxCBlow   24  fluid_dens  30
+        # Tcold         1   eff_CB_HE   7   sEndBlow    13  freq        19  sMaxHBlow   25  mass_flow   31
+        # qc            2   tFce        8   y           14  t           20  qh          26
+        # qccor         3   tFhe        8   s           15  xloc        21  cycleCount  27
+        # (t1-t0)/60    4   yHalfBlow   10  pt          16  yMaxCBlow   22  int_field   28
+        # pave          5   yEndBlow    11  np.max(pt)  17  yMaxHBlow   23  htc_fs      29
+
         Tspan = Thot-Tcold
         Tspan_data.append(Tspan)
         Qc = results[2]  # [W] Cooling capacity of the device without thermal losses correction
@@ -103,55 +94,22 @@ if __name__ == '__main__':
         Qc_corr = results[3]  # [W] Cooling capacity of the device corrected for thermal losses in CHEX
         Qc_corr_data.append(Qc_corr)
         Tcold = Tcold-5
-        FileSave(fileNameSave,"{},{},{},{},{},{} \n".format('Tspan [K]', 'Qc_corr [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
-        FileSave(fileNameSave,"{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f} \n".format(results[0]-results[1], results[3], results[2], results[27], results[4], results[17]))
-        FileSave(fileNameSave,"Fluid temperatures \n")
-        FileSaveMatrix(fileNameSave, results[14])
-        FileSave(fileNameSave,"\n")
-        FileSave(fileNameSave,"Solid temperatures \n")
-        FileSaveMatrix(fileNameSave, results[15])
-        FileSave(fileNameSave,"\n")
-        Qc = -1
 
+        fileNameSave = './output/' + jName + '_' + str(caseNumber) + '.txt'
 
-    # Plotting Tspan vs Qc
-    # import numpy as np
-    # import matplotlib.pyplot as plt
+        FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]'))
+        FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
+        FileSave(fileNameSave, "Fluid temperatures\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
+        FileSave(fileNameSave, "Solid temperatures\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 3, 2))
+        FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
+        FileSaveVector(fileNameSave, results[16])
+        FileSave(fileNameSave, "\nInternal Magnetic Field\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 3, 2))
+        FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 3, 2))
+        FileSave(fileNameSave, "\nMass flow rate\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 3, 2))
 
-    # plot1 = plt.figure(1)
-    # plt.plot([0, 24, 51, 77, 103], [9.7, 8, 6, 3.3, 0.01])
-    # plt.plot(Qc_data, Tspan_data)
-    # plt.legend(["Bowei's experiments", "Simulation without heat losses in CHEX"])
-    # plt.xlabel("Cooling capacity [W]")
-    # plt.ylabel("Temperature span [K]")
-    # plt.title("Temperature span vs Cooling capacity")
-    # plt.grid(which='both', axis='both')
-    #
-    # plt.show()
-
-
-
-
-#     results = runActive(caseNumber,Thot,Tcold,cen_loc,Tambset,dispV,ff,CF,CS,CL,CVD,CMCE,nodes,timesteps,Dsp,cName,jName,time_limit,cycle_toler,maxStepIter,maxCycleIter)
-#
-
-#
-# #  runActive():  return Thot,Tcold,qc,qccor,(t1-t0)/60,pave,eff_HB_CE,eff_CB_HE,tFce,tFhe,yHalfBlow,yEndBlow,sHalfBlow,sEndBlow,y, s, pt, np.max(pt),Uti,freq,t,xloc,yMaxCBlow,yMaxHBlow,sMaxCBlow,sMaxHBlow,qh, cycleCount
-# #                       0       1   2   3     4         5     6           7      8    9      10        11       12       13     14 15 16    17       18  19   20 21    22         23       24         25      26     27
-#
-#     fileName = "Validation_val_span_11K.txt"
-#     fileNameSave = './' + fileName
-#     fileNameSliceTemp = './Blow/{:3.0f}-{:3.0f}-BlowSlice'.format(Thot, Tcold) + fileName
-#     FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-#     FileSave(fileNameSliceTemp,"{},{},{},{},{} \n".format('Thot [K]', 'Tcold [K]', 'Uti [-]', 'freq [Hz]', 'run time [min]'))
-#     FileSave(fileNameSliceTemp,"{},{},{:4.2f},{},{:4.2f} \n".format(results[0], results[1], results[18], results[19], results[4]))
-#     BlowSliceTemperatures = np.stack((results[21], results[10], results[11], results[12], results[13], results[22], results[23], results[24], results[25]), axis=-1)
-#     FileSaveMatrix(fileNameSliceTemp, BlowSliceTemperatures)
-#
-#     fluidtemperature = './' + "Fluid_Temp_val_span_11K.txt"
-#     fluidtemperatures = results[14]
-#     FileSaveMatrix(fluidtemperature,fluidtemperatures)
-#
-#     solidtemperature = './' + "Solid_Temp_val_span_11K.txt"
-#     solidtemperatures = results[15]
-#     FileSaveMatrix(solidtemperature,solidtemperatures)
+        caseNumber    = caseNumber + 1

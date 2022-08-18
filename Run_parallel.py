@@ -1,27 +1,8 @@
 from FAME_DP_V1 import runActive
+from tools.write_data_to_file import FileSave, FileSaveMatrix, FileSaveVector
+from tools.reduce_matrix import reduce_matrix
 import numpy as np
 import sys
-
-
-# ------- Some useful functions for storing data --------
-
-
-def FileSave(filename, content):
-    with open(filename, "a") as myfile:
-        myfile.write(content)
-
-
-def FileSaveMatrix(filename, content):
-    with open(filename, "a") as f:
-        for line in content:
-            f.write(" ".join("{:9.4f}\t".format(x) for x in line))
-            f.write("\n")
-
-
-def FileSaveVector(filename, content):
-    with open(filename, "a") as f:
-        f.write(" ".join("{:9.4f}\t".format(x) for x in content))
-        f.write("\n")
 
 
 # ------- Definition of the variables that change for the cases to simulate -------
@@ -54,12 +35,12 @@ vble3lowvalue = 600e-6
 vble3highvalue = 600e-6
 vble3resolution = 1
 
+Thotarr = np.linspace(Thotlow, Thothigh, hotResolution)
+Tspanarr = np.linspace(MinTspan, MaxTSpan, TspanResolution)
+
 vble1values = np.linspace(vble1lowvalue, vble1highvalue, vble1resolution)
 vble2values = np.linspace(vble2lowvalue, vble2highvalue, vble2resolution)
 vble3values = np.linspace(vble3lowvalue, vble3highvalue, vble3resolution)
-
-Thotarr = np.linspace(Thotlow, Thothigh, hotResolution)
-Tspanarr = np.linspace(MinTspan, MaxTSpan, TspanResolution)
 
 numGroups = vble1resolution * vble2resolution * vble3resolution
 maxcase = numGroups * hotResolution * TspanResolution
@@ -130,10 +111,10 @@ CL   = 1
 CVD  = 1
 CMCE = 1
 
-# Heat transfer models
+# Flow and Heat transfer models
 htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
 leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
-
+pdrop_model_name = 'pb_ergun_1952'
 
 if __name__ == '__main__':
 
@@ -151,10 +132,10 @@ if __name__ == '__main__':
 
         # ------- Parameters that change for the cases to study -------
 
-        # Note: place in this section the parameters that change in the simulations. The volume displacement and
+        # Note: place in this section the parameters that change in the simulations. The volume flow rate and
         # frequency of the AMR cycle are taken as changing parameters in what follows, but it can be any of the input
         # parameters listed above. Please remember that the changing parameters must be commented out in the section
-        # above. It is not necessary to provide three changing parameters necessarily
+        # above. Any of these three parameters can have a single value.
 
         dispV = vble1values[vble1index] * 16.667e-6
         ff = vble2values[vble2index]
@@ -171,7 +152,7 @@ if __name__ == '__main__':
 
         results = runActive(case, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
-                            htc_model_name, leaks_model_name, num_reg)
+                            htc_model_name, leaks_model_name, pdrop_model_name, num_reg)
         #  runActive():  returns
         # Thot          0   eff_HB_CE   6   sHalfBlow   12  Uti         18  sMaxCBlow   24  fluid_dens  30
         # Tcold         1   eff_CB_HE   7   sEndBlow    13  freq        19  sMaxHBlow   25  mass_flow   31
@@ -183,18 +164,18 @@ if __name__ == '__main__':
         fileNameSave = './output/' + str(case) + fileName  # This is for the HPC11 cluster at TU Delft
         # fileNameSave = '/scratch/dpineda/' + str(case) + fileName  # This is for the THCHEM cluster at RU Nijmegen
         FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]'))
-        FileSave(fileNameSave, "{},{:4.2f},{:4.2f},{},{:4.2f},{:4.2f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
+        FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
         FileSave(fileNameSave, "Fluid temperatures\n")
-        FileSaveMatrix(fileNameSave, results[14])
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
         FileSave(fileNameSave, "Solid temperatures\n")
-        FileSaveMatrix(fileNameSave, results[15])
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 3, 2))
         FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
         FileSaveVector(fileNameSave, results[16])
         FileSave(fileNameSave, "\nInternal Magnetic Field\n")
-        FileSaveMatrix(fileNameSave, results[28])
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 3, 2))
         FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
-        FileSaveMatrix(fileNameSave, results[29])
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 3, 2))
         FileSave(fileNameSave, "\nMass flow rate\n")
-        FileSaveMatrix(fileNameSave, results[31])
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 3, 2))
 
     RunCaseThotTcold(float(sys.argv[1]), sys.argv[2])
