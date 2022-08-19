@@ -24,8 +24,9 @@ def SPresM(Dsp, Ud, V, er, flMu, flRho, Af):
     Msc = np.sqrt(np.sqrt((64 * er**2 - 128 * er + np.pi**2 + 64) * Dsp**4)/(np.pi * Dsp**4) - 1/Dsp**2) / np.sqrt(2)
     dl = (1 - Msc * Dsp) / Msc
     beta = 4 * (1 - er) / Dsp
-    Re = flRho * Ud / (beta**2 * flMu * dl)
-    ff = 8.61 / Re + 0.52
-    dP = ff * flRho * (Ud / er)**2 / dl
+    #Re = flRho * Ud / (beta**2 * flMu * dl)
+    #ff = 8.61 / Re + 0.52
+    #dP = ff * flRho * (Ud / er)**2 / dl
+    dP = 8.61 * beta**2 * flMu * Ud / (er**2) + 0.52 * flRho * (Ud / er)**2 / dl
     Spress = dP * V
     return Spress, dP
