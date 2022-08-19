@@ -304,7 +304,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)  # htc between solid and fluid
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)  # heat leaks through regenerator casing
-    predrop = importlib.import_module('closure.pressure_drop.' + pdrop_model_name)  # pressure drop in the AMR bed
+    predrop = importlib.import_module('closure.press_drop.' + pdrop_model_name)  # pressure drop in the AMR bed
 
     # ------- Import the geometric configuration of the regenerator -------
 
