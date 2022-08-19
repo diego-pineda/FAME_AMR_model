@@ -3,6 +3,7 @@ from tools.write_data_to_file import FileSave, FileSaveMatrix, FileSaveVector
 from tools.reduce_matrix import reduce_matrix
 import numpy as np
 import sys
+import importlib
 
 
 # ------- Definition of the variables that change for the cases to simulate -------
@@ -95,14 +96,17 @@ app_field = FAME_app_field.app_field(timesteps, nodes, max_app_field)
 '''Geometric parameters that differ from the configuration from case to case can be adjusted here. This way it is not
 necessary to create a new configuration file each time a single parameter need to be changed. Take the following lines
 starting with R8 as an example.'''
-from configurations import R8
+
+cName = "R8"
+num_reg = 1
+
+configuration = importlib.import_module('configurations.' + cName)
+
 # R8.species_discription = ['reg-M6', 'reg-M7', 'reg-M8', 'reg-M9', 'reg-M10', 'reg-M11', 'reg-M12', 'reg-M13', 'reg-M14', 'reg-M15']
 # R8.x_discription = [0, 0.006, 0.012, 0.018, 0.024, 0.030, 0.036, 0.042, 0.048, 0.054, 0.060]
 # R8.reduct_coeff = dict(M0=1, M1=0.55, M2=0.77, M6=1, M7=1, M8=1, M9=1, M10=1, M11=1, M12=1, M13=1, M14=1, M15=1)
 # R8.mK = 6
 # R8.mRho = 6100
-cName = "R8"
-num_reg = 1
 
 # Switches for activating and deactivating terms in governing equations
 CF   = 1
@@ -139,7 +143,7 @@ if __name__ == '__main__':
 
         dispV = vble1values[vble1index] * 16.667e-6
         ff = vble2values[vble2index]
-        R8.Dsp = vble3values[vble3index]
+        configuration.Dsp = vble3values[vble3index]
 
         volum_flow_profile = vol_flow_rate(timesteps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
 

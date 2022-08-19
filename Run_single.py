@@ -2,6 +2,7 @@ from FAME_DP_V1 import runActive
 from tools.write_data_to_file import FileSave, FileSaveMatrix, FileSaveVector
 from tools.reduce_matrix import reduce_matrix
 import numpy as np
+import importlib
 
 # ---------------------------------- Calculation of just one case --------------------------------------
 
@@ -55,19 +56,25 @@ app_field = FAME_app_field.app_field(timesteps, nodes, mag_field)
 '''Geometric parameters that differ from the configuration from case to case can be adjusted here. This way it is not
 necessary to create a new configuration file each time a single parameter need to be changed. Take the following lines
 starting with R8 as an example.'''
-from configurations import R8
-R8.species_discription = ['void3', 'reg-M0', 'void3', 'reg-M0', 'void3']
-R8.x_discription = [0, 0.006, 0.029, 0.030, 0.054, 0.060]
-# R8.species_discription = ['reg-M166', 'reg-M167', 'reg-M168', 'reg-M169', 'reg-M170', 'reg-M171', 'reg-M172', 'reg-M173', 'reg-M174', 'reg-M175', 'reg-M176', 'reg-M177', 'reg-M178', 'reg-M179']  # ['reg-M122', 'reg-M123', 'reg-M124', 'reg-M125']
-# R8.x_discription = [0, 0.00428571, 0.00857143, 0.01285714, 0.01714286, 0.02142857, 0.02571429, 0.03, 0.03428571, 0.03857143, 0.04285714, 0.04714286, 0.05142857, 0.05571429, 0.06]  # [0, 0.015, 0.03, 0.045, 0.06]
-R8.reduct_coeff = dict(M0=1, M122=1, M123=1, M124=1, M125=1, M166=0.77, M167=0.77, M168=0.77, M169=0.77,
-                       M170=0.77, M171=0.77, M172=0.77, M173=0.77, M174=0.77, M175=0.77, M176=0.77, M177=0.77, M178=0.77, M179=0.77)
-R8.Dsp = 300e-6
-# R8.mK = 6
-# R8.mRho = 6100
-cName   = "R8"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "Test_internal_void"  # DP: use underlines to connect words because this is used as file name
+
+cName   = "PSB"  # Name of file where the geometric configuration of the regenerator is defined
+jName   = "Test_PSB_configuration"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
+
+dsp = 300e-6  # Note: this is particular for the packed bed and packed screen bed configuration
+msc = 2000  # Note: this is particular for the packed screen bed configuration
+
+configuration = importlib.import_module('configurations.' + cName)
+
+# Overwriting variables in the configuration file for this particular simulation
+
+configuration.species_discription = ['reg-M0']
+configuration.x_discription = [0, 0.060]
+configuration.reduct_coeff = dict(M0=1, M122=1, M123=1, M124=1, M125=1, M166=0.77, M167=0.77, M168=0.77, M169=0.77,
+                       M170=0.77, M171=0.77, M172=0.77, M173=0.77, M174=0.77, M175=0.77, M176=0.77, M177=0.77, M178=0.77, M179=0.77)
+configuration.Dsp = dsp
+configuration.Msc = msc
+configuration.er = 1 - np.pi * dsp * msc**2 * np.sqrt(dsp**2 + msc**-2) / 4  # [] Porosity of the packed screen bed
 
 # Switches for activating and deactivating terms in governing equations
 CF   = 1
@@ -77,9 +84,9 @@ CVD  = 1
 CMCE = 1
 
 # Flow and Heat transfer models
-htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
+htc_model_name = 'psb_park_2002'  # Name of the file containing the function of the model for htc
 leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
-pdrop_model_name = 'pb_ergun_1952'
+pdrop_model_name = 'psb_Armour_1968'
 
 results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                     jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
@@ -94,7 +101,7 @@ results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, C
 # pave          5   yEndBlow    11  np.max(pt)  17  yMaxHBlow   23  htc_fs      29
 
 
-fileName = "Gd_intern_void_1mm.txt"
+fileName = "Gd_PSB_test.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
 FileSave(fileNameSave, "{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'run time [min]', 'Max. Pressure drop [Pa]'))
