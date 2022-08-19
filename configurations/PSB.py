@@ -61,8 +61,8 @@ reduct_coeff        = dict(M0=1, M1=0.55, M2=0.77)  # [-] Reduction coefficients
 
 # Active bed of MCM
 
-Dsp  = 600e-6  # [m] Diameter of MCM wires
-Msc  = 2500    # [1/m] Mesh number of weave screen. Similar to number of threads per meter
+Dsp  = 300e-6  # [m] Diameter of MCM wires
+Msc  = 2000    # [1/m] Mesh number of weave screen. Similar to number of threads per meter
 mK   = 10.5    # [W/(m K)]...DP: this was 6 and is an assumed thermal conductivity of the MCM
 mRho = 7900    # [kg/m^3]... DP: This was 6100 and is an assumed MCM density to calculate porosity of bed
 
