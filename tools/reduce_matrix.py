@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def reduce_matrix(nodes, timesteps, matrix, fraction_nodes, fraction_timesteps):
     new_matrix = np.ones((int(timesteps / fraction_timesteps)+1, int(nodes / fraction_nodes)+1))
     ii = 0
