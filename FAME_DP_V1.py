@@ -300,17 +300,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     '''
 
-    # Import the model for the calc. of the convective htc between solid and fluid in the packed bed
+    # Import the flow and heat transfer models
 
-    htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)
-
-    # Import the model for the calc. of the overall htc for heat leaks through regenerator casing
-
-    leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)
-
-    # Import the model for the calc. of the pressure drop in the AMR bed
-
-    pdrop = importlib.import_module('closure.pressure_drop.' + pdrop_model_name)
+    htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)  # htc between solid and fluid
+    leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)  # heat leaks through regenerator casing
+    predrop = importlib.import_module('closure.pressure_drop.' + pdrop_model_name)  # pressure drop in the AMR bed
 
     # ------- Import the geometric configuration of the regenerator -------
 
@@ -1059,7 +1053,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         htc_fs[n, i] = Omegaf[i] / A_c[i] / (6 * (1 - e_r[i]) / Dsp)  # Added on 03/04/2022
                         # --- Calculation of the coefficient of the viscous dissipation term and pressure drop
-                        Spres[i], dP = pdrop.SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
+                        Spres[i], dP = predrop.SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
 
                         # DP: for spherical particles the following correction is not needed
 
@@ -1092,7 +1086,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = pdrop.SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = predrop.SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
                         Lf[i] = P_c[i] * ThermalResistance(Dspgs, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
@@ -1113,7 +1107,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, lsCp, lsK, lsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = pdrop.SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = predrop.SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
                         Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
