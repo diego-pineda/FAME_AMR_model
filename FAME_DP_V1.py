@@ -786,6 +786,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     htc_fs = np.zeros((nt+1, N+1))  # Matrix for storing heat transfer coefficients between fluid and solid
     fluid_dens = np.zeros((nt+1, N+1))  # Matrix for storing fluid density at every node and time step
     mass_flow = np.zeros((nt+1, N+1))  # Matrix for storing mass flow rate at every node and time step
+    pressure_drop_per_unit_length = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing pressure drop per unit length at every node and time step
+    k_stat = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing kstat at every node and time step
+    k_disp = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing kdisp at every node and time step
 
     cycleTol   = 0  # DP comment: this is equivalent to a boolean False
     cycleCount = 1  # DP comment: it was defined above that the maximum number of cycle iterations is 2000
@@ -1049,6 +1052,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
                         # --- Calculation of effective thermal conductivity for fluid
                         k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
+                        k_disp[n, i] = k[i]  # Added on 15/09/2022 in order to calculate entropy generation
                         # --- Calculation of coefficient of heat transfer by convection term east of the P node
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         htc_fs[n, i] = Omegaf[i] / A_c[i] / (6 * (1 - e_r[i]) / Dsp)  # Added on 03/04/2022
@@ -1070,6 +1074,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
                         # --- Calculation of the effective thermal conductivity for the solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
+                        k_stat[n, i] = ks[i]
                         # --- Calculation of capacitance of solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
                         # DP: freq is used here because in the SolveSolid function Cs is divided by dt = 1/(nt+1).
@@ -1142,6 +1147,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Spres[i] = 0
                         dP = 0
                         # This is where the void stuff will go
+                    pressure_drop_per_unit_length[n, i] = dP  # [Pa/m] dP is actually dP/dx
                     pt[n] = dP * DX + pt[n]  # DP: it seems that the term dP is actually dP/dx
                     # DP: pt[n] returns the pressure drop along the regenerator at the current time step
 
@@ -1452,6 +1458,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     except FileNotFoundError:
         print('\nThe calculation converged!', flush = True)
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field, htc_fs, fluid_dens, mass_flow
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field, htc_fs, fluid_dens, mass_flow, pressure_drop_per_unit_length, k_stat, k_disp
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------

@@ -158,12 +158,12 @@ if __name__ == '__main__':
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
                             htc_model_name, leaks_model_name, pdrop_model_name, num_reg)
         #  runActive():  returns
-        # Thot          0   eff_HB_CE   6   sHalfBlow   12  Uti         18  sMaxCBlow   24  fluid_dens  30
-        # Tcold         1   eff_CB_HE   7   sEndBlow    13  freq        19  sMaxHBlow   25  mass_flow   31
-        # qc            2   tFce        8   y           14  t           20  qh          26
-        # qccor         3   tFhe        8   s           15  xloc        21  cycleCount  27
-        # (t1-t0)/60    4   yHalfBlow   10  pt          16  yMaxCBlow   22  int_field   28
-        # pave          5   yEndBlow    11  np.max(pt)  17  yMaxHBlow   23  htc_fs      29
+        # Thot          0 |  eff_HB_CE   6  |  sHalfBlow   12 | Uti         18 | sMaxCBlow   24 | fluid_dens  30 |
+        # Tcold         1 |  eff_CB_HE   7  |  sEndBlow    13 | freq        19 | sMaxHBlow   25 | mass_flow   31 |
+        # qc            2 |  tFce        8  |  y           14 | t           20 | qh          26 | dP/dx       32 |
+        # qccor         3 |  tFhe        8  |  s           15 | xloc        21 | cycleCount  27 | k_stat      33 |
+        # (t1-t0)/60    4 |  yHalfBlow   10 |  pt          16 | yMaxCBlow   22 | int_field   28 | k_disp      34 |
+        # pave          5 |  yEndBlow    11 |  np.max(pt)  17 | yMaxHBlow   23 | htc_fs      29 |                |
 
         fileNameSave = './output/' + str(case) + fileName  # This is for the HPC11 cluster at TU Delft
         # fileNameSave = '/scratch/dpineda/' + str(case) + fileName  # This is for the THCHEM cluster at RU Nijmegen
@@ -181,5 +181,11 @@ if __name__ == '__main__':
         FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 3, 2))
         FileSave(fileNameSave, "\nMass flow rate\n")
         FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 3, 2))
+        FileSave(fileNameSave, "\nPressure drop per unit length\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[32], 3, 2))
+        FileSave(fileNameSave, "\nEffective thermal conductivity of solid\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[33], 3, 2))
+        FileSave(fileNameSave, "\nEffective thermal conductivity of fluid\n")
+        FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[34], 3, 2))
 
     RunCaseThotTcold(float(sys.argv[1]), sys.argv[2])
