@@ -528,6 +528,21 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # V = FAME_V_flow.vol_flow_rate(nt, Vd, acc_period, max_flow_period, full_magn_ang, unbal_rat)  # DP: Vd for the FAME cooler is the maximum volumetric flow rate in m^3/s
     V = vol_flow_profile
 
+    # ------------------------- Added on 28-09-2022 to fix violation of conservation of mass ---------------------------
+    i = 0
+    m_flow = np.zeros(np.shape(V))
+    for v in V:
+        if v > 0:
+            rho_f_in = fRho(Tcold, percGly)
+        elif v < 0:
+            rho_f_in = fRho(Thot, percGly)
+        else:
+            m_flow[i] = 0
+            continue
+        m_flow[i] = rho_f_in * v  # TODO: fix unbalance flow -> mass flow rates in both directions will not match
+        i = i+1
+    # ------------------------------------------------------------------------------------------------------------------
+
     vol_disp = 0
     for i in range(int(np.floor((nt+1)/2))):
         v_disp = V[i]*DT  # Integration using the rectangle rule
@@ -786,7 +801,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     htc_fs = np.zeros((nt+1, N+1))  # Matrix for storing heat transfer coefficients between fluid and solid
     fluid_dens = np.zeros((nt+1, N+1))  # Matrix for storing fluid density at every node and time step
     mass_flow = np.zeros((nt+1, N+1))  # Matrix for storing mass flow rate at every node and time step
-    pressure_drop_per_unit_length = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing pressure drop per unit length at every node and time step
+    Vf = np.zeros((nt+1, N+1))  # Matrix for storing volume flow rate at every node and time step
+    dPdx = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing pressure drop per unit length at every node and time step
     k_stat = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing kstat at every node and time step
     k_disp = np.zeros((nt+1, N+1))  # 15/09/22 Matrix for storing kdisp at every node and time step
 
@@ -1002,6 +1018,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
                     fluid_dens[n, i] = fRho(fT[i], percGly)  # Added on 03/01/2022
                     mass_flow[n, i] = fluid_dens[n, i] * V[n]  # Added on 03/01/2022
+                    Vf[n, i] = m_flow[n] / rhof_ave  # Added on 28/09/2022
 
                     if species_descriptor[i].startswith("reg"):
                         cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
@@ -1051,27 +1068,24 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # average of the properties at the temperatures of current and previous time steps
 
                         # --- Calculation of effective thermal conductivity for fluid
-                        k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
+                        k[i] = kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         k_disp[n, i] = k[i]  # Added on 15/09/2022 in order to calculate entropy generation
                         # --- Calculation of coefficient of heat transfer by convection term east of the P node
-                        Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
                         htc_fs[n, i] = Omegaf[i] / A_c[i] / (6 * (1 - e_r[i]) / Dsp)  # Added on 03/04/2022
                         # --- Calculation of the coefficient of the viscous dissipation term and pressure drop
-                        Spres[i], dP = predrop.SPresM(Dsp, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
+                        Spres[i], dP = predrop.SPresM(Dsp, np.abs(Vf[n, i] / (A_c[i])), np.abs(Vf[n, i]), e_r[i], muf_ave, rhof_ave, A_c[i] * e_r[i])
 
                         # DP: for spherical particles the following correction is not needed
 
                         # dP = dP * 2.7
                         # Spres[i] = Spres[i]*2.7
 
-
-
-
                         # DP: this factor is to compensate for the additional pressure drop occurring in beds of
                         # irregular shaped particles given that Ergun's correlation is for beds of spherical particles
 
                         # --- Calculation of the coefficient of the heat leaks term
-                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
+                        Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
                         # --- Calculation of the effective thermal conductivity for the solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
                         k_stat[n, i] = ks[i]
@@ -1085,16 +1099,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # Effective Conduction for solid
                         rhos_cs_ave[i] = gsCp * gsRho
                         # Effective Conduction for fluid
-                        k[i] = kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
+                        k[i] = kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         # Forced convection term east of the P node
 
-                        Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, gsCp, gsK, gsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = predrop.SPresM(Dspgs, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = predrop.SPresM(Dspgs, np.abs(Vf[n, i] / (A_c[i])), np.abs(Vf[n, i]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
-                        Lf[i] = P_c[i] * ThermalResistance(Dspgs, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
+                        Lf[i] = P_c[i] * ThermalResistance(Dspgs, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
                                                        kg10, r1, r2, r3)
                         # Effective Conduction for solid
                         ks[i] = kStat(e_r[i], kf_ave, gsK)
@@ -1107,15 +1121,15 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # Effective Conduction for solid
                         rhos_cs_ave[i] = lsCp * lsRho
                         # Effective Conduction for fluid
-                        k[i] = kDyn_P(Dspls, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(V[n] / (A_c[i])))
+                        k[i] = kDyn_P(Dspls, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         # Forced convection term east of the P node
-                        Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(V[n] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
+                        Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, lsCp, lsK, lsRho, e_r[i])  # Beta Times Heff
                         # Pressure drop
-                        Spres[i], dP = predrop.SPresM(Dspls, np.abs(V[n] / (A_c[i])), np.abs(V[n]), e_r[i], muf_ave, rhof_ave,
+                        Spres[i], dP = predrop.SPresM(Dspls, np.abs(Vf[n, i] / (A_c[i])), np.abs(Vf[n, i]), e_r[i], muf_ave, rhof_ave,
                                               A_c[i] * e_r[i])
                         # Loss term
-                        Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(V[n] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
+                        Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
                                                        kg10, r1, r2, r3)
                         # Effective Conduction for solid
                         ks[i] = kStat(e_r[i], kf_ave, lsK)
@@ -1133,7 +1147,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         elif species_descriptor[i] == 'void2':  # Used for PM1 device
                             Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, kult, rvs2, r1, r2, r3)
                         elif species_descriptor[i] == 'void3':  # Used for FAME cooler and 8Mag device
-                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, freq, np.abs(V[n] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)
+                            Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, freq, np.abs(Vf[n, i] / (A_c[i])), A_c[i], P_c[i], casing_th, air_th)
                         elif species_descriptor[i] == 'void4':  # Used for POLO device
                             Lf[i] = P_c[i] * leaks.ThermalResistanceVoid(kair, kf_ave, kg10, r1, r2, r3)
                         # No solid in the void
@@ -1147,7 +1161,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Spres[i] = 0
                         dP = 0
                         # This is where the void stuff will go
-                    pressure_drop_per_unit_length[n, i] = dP  # [Pa/m] dP is actually dP/dx
+                    dPdx[n, i] = dP  # [Pa/m] dP is actually dP/dx
                     pt[n] = dP * DX + pt[n]  # DP: it seems that the term dP is actually dP/dx
                     # DP: pt[n] returns the pressure drop along the regenerator at the current time step
 
@@ -1158,7 +1172,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 # where A is an lxm matrix and B is an mxn matrix so that A*B is an lxn matrix
 
                 ### Fluid term
-                Ff = (rhof_cf_ave * V[n]) / L_tot  # DP: this is divided by L_tot because in the FluidSolver function Ff
+                Ff = (rhof_cf_ave * Vf[n, i]) / L_tot  # DP: this is divided by L_tot because in the FluidSolver function Ff
                 # is divided by dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
                 Sp = Spres / (Thot - Tcold)
 
@@ -1213,15 +1227,15 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 ################################################################
                 ####################### SOLVE FLUID EQ      ####################
                 # Fluid Equation
-                ynext = SolveFluid(iynext, isnext, y[n-1,:], s[n-1,:],V[n],Cf,Kfe,Kfw,Ff,Omegaf,Lf,Sp,CF,CL,CVD,N,dx,dt,yamb)
+                ynext = SolveFluid(iynext, isnext, y[n-1, :], s[n-1, :], V[n], Cf, Kfe, Kfw, Ff, Omegaf, Lf, Sp, CF, CL, CVD, N, dx, dt, yamb)  # V is only used in this function to get the direction of flow. That is why it was not changed to Vf on 28/09/2022
                 ################################################################
                 ####################### SOLVE SOLID EQ      ####################
                 # Solid Equation
-                snext = SolveSolid(ynext, isnext, y[n-1,:], s[n-1,:],V[n],Cs,Kse,Ksw,Omegas,Smce,CS,CMCE,N,dx,dt)
+                snext = SolveSolid(ynext, isnext, y[n-1, :], s[n-1, :], V[n], Cs, Kse, Ksw, Omegas, Smce, CS, CMCE, N, dx, dt)  # V is only used in this function to get the direction of flow. That is why it was not changed to Vf on 28/09/2022
                 ################################################################
                 ####################### CHECK TOLLERANCE    ####################
                 # Check the tolerance of the current time step
-                stepTol = AbsTolFunc(ynext,iynext,maxStepTol[stepTolInt])[0] and AbsTolFunc(snext,isnext,maxStepTol[stepTolInt])[0] # DP: only get the boolean part of the function,
+                stepTol = AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt])[0] and AbsTolFunc(snext, isnext, maxStepTol[stepTolInt])[0]  # DP: only get the boolean part of the function,
                 # which indicates whether or not the absolute difference between the assumed and calculated temperature distributions is less than the predefined tolerance.
                 # The second element that returns from the function AbsTolFunc is not used or not relevant here
                 ################################################################
@@ -1230,10 +1244,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 stepCount = stepCount + 1
                 # Check if we have hit the max steps
                 if (stepCount == maxSteps):
-                    print("Hit max step count", flush = True)
-                    print(AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt]), flush = True)
-                    print(AbsTolFunc(snext, isnext, maxStepTol[stepTolInt]), flush = True)
-                    print(stepTol, flush = True)
+                    print("Hit max step count", flush=True)
+                    print(AbsTolFunc(ynext, iynext, maxStepTol[stepTolInt]), flush=True)
+                    print(AbsTolFunc(snext, isnext, maxStepTol[stepTolInt]), flush=True)
+                    print(stepTol, flush=True)
                 # Copy current values to new guess and current step.
                 s[n, :] = np.copy(snext)  # DP: updated the current time step solid Temp distrib in the matrix containing all time steps temperature distributions
                 isnext  = np.copy(snext)  # DP: uses the solid temperature just calculated for new time step iteration
@@ -1241,8 +1255,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 iynext  = np.copy(ynext)
                 if (np.any(np.isnan(y)) or np.any(np.isnan(s))):
                     # Sometimes the simulation hits a nan value. We can redo this point later.
-                    print(y, flush = True)
-                    print(s, flush = True)
+                    print(y, flush=True)
+                    print(s, flush=True)
                     break
                 # Break the step calculation
                 if ((time.time()-t0)/60) > time_lim: # DP: time.time() returns the number of seconds from January 1st 1970 00:00:00.
@@ -1272,13 +1286,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 # DP: this for loop is for the numerical integration of the equation 3.33 of Theo's thesis (which misses the integrand, dt).
                 tF = y[n, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n
                 tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n+1
-                coolPn = freq * fCp((tF+tF1)/2, percGly) * fRho((tF+tF1)/2, percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
+                coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
                 coolingpowersum = coolingpowersum + coolPn
 
                 # DP: Heating power
                 tF_h = y[n, -1]*(Thot - Tcold) + Tcold
                 tF1_h = y[n+1, -1]*(Thot - Tcold) + Tcold
-                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly)*fRho((tF_h+tF1_h)/2, percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
+                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly) * m_flow[n] * DT * ((tF_h+tF1_h)/2 - Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
             qc = num_reg * coolingpowersum  # DP: 2 changed by 7 to account for the number of regenerators of the device
@@ -1288,7 +1302,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                   .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush = True)
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush=True)
 
         if ((time.time()-t0)/60) > time_lim:  # DP: if the for loop was broken above, then do...
             coolingpowersum=0
@@ -1297,13 +1311,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             for n in range(startint, nt):
                 tF = y[n, 0] * (Thot - Tcold) + Tcold
                 tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold
-                coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
+                coolPn =  freq * fCp((tF+tF1)/2,percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
                 coolingpowersum = coolingpowersum + coolPn
 
                 # DP: Heating power
                 tF_h = y[n, -1]*(Thot - Tcold) + Tcold
                 tF1_h = y[n+1, -1]*(Thot - Tcold) + Tcold
-                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly)*fRho((tF_h+tF1_h)/2, percGly)*V[n]*DT*((tF_h+tF1_h)/2-Thot)
+                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly) * m_flow[n]*DT*((tF_h+tF1_h)/2-Thot)
                 heatingpowersum = heatingpowersum + heatPn
 
             qc = num_reg * coolingpowersum  # DP: changed from 2 to 7. Number of regenerators
@@ -1313,7 +1327,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                   .format("CycleCount {:d}".format(cycleCount),
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush = True)
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60)), flush=True)
 
             # Pickle data
             aaa = (y, s, stepTolInt, iyCycle, isCycle)
@@ -1324,7 +1338,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             pickle.dump(aaa, fileObject)
             # here we close the fileObject
             fileObject.close()
-            print("Saving pickle file...", flush = True)
+            print("Saving pickle file...", flush=True)
             # Quit Program
             sys.exit()
         # Copy last value to the first of the next cycle.
@@ -1334,13 +1348,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         cycleCount = cycleCount + 1
         # Did we hit the maximum number of cycles
         if cycleCount == maxCycles:
-            print("Hit max cycle count\n", flush = True)
+            print("Hit max cycle count\n", flush=True)
         # Copy current cycle to the stored value
         isCycle = np.copy(s)
         iyCycle = np.copy(y)
         if np.any(np.isnan(y)):
             # Sometimes the simulation hits a nan value. We can redo this point later.
-            print(y, flush = True)
+            print(y, flush=True)
             break # DP: this breaks the while loop for the cycle calculation
         # End Cycle
     t1 = time.time()
@@ -1348,12 +1362,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     # DP: the iterative calculation process on the cycle level ends up here
 
-    quart=int(nt/4)
-    halft=int(nt/2)
-    tquat=int(nt*3/4)
+    quart = int(nt/4)
+    halft = int(nt/2)
+    tquat = int(nt*3/4)
     # This is a modifier so we can modify the boundary at which we calculate the
     # effectiveness
-    cold_end_node  = np.min(np.argwhere([val.startswith("reg") for val in species_descriptor])) # 0
+    cold_end_node = np.min(np.argwhere([val.startswith("reg") for val in species_descriptor])) # 0
     # DP: the following argument: [val.startswith("reg") for val in species_descriptor] returns an array of False and True values after evaluating the condition
     # startwith("reg"). This array is of the same length as species_descriptor
     # DP: np.argwhere returns an array with the positions of the True values obtained from [val.startswith("reg") for val in species_descriptor].
@@ -1380,16 +1394,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     tFhe = y[:, hot_end_node] * (Thot - Tcold) + Tcold # DP: temperature in [K] of the fluid at the hot end of the regenerator during the cycle
 
     # DP: probably, given the sine shape of the volumetric flow with respect to time, the max values of the blow processes occur at 1/4 and 3/4 of the period
-    yMaxCBlow  = y[quart,  :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at the instant tau/4
+    yMaxCBlow  = y[quart, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at the instant tau/4
     yMaxHBlow = y[tquat, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at the instant tau*3/4
 
-    yEndBlow  = y[-1,  :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at the end of the cycle
+    yEndBlow  = y[-1, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at the end of the cycle
     yHalfBlow = y[halft, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the fluid in [K] at half time the cycle period
 
-    sMaxCBlow  = s[quart,  :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at the instant tau/4
+    sMaxCBlow  = s[quart, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at the instant tau/4
     sMaxHBlow = s[tquat, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at the instant tau*3/4
 
-    sEndBlow  = s[-1,  :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at the end of the cycle
+    sEndBlow  = s[-1, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at the end of the cycle
     sHalfBlow = s[halft, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at half time the cycle period
 
     coolingpowersum=0
@@ -1399,7 +1413,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for n in range(startint, nt):
         tF = y[n, 0] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold
-        coolPn =  freq * fCp((tF+tF1)/2,percGly) * fRho((tF+tF1)/2,percGly) * V[n] * DT * ((tF+tF1)/2 - Tcold)
+        coolPn =  freq * fCp((tF+tF1)/2,percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
         coolingpowersum = coolingpowersum + coolPn
 
     qc = num_reg * coolingpowersum  # [W] Gross cooling power of the device
@@ -1409,7 +1423,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for n in range(startint, nt):
         tF = y[n, -1] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, -1] * (Thot - Tcold) + Tcold
-        heatPn = freq * fCp((tF+tF1)/2, percGly) * fRho((tF+tF1)/2, percGly) * V[n] * DT * ((tF+tF1)/2-Thot)
+        heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
         heatingpowersum = heatingpowersum + heatPn
 
     qh = num_reg * heatingpowersum  # [W] Heating power of the device
@@ -1429,35 +1443,76 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
           .format("CycleCount {:d}".format(cycleCount),
                   "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                   "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
-                  "Run time {:4.1f} [min]".format((t1-t0)/60)), flush = True)
+                  "Run time {:4.1f} [min]".format((t1-t0)/60)), flush=True)
 
     # print('Effectiveness HB-CE {} CB-HE {}'.format(eff_HB_CE, eff_CB_HE)) # TODO check whether effectiveness is useful
-    print('\nMaximum pressure drop: {:.3f} (kPa)'.format(np.amax(pt)/1000), flush = True)
-    print('Average pressure drop: {:.3f} (kPa)'.format(pave/1000), flush = True)
+    print('\nMaximum pressure drop: {:.3f} (kPa)'.format(np.amax(pt)/1000), flush=True)
+    print('Average pressure drop: {:.3f} (kPa)'.format(pave/1000), flush=True)
 
-    print('\nValues found at minimal field', flush = True)
-    print('min Applied Field: {:.3f}'.format(minAplField), flush = True)
-    print('min Internal Field: {:.3f}'.format(minPrevHint), flush = True)
-    print('min Magnetic Temperature: {:.3f}'.format(minMagTemp), flush = True)
-    print('min Cp: {:.3f}'.format(minCpPrev), flush = True)
-    print('min SS:{:.3f}'.format(minSSprev), flush = True)
-    print('Lowest Temperature found in the SS cycle: {:.3f}'.format(minTemp), flush = True)
+    print('\nValues found at minimal field', flush=True)
+    print('min Applied Field: {:.3f}'.format(minAplField), flush=True)
+    print('min Internal Field: {:.3f}'.format(minPrevHint), flush=True)
+    print('min Magnetic Temperature: {:.3f}'.format(minMagTemp), flush=True)
+    print('min Cp: {:.3f}'.format(minCpPrev), flush=True)
+    print('min SS:{:.3f}'.format(minSSprev), flush=True)
+    print('Lowest Temperature found in the SS cycle: {:.3f}'.format(minTemp), flush=True)
 
     print('\nValues found at maximum field', flush = True)
-    print('max Applied Field: {:.3f}'.format(maxAplField), flush = True)
-    print('max Internal Field: {:.3f}'.format(maxPrevHint), flush = True)
-    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp), flush = True)  # DP: this probably refers to Max MCM Temperature
+    print('max Applied Field: {:.3f}'.format(maxAplField), flush=True)
+    print('max Internal Field: {:.3f}'.format(maxPrevHint), flush=True)
+    print('max Magnetic Temperature: {:.3f}'.format(maxMagTemp), flush=True)  # DP: this probably refers to Max MCM Temperature
     print('max Cp: {:.3f}'.format(maxCpPrev), flush = True)
     print('max SS:{:.3f}'.format(maxSSprev), flush = True)
-    print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp), flush = True)
+    print('highest Temperature found in the SS cycle: {:.3f}'.format(maxTemp), flush=True)
 
     # Remove Pickle
     try:
         os.remove(PickleFileName)
-        print("\nWe removed the pickle file", flush = True)
+        print("\nWe removed the pickle file", flush=True)
     except FileNotFoundError:
-        print('\nThe calculation converged!', flush = True)
+        print('\nThe calculation converged!', flush=True)
 
-    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, cycleCount, int_field, htc_fs, fluid_dens, mass_flow, pressure_drop_per_unit_length, k_stat, k_disp
+    # -------------------------------------- Entropy generation calculations --------------------------------------
+
+    # Note: feature added on 27/09/2022
+    # Equations are based on: T. Lei et al. / Applied Thermal Engineering 111 (2017) 1232–1243
+
+    S_ht_hot = 0
+    S_ht_cold = 0
+    S_ht_fs = 0
+    S_vd = 0
+    S_condu_stat = 0
+    S_condu_disp = 0
+
+    Tf = y * (Thot - Tcold) + Tcold
+    Ts = s * (Thot - Tcold) + Tcold
+    beta = 6 * (1 - er) / Dsp
+
+    for j in range(nt+1):
+        cp_f_hot_ave = fCp((Tf[j, -1] + Thot) / 2, percGly)
+        cp_f_cold_ave = fCp((Tf[j, 0] + Tcold) / 2, percGly)
+        S_ht_hot = S_ht_hot + freq * np.abs(m_flow[j]) * cp_f_hot_ave * (np.log(Thot / Tf[j, -1]) + (Tf[j, -1] - Thot) / Thot) * DT
+        S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf[j, 0]) + (Tf[j, 0] - Tcold) / Tcold) * DT
+        for i in range(N+1):
+            S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf[j, i] - Ts[j, i])**2 * DX * DT / (Tf[j, i] * Ts[j, i])
+            S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf[j, i]
+            if i==0:
+                dTsdx = (Ts[j, i+1] - Ts[j, i]) / DX
+                dTfdx = (Tf[j, i+1] - Tf[j, i]) / DX
+            elif i==nodes:
+                dTsdx = (Ts[j, i] - Ts[j, i-1]) / DX
+                dTfdx = (Tf[j, i] - Tf[j, i-1]) / DX
+            else:
+                dTsdx = (Ts[j, i+1] - Ts[j, i-1]) / (2 * DX)
+                dTfdx = (Tf[j, i+1] - Tf[j, i-1]) / (2 * DX)
+            S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * dTsdx**2 * DX * DT / Ts[j, i]**2
+            S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * dTfdx**2 * DX * DT / Tf[j, i]**2
+
+    # -------------------------------------------------------------------------------------------------------------
+
+    return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
+           sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
+           cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
+           S_vd, S_condu_stat, S_condu_disp
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
