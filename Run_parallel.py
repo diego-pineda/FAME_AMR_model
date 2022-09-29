@@ -109,11 +109,11 @@ configuration = importlib.import_module('configurations.' + cName)
 # R8.mRho = 6100
 
 # Switches for activating and deactivating terms in governing equations
-CF   = 1
-CS   = 1
-CL   = 1
-CVD  = 1
-CMCE = 1
+CF   = 1  # Heat conduction in the fluid
+CS   = 1  # Heat conducion in the solid
+CL   = 1  # Heat leaks through AMR casing
+CVD  = 1  # Viscous dissipation
+CMCE = 1  # Magnetocaloric effect
 
 # Flow and Heat transfer models
 htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
@@ -158,17 +158,23 @@ if __name__ == '__main__':
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
                             htc_model_name, leaks_model_name, pdrop_model_name, num_reg)
         #  runActive():  returns
-        # Thot          0 |  eff_HB_CE   6  |  sHalfBlow   12 | Uti         18 | sMaxCBlow   24 | fluid_dens  30 |
-        # Tcold         1 |  eff_CB_HE   7  |  sEndBlow    13 | freq        19 | sMaxHBlow   25 | mass_flow   31 |
-        # qc            2 |  tFce        8  |  y           14 | t           20 | qh          26 | dP/dx       32 |
-        # qccor         3 |  tFhe        8  |  s           15 | xloc        21 | cycleCount  27 | k_stat      33 |
-        # (t1-t0)/60    4 |  yHalfBlow   10 |  pt          16 | yMaxCBlow   22 | int_field   28 | k_disp      34 |
-        # pave          5 |  yEndBlow    11 |  np.max(pt)  17 | yMaxHBlow   23 | htc_fs      29 |                |
+        # Thot          0  |  sHalfBlow   12 |  sMaxCBlow   24 |  S_ht_cold     36 |
+        # Tcold         1  |  sEndBlow    13 |  sMaxHBlow   25 |  S_ht_fs       37 |
+        # qc            2  |  y           14 |  qh          26 |  S_vd          38 |
+        # qccor         3  |  s           15 |  cycleCount  27 |  S_condu_stat  39 |
+        # (t1-t0)/60    4  |  pt          16 |  int_field   28 |  S_condu_disp  40 |
+        # pave          5  |  np.max(pt)  17 |  htc_fs      29 |
+        # eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |
+        # eff_CB_HE     7  |  freq        19 |  mass_flow   31 |
+        # tFce          8  |  t           20 |  dP/dx       32 |
+        # tFhe          9  |  xloc        21 |  k_stat      33 |
+        # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |
+        # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
         fileNameSave = './output/' + str(case) + fileName  # This is for the HPC11 cluster at TU Delft
         # fileNameSave = '/scratch/dpineda/' + str(case) + fileName  # This is for the THCHEM cluster at RU Nijmegen
-        FileSave(fileNameSave, "{},{},{},{},{},{},{},{} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]'))
-        FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold))
+        FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot', 'S_ht_cold', 'S_ht_fs', 'S_vd', 'S_condu_stat', 'S_condu_disp'))
+        FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{},{:7.4f},{:7.4f},{:7.4f},{:7.4f},{:7.4f},{:7.4f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40]))
         FileSave(fileNameSave, "Fluid temperatures\n")
         FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
         FileSave(fileNameSave, "Solid temperatures\n")
