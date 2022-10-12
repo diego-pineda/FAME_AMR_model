@@ -531,15 +531,19 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # ------------------------- Added on 28-09-2022 to fix violation of conservation of mass ---------------------------
     i = 0
     m_flow = np.zeros(np.shape(V))
+    rho_f_in_ave = fRho((Tcold+Thot)/2, percGly)
     for v in V:
-        if v > 0:
-            rho_f_in = fRho(Tcold, percGly)
-        elif v < 0:
-            rho_f_in = fRho(Thot, percGly)
-        else:
-            m_flow[i] = 0
-            continue
-        m_flow[i] = rho_f_in * v  # TODO: fix unbalance flow -> mass flow rates in both directions will not match
+        # if v > 0:
+        #     rho_f_in = fRho(Tcold, percGly)
+        #     m_flow[i] = rho_f_in * v
+        # elif v < 0:
+        #     rho_f_in = fRho(Thot, percGly)
+        #     m_flow[i] = rho_f_in * v
+        # else:
+        #     m_flow[i] = 0
+
+        m_flow[i] = rho_f_in_ave * v
+        # TODO: fix unbalance flow -> mass flow rates in both directions will not match
         i = i+1
     # ------------------------------------------------------------------------------------------------------------------
 
