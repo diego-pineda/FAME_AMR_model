@@ -37,7 +37,7 @@ def ThermalResistance(Dsp, Ud, fMu, fRho, kair, kf, kg10, r1, r2, r3, casing_th,
 # Nusselt number equal to 5.04, found by interpolation from table 8.1 of Incropera based on relation width/height
 # Film flow between parallel plates for the calculation of the external heat transfer coefficient
 
-@jit(f8(                    f8, f8,   f8,   f8, f8,  f8,  f8,        f8, f8),nopython=True)
+@jit(f8(                    f8, f8,   f8,   f8, f8,  f8,  f8,        f8, f8), nopython=True)
 def ThermalResistanceVoid(kair, kf, kg10, fAMR, Ud, A_c, P_c, casing_th, air_th):
 
     u_air = 0.1075 * np.pi * fAMR  # velocity of air. The velocity of the center of the magnet was considered r=0.1075 m

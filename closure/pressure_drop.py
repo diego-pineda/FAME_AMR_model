@@ -13,7 +13,7 @@ def SPresM(Dsp, Ud, V, er, flMu, flRho, Af):
     Spress = dP * V
     return Spress, dP
 
-# DP: It seems that V is volumetric flow rate. In that case, Spress would be the viscous disipation
+# DP: It seems that Vflow is volumetric flow rate. In that case, Spress would be the viscous disipation
 # DP: dP/dx is defined according to the correlation presented in Mills end of chapter 4 table
 
 # DP: I could not find this particular correlation in the book of heat transfer in porous media.
@@ -26,9 +26,9 @@ if __name__ == '__main__':
     from sourcefiles.fluid.density import fRho
     from sourcefiles.fluid.dynamic_viscosity import fMu
 
-    T_fluid = 280  # [K] Temperature of fluid
+    T_fluid = 283  # [K] Temperature of fluid
     perc_gly = 20  # [-] Percentage of glycol in the mixture
-    D_sphere = 400e-6  # [m] Diameter of sphere
+    D_sphere = 600e-6  # [m] Diameter of sphere
     Vol_flow_rate = 30.52e-6  # [m3/s] Volumetric flow rate
     Area_cross = 0.045*0.013  # [m2] Cross sectional area of bed
     Porosity = 0.36  # [] Porosity of be
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     diameters = [400e-6, 500e-6, 600e-6, 700e-6, 800e-6]
     porosities = [0.3, 0.35, 0.4, 0.45, 0.5]
+    vol_flow_rates = np.array([5, 10, 15, 20, 25, 30, 35, 40, 45, 50])*1e-6  # [m3/s]
     press_drop = np.ones((len(porosities), len(diameters)))
 
     b = 0
@@ -52,11 +53,32 @@ if __name__ == '__main__':
             a = a+1
         b = b+1
 
-    fig = plt.figure()
+    fig = plt.figure(1)
     plt.plot(diameters, press_drop)
     plt.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
     plt.legend(['Porosity = 0.3', 'Porosity = 0.35', 'Porosity = 0.4', 'Porosity = 0.45', 'Porosity = 0.5'])
     plt.xlabel("Diameter of spheres [m]")
     plt.ylabel("Pressure drop along regenerator [Pa]")
     plt.title("Pressure drop in packed bed using Ergun's correlation")
+
+    press_drop_fQ = np.ones((len(vol_flow_rates),len(porosities)))
+
+    index2 = 0
+
+    for x in porosities:
+        index1 = 0
+        for k in vol_flow_rates:
+            press_drop_fQ[index1, index2] = SPresM(D_sphere, k/Area_cross, k, x, mu_fluid, rho_fluid, 1)[1]*0.060
+            index1 = index1+1
+        index2 = index2+1
+
+    plt.figure(2)
+    plt.plot(vol_flow_rates,press_drop_fQ)
+    plt.ticklabel_format(axis="x", style="sci", scilimits=(0, 0))
+    plt.legend(['Porosity = 0.3', 'Porosity = 0.35', 'Porosity = 0.4', 'Porosity = 0.45', 'Porosity = 0.5'],title="Dsp = {} [m]".format(D_sphere))
+    plt.xlabel("Volumetric flow rate [$m^3/s$]")
+    plt.ylabel("Pressure drop along regenerator [Pa]")
+    plt.title("Pressure drop in packed bed using Ergun's correlation")
+    plt.grid(which='major',axis='both')
+
     plt.show()

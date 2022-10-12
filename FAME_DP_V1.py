@@ -1158,6 +1158,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Cs[i] = 1 * freq
                         Smce[i] = (iynext[i]-s[n-1, i])/DT
                         #neglect pressure term.
+                        # TODO: implement pressure drop term in void sections of the casing
                         Spres[i] = 0
                         dP = 0
                         # This is where the void stuff will go

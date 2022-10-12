@@ -4,7 +4,7 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
 
 
-######################### Data loading of Material data Si1 Material #########################
+######################### Loading of Material data Si2 Material #########################
 
 # Specifc Heat
 cpdat_c   = np.loadtxt('sourcefiles/mat/ssi2/M2_cp_Si_05_AT_G_Q20_c.txt')

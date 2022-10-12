@@ -49,15 +49,53 @@ def vol_flow_rate(nt, v_max, acc_period, max_flow_period, full_magn_ang, unbal_r
 
 if __name__ == '__main__':
 
-    nt = 600 # number of nodes in the time domain
-    V_rate = 15.33e-6 # [m^3/s] Maximum volumetric flow rate
-    acc_period = 10  # [°] angular duration of acceleration and deceleration
-    max_flow_period = 45  # [°] angular duration of max flow
+    # Plotting magnetic field profile to visualize along with volumetric flow rate profile
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
+
+    from sourcefiles.device.FAME_app_field import app_field
+
+    nt = 400 # number of nodes in the time domain
+    N = 1 # number of nodes in the spatial domain. This is just for the applied field function
+    mag_field = 0.9
+
+    ap_field = app_field(nt, N, mag_field)
+    print(ap_field)
+
+    # fig, plot1 = plt.subplots()
+    plt.figure(1)
+    plt.plot(np.linspace(0, 180, nt+1), ap_field[:, 0])
+    # plt.xlabel("Angle [°]")
+    # plt.ylabel("Applied field [T]")
+    # plt.title("Applied magnetic field as a function of rotation angle")
+    # plt.grid(which='both', axis='both')
+    # plot1.xaxis.set_major_locator(MultipleLocator(15))
+    # plt.show()
+
+
+
+    # nt = 600 # number of nodes in the time domain
+    V_rate = 1  # [m^3/s] Maximum volumetric flow rate. Set to 1 for considering all bed and constant flow rate from pump
+    acc_period = 5  # [°] angular duration of acceleration and deceleration
+    max_flow_period = 45  #360/7-20  # [°] angular duration of max flow
     full_magn_ang = 30  # [°] full magnetization angle or angle at which maximum flow is reached
     unbal_rat = 1  # []
 
     volumetric_rate = vol_flow_rate(nt, V_rate, acc_period, max_flow_period, full_magn_ang, unbal_rat)
     # print(np.abs(volumetric_rate[25] / (0.045*0.013)))
+
+    plot1 = plt.figure(1)
+    plt.plot(np.linspace(0, 180, (nt+1)), volumetric_rate)
+
+    plt.xlabel("Angle [°]")
+    plt.ylabel("Normalized flow rate [-] / Applied field [T]")
+    # plt.title("Normalized flow rate and applied field as function of rotation angle")
+    plt.legend(['Applied field', 'Flow rate'])
+    plt.grid(which='both', axis='both')
+    #plt.minorticks_on()
+    #plot1.xaxis.set_major_locator(MultipleLocator(10))
+    # plt.show()
+
 
     # The following lines are for plotting flow rate profiles of 7 regenerators each in its one phase
 
@@ -74,12 +112,8 @@ if __name__ == '__main__':
     reg6twocycles = np.concatenate((reg1twocycles[-reg6ind:], reg1twocycles[:-reg6ind]), axis=None)
     reg7ind = int(np.floor(6 * 2 * (nt + 1) / 7))
     reg7twocycles = np.concatenate((reg1twocycles[-reg7ind:], reg1twocycles[:-reg7ind]), axis=None)
-    print(reg2ind,reg3ind,reg4ind,reg5ind,reg6ind,reg7ind)
-    print(reg1twocycles,reg5twocycles)
-
-
-    import matplotlib.pyplot as plt
-    from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
+    # print(reg2ind,reg3ind,reg4ind,reg5ind,reg6ind,reg7ind)
+    # print(reg1twocycles,reg5twocycles)
 
     fig, plot2 = plt.subplots()
 
@@ -96,7 +130,55 @@ if __name__ == '__main__':
     plt.title("Volumetric flow rate as a function of rotation angle")
     plt.grid(which='both', axis='both')
     plot2.xaxis.set_major_locator(MultipleLocator(15))
+    # plt.show()
+
+    # Recalculating the flow profile
+
+    V_pump = 19.67e-6  # [m3/s] (Group B = 43.17e-6)
+    f_AMR = 0.5  # [Hz]
+    dt = (1 / f_AMR) / nt
+
+    reg1_vol_flow = np.ones(2*(nt+1))
+    Vtotal = np.ones(2*(nt+1))
+    vol_per_reg = np.ones(2*(nt+1))
+    disp_vol = 0
+
+
+    for i in range(2*(nt+1)):
+        Vtotal[i] = max(0,reg1twocycles[i])+max(0,reg2twocycles[i])+max(0,reg3twocycles[i])+max(0,reg4twocycles[i])+max(0,reg5twocycles[i])+max(0,reg6twocycles[i])+max(0,reg7twocycles[i])
+        vol_per_reg[i] = V_pump / Vtotal[i]
+        reg1_vol_flow[i] = max(0,reg1twocycles[i]) * vol_per_reg[i]
+        rect_area = reg1_vol_flow[i]*dt
+        disp_vol = disp_vol + rect_area
+
+    rel_error = 1
+    V_reg_guess = 11e-6
+    iteration = 0
+
+    while np.abs(rel_error) > 0.00005:
+        disp_vol2 = 0
+        for i in range(2*(nt+1)):
+            rect_area2 = V_reg_guess * max(0, reg1twocycles[i]) * dt
+            disp_vol2 = disp_vol2 + rect_area2
+        rel_error = (disp_vol2-disp_vol)/disp_vol
+        V_reg_guess = V_reg_guess * (1-rel_error)
+        iteration = iteration + 1
+        print(iteration,rel_error,V_reg_guess)
+    V_reg_calc = V_reg_guess
+
+    print(disp_vol/2,disp_vol2/2, V_reg_calc)
+
+    plt.figure(3)
+    plt.plot(np.linspace(0, 360, 2*(nt+1)), reg1_vol_flow)
+    plt.xlabel("Angle [°]")
+    plt.ylabel("Normalized flow rate [-]")
+    plt.title("Flow rate one direction / one regenerator / constant pump flow rate")
+    plt.grid(which='both', axis='both')
     plt.show()
+
+
+
+
 
 # ----The next lines correspond to the function that Theo implemented to describe the volumetric flow rate vs time----
 

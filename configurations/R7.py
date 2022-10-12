@@ -8,10 +8,10 @@ Ac = H_reg * W_reg # [m^2] Cross sectional area of one regenerator
 Pc = W_reg * 2 + H_reg * 2 # [m] Perimeter of the cross section of the regenerator
 casing_th = 0.0035 # [m] Thickness of the casing material. G10 glass fiber reinforced epoxy in this case.
 air_th = 0.001 # [m] Thickness of the air layer in between regenerator casing and magnets
-reg_length = 0.060 # [m] length of one regenerator. New variable, it seems that it is not necessary
+L_reg1 = 0.060 # [m] length of one regenerator. New variable, it seems that it is not necessary
 #species_discription = ['void', 'reg-si5', 'reg-si4', 'reg-si3', 'reg-si2', 'reg-si1', 'void'] # This is to identify the layers of MCM
 #species_discription = ['void', 'reg-si3', 'reg-si2', 'reg-si1', 'void'] # This is to identify the layers of MCM
-species_discription = ['void', 'reg-Gd', 'void']  # Case with some voids on the ends of the regenerator
+species_discription = ['void3', 'reg-Gd', 'void3']  # Case with some voids on the ends of the regenerator
 #species_discription = ['reg-Gd'] # This is to identify the layers of MCM
 # If the number of layers increases to 30, which is a realistic number, this list should have 30 elements to identify
 # each layer.
@@ -29,8 +29,8 @@ x_discription = [0, 0.006, 0.066, 0.072]
 # TODO. Write a test statement to check if the number of elements of x_discription equals the number of elements of species_discription plus one
 
 #er      = 0.53 # [-] Porosity of regenerator
-#er      = 0.36 # [-] Porosity of regenerator. er=0.36 in Bowei's paper
-# TODO. Enter this as a parameter of the simulation
+er      = 0.36 # [-] Porosity of regenerator. er=0.36 in Bowei's paper
+
 
 percGly = 20 # [%] Percentage of glycol in the water glycol mixture used as HTF
 
@@ -111,7 +111,7 @@ kair  = 0.0255  # [W/(m K)] air material
 #er      = 0.53 # [-] Porosity of regenerator
 #els     = 0.36  # [-] Porosity of lead spheres
 #egs     = 0.43  # [-] Porosity of glass spheres
-#Dsp     = Dsp  # [m] Diameter of MCM particles (spheres) Set as imput variable!
+Dsp     = 600e-6  # [m] Diameter of MCM particles (spheres)
 #Dspgs   = 0.003175  # [m] Diameter of glass spheres
 #Dspls   = 300e-6  # [m] Diameter of lead spheres
 

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
 
 # Creating the data for the interpolation function
@@ -33,17 +34,24 @@ appliedField = RectBivariateSpline(Rotation, xPosition, Z, kx=1, ky=1)
 # plt.xlabel("Rotating angle [deg]")
 # plt.ylabel("Magnetic flux density [T]")
 # plt.grid(which='both')
-
-# Plot the surface.
-
+#
+# # Plot the surface.
+#
 # R, X = np.meshgrid(rot_angle, x)
 #
 # fig = plt.figure(2)
 # ax = fig.gca(projection='3d')
 # surf = ax.plot_surface(R, X, B, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-# ax.set_zlabel("Magnetic flux density [T]")
+# ax.set_zlabel("Applied field [T]")
 # plt.xlabel("Rotating angle [deg]")
-# plt.ylabel("Position along the regenerator [m]")
+# plt.ylabel("Axial direction [m]")
+#
+# ax.set_xlim(0, 360)
+# ax.xaxis.set_major_locator(LinearLocator(7))
+# ax.set_ylim(-0.05, 0.05)
+# ax.yaxis.set_major_locator(LinearLocator(11))
+# ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+# fig.colorbar(surf, shrink=0.5, aspect=5)
 # plt.show()
 
 

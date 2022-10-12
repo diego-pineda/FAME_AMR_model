@@ -89,8 +89,6 @@ if __name__ == '__main__':
     thick_air = 1e-3  # [m] Thickness of air layer
     fAMR = 1.7  # [Hz] Frequency of AMR
 
-
-
     Tair = Tamb
     kair = 1.5207e-11*Tair**3-4.8574e-8*Tair**2+1.0184e-4*Tair-3.9333e-4  # [W/(m K)] Thermal conductivity of air
     print('Thermal conductivity of air is: {}'.format(kair))

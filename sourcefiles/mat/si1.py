@@ -9,20 +9,17 @@ from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
 # Specifc Heat
 cpdat_c   = np.loadtxt('sourcefiles/mat/ssi1/M1_cp_Si_04_IW_G_Q20_c.txt')
 cpdat_h   = np.loadtxt('sourcefiles/mat/ssi1/M1_cp_Si_04_IW_G_Q20_h.txt')
-
-#cpdat_c   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_c.txt') # written by DP
-#cpdat_h   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_h.txt') # written by DP
-
 # Magnetization
 magdata_h = np.loadtxt('sourcefiles/mat/ssi1/M1_Mag_h_Si_04_IW_G_Q20_h.txt')
 magdata_c = np.loadtxt('sourcefiles/mat/ssi1/M1_Mag_h_Si_04_IW_G_Q20_c.txt')
-
-#magdata_h = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_h.txt') # written by DP
-#magdata_c = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_c.txt') # written by DP
-
 # Entropy
 datstot_c = np.loadtxt('sourcefiles/mat/ssi1/M1_S_Si_04_IW_G_Q20_c.txt')
 datstot_h = np.loadtxt('sourcefiles/mat/ssi1/M1_S_Si_04_IW_G_Q20_h.txt')
+#cpdat_c   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_c.txt') # written by DP
+#cpdat_h   = np.loadtxt('ssi1/M1_cp_Si_04_IW_G_Q20_h.txt') # written by DP
+
+#magdata_h = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_h.txt') # written by DP
+#magdata_c = np.loadtxt('ssi1/M1_Mag_h_Si_04_IW_G_Q20_c.txt') # written by DP
 
 #datstot_c = np.loadtxt('ssi1/M1_S_Si_04_IW_G_Q20_c.txt') # written by DP
 #datstot_h = np.loadtxt('ssi1/M1_S_Si_04_IW_G_Q20_h.txt') # written by DP

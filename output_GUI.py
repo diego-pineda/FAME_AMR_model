@@ -142,7 +142,6 @@
 import numpy as np
 
 from tkinter import *
-from math import  sin
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
@@ -152,13 +151,15 @@ import sys
 import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_20layer_ff_vfl_Dsp"  # "output/FAME_20layer_infl_Thot_flow2"
+# "output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
+directory = 'output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc'  # 'output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR' # 'output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl_intern_voids' #"output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-inputs_file_name = "FAME_20layer_ff_vfl_Dsp"  # "Run_parallel"
+#"FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
+inputs_file_name = 'FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc'  # 'FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR'  # 'FAME_Dsp300um_B1400mT_ff_vfl_intern_voids'  #"FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "Run_parallel"
 
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
-# inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
-inputs = importlib.import_module(inputs_file_name)
+inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
+# inputs = importlib.import_module(inputs_file_name)
 
 variable_1_name = inputs.vble1name  # This must be either Thot or any other variable used in X_resolution
 variable_1_units = inputs.vble1units
@@ -183,33 +184,40 @@ Tspan = inputs.Tspanarr
 legends = []
 legends2 = []
 
+# ------- Create the Qc and Qh matrices from simulation data files --------
 
-Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
-Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+# Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+# Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+#
+# for files in os.listdir(directory):  # Goes over all files in the directory
+#
+#     if '.txt' in files:
+#         if 'index' in files:
+#             continue
+#         # case = int(files.split('-')[1].split('.')[0])
+#         case = int(files.split('.')[0])
+#         casegroup = int(np.floor(case / (span_resolution * hot_resolution)))
+#
+#         a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
+#         b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
+#         c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
+#         y = int(np.floor(case / span_resolution) % hot_resolution)
+#         x = case % span_resolution
+#         # print(case, z, x, y)
+#         myfile = open(directory + '/' + files, "rt")
+#         contents = myfile.read()
+#         myfile.close()
+#         Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
+#         Qh[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[1])
 
-for files in os.listdir(directory):  # Goes over all files in the directory
+# --------- Loading Qc and Qh from a pickle file -----------
 
-    if '.txt' in files:
-        if 'index' in files:
-            continue
-        # case = int(files.split('-')[1].split('.')[0])
-        case = int(files.split('.')[0])
-        casegroup = int(np.floor(case / (span_resolution * hot_resolution)))
+Qc = np.load(directory + '/' + inputs_file_name + '_Qc.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qc.npy'
+Qh = np.load(directory + '/' + inputs_file_name + '_Qh.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qh.npy'
 
-        a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
-        b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
-        c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
-        y = int(np.floor(case / span_resolution) % hot_resolution)
-        x = case % span_resolution
-        # print(case, z, x, y)
-        myfile = open(directory + '/' + files, "rt")
-        contents = myfile.read()
-        myfile.close()
-        Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
-        Qh[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[1])
-
-
-
+COP_h = Qh / (Qh - Qc)
+COP_c = Qc / (Qh - Qc)
+# --------
 
 # Tspan = np.linspace(3, 30, 10)
 # Thot = np.linspace(306, 314, 5)
@@ -275,8 +283,8 @@ class Window:
 
         self.X_option = IntVar(self.root)
         self.Y_option = IntVar(self.root)
-        self.X_option.set(1)  # Note: the default X variable is set to be Tspan
-        self.Y_option.set(2)  # Note: the default Y variable is set to be Thot
+        self.X_option.set(3)  # Note: the default X variable is set to be vble3
+        self.Y_option.set(4)  # Note: the default Y variable is set to be vble4
 
         Radiobutton(self.root, variable=self.X_option, value=1, command=self.deactivate_entries).grid(row=8, column=2)
         Radiobutton(self.root, variable=self.Y_option, value=1, command=self.deactivate_entries).grid(row=8, column=3)
@@ -297,15 +305,17 @@ class Window:
 
         # Note: the following frames are necessary for deactivating the dropdown menus of the selected radio-buttons
         self.frames = [Frame(self.root), Frame(self.root), Frame(self.root), Frame(self.root), Frame(self.root)]
-        # self.frames[0].grid(row=8, column=3)  # Note: This is not included because X_option is set to 1
-        # self.frames[1].grid(row=9, column=3)  # Note: This is not included because Y_option is set to 2
-        self.frames[2].grid(row=10, column=4, sticky='ew')
-        self.frames[3].grid(row=11, column=4, sticky='ew')
+        self.frames[0].grid(row=8, column=4, sticky='ew')  # Note: This is not included because X_option is set to 1
+        self.frames[1].grid(row=9, column=4, sticky='ew')  # Note: This is not included because Y_option is set to 2
+        # self.frames[2].grid(row=10, column=4, sticky='ew')
+        # self.frames[3].grid(row=11, column=4, sticky='ew')
         self.frames[4].grid(row=12, column=4, sticky='ew')
 
         self.menu_vbles = [StringVar(self.root), StringVar(self.root), StringVar(self.root), StringVar(self.root), StringVar(self.root)]
-        self.menu_vbles[2].set(parameter_values[2][0])
-        self.menu_vbles[3].set(parameter_values[3][0])
+        self.menu_vbles[0].set(parameter_values[0][0])
+        self.menu_vbles[1].set(parameter_values[1][0])
+        # self.menu_vbles[2].set(parameter_values[2][0])
+        # self.menu_vbles[3].set(parameter_values[3][0])
         self.menu_vbles[4].set(parameter_values[4][0])
 
         self.menus = [OptionMenu(self.frames[0], self.menu_vbles[0], *parameter_values[0]),
@@ -325,6 +335,13 @@ class Window:
         self.menus[2].configure(width=6)
         self.menus[3].configure(width=6)
         self.menus[4].configure(width=6)
+
+        self.z_vble = StringVar(self.root)
+        self.z_vble.set('Qc')
+        z_vble_contour = ['Qc', 'Qh', 'COP_c', 'COP_h']
+        self.z_vble_menu = OptionMenu(self.root, self.z_vble, *z_vble_contour)
+        self.z_vble_menu.grid(row=13, column=4, sticky='w')
+        self.z_vble_menu.configure(width=6)
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION II - Tspan vs Qcool plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -533,19 +550,34 @@ class Window:
 
         print(Qc_indices)
 
-        Z = Qc[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+        # ------------ Selection of variable to plot on z dimension of contour plot ----------
+
+        if self.z_vble.get() == 'Qc':
+            Z = Qc[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+        elif self.z_vble.get() == 'Qh':
+            Z = Qh[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+        elif self.z_vble.get() == 'COP_c':
+            Z = COP_c[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+        elif self.z_vble.get() == 'COP_h':
+            Z = COP_h[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+
+        # Z = Qh[Qc_indices[4], Qc_indices[3], Qc_indices[2], Qc_indices[1], Qc_indices[0]]
+
         if bb < aa:
             Z = np.transpose(Z)
         X, Y = np.meshgrid(parameter_values[aa-1], parameter_values[bb-1])
         print(Z)
 
-        xlab = vble_names[aa-1]
-        ylab = vble_names[bb-1]
+        colorbar_ticks = np.linspace(0, np.amax(Z), 10)
+
+        xlab = vble_names[aa-1] + ' [' + vble_units[aa-1] + ']'
+        ylab = vble_names[bb-1] + ' [' + vble_units[bb-1] + ']'
 
         figure = plt.figure(figsize=(6, 4), dpi=100)
         # figure.add_subplot(111).plot(t,y)
-        CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, np.amax(Z), 100), extend='neither', cmap='jet')
-        plt.colorbar(mappable=CS, aspect=10)
+        figure.add_subplot(111).plot(X, Y, 'dk', markersize=2)  # Plotting grid mesh
+        CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, abs(np.amax(Z)), 100), extend='neither', cmap='jet')
+        plt.colorbar(ticks=colorbar_ticks, mappable=CS, aspect=10)
         chart = FigureCanvasTkAgg(figure, self.root)
         chart.get_tk_widget().grid(row=14, columnspan=5, padx=10)
 
@@ -578,7 +610,26 @@ class Window:
 
         print(Qc_indices)
 
-        x_for_plot = Qc[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+# Part in test 25/04/2022
+
+        if self.z_vble.get() == 'Qc':
+            x_for_plot = Qc[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+            xlab = 'Qc [W]'
+        elif self.z_vble.get() == 'Qh':
+            x_for_plot = Qh[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+            xlab = 'Qh [W]'
+        elif self.z_vble.get() == 'COP_c':
+            x_for_plot = COP_c[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+            xlab = 'COP_c [-]'
+        elif self.z_vble.get() == 'COP_h':
+            x_for_plot = COP_h[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+            xlab = 'COP_h [-]'
+
+        # x_for_plot = Qc[Qc_indices1[4], Qc_indices1[3], Qc_indices1[2], Qc_indices1[1], Qc_indices1[0]]
+
+# End part in test
+
+
         # if bb < aa:
         #     Z = np.transpose(Z)
         # X, Y = np.meshgrid(parameter_values[aa-1], parameter_values[bb-1])
@@ -604,13 +655,13 @@ class Window:
 
         # plt.grid(True)
         axes = plt.axes()
-        axes.set_xlim([0, np.amax(x_for_plot)+2])
+        axes.set_xlim([0, 45])  # [0, np.amax(x_for_plot)+2]
         # axes.set_ylim([-3, 3])
         # axes.set_xlabel(xlab)
         # axes.set_ylabel(ylab)
         axes.legend(legends, title="{} [{}]".format(vble_names[aa-1], vble_units[aa-1]))  # , title=legend_title
         axes.grid(True)
-        axes.set_xlabel("Qc [W]")
+        axes.set_xlabel(xlab)  #"Qc [W]"  Test 25/04/2022
         axes.set_ylabel("Tspan [K]")
 
     def plot_Qc_vs_X(self):
@@ -631,7 +682,21 @@ class Window:
 
         print(Qc_indices)
 
-        y_for_plot = Qc[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+        if self.z_vble.get() == 'Qc':
+            y_for_plot = Qc[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+            ylab = 'Qc [W]'
+        elif self.z_vble.get() == 'Qh':
+            y_for_plot = Qh[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+            ylab = 'Qh [W]'
+        elif self.z_vble.get() == 'COP_c':
+            y_for_plot = COP_c[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+            ylab = 'COP_c [-]'
+        elif self.z_vble.get() == 'COP_h':
+            y_for_plot = COP_h[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+            ylab = 'COP_h [-]'
+
+        # y_for_plot = Qc[Qc_indices2[4], Qc_indices2[3], Qc_indices2[2], Qc_indices2[1], Qc_indices2[0]]
+
         if bb < aa:
             y_for_plot = np.transpose(y_for_plot)
         # X, Y = np.meshgrid(parameter_values[aa-1], parameter_values[bb-1])
@@ -641,9 +706,9 @@ class Window:
         # ylab = vble_names[bb-1]
         legends = []
 
-        figure = plt.figure(figsize=(6, 4), dpi=100)
+        figure = plt.figure(figsize=(6, 6), dpi=100)
         for i in range(len(parameter_values[bb-1])):
-            figure.add_subplot(111).plot(parameter_values[aa-1], y_for_plot[i, :])
+            figure.add_subplot(111).plot(parameter_values[aa-1], y_for_plot[i, :], marker='s', markersize=4)
             legends.append("{}".format(parameter_values[bb-1][i]))
 
         # CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, np.amax(Z), 100), extend='neither', cmap='jet')
@@ -657,14 +722,14 @@ class Window:
 
         # plt.grid(True)
         axes = plt.axes()
-        axes.set_ylim([0, np.amax(y_for_plot)+2])
-        # axes.set_ylim([-3, 3])
+        # axes.set_ylim([0, np.amax(y_for_plot)+2])
+        #axes.set_ylim([0, 45])
         # axes.set_xlabel(xlab)
         # axes.set_ylabel(ylab)
         axes.legend(legends, title="{} [{}]".format(vble_names[bb-1], vble_units[bb-1]))  # , title=legend_title
         axes.grid(True)
         axes.set_xlabel(xlab)
-        axes.set_ylabel("Qc [W]")
+        axes.set_ylabel(ylab)  # axes.set_ylabel("Qc [W]")
 
         # index = list(Tspan[0, 0, :]).index(Tspan_contour)
         #

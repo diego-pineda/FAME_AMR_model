@@ -7,80 +7,113 @@ import sys
 import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_20layer_infl_Thot_flow"
-inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-variable_1_name = 'Thot'  # This must be either Thot or any other variable used in X_resolution
-variable_1_units = 'K'
-variable_2_name = 'Vflow' # This must be the variable changed inside the if conditions in the inputs file
-variable_2_units = 'Lpm'
-variable_2_values = [2, 3, 4]  # [units] Variable name. Note: values used for variable 2 in the cases simulated
+directory = "output/FAME_20layer_Dsp"
+# inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
+inputs_file_name = "Run_parallel"
 
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
-inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
+# inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
+inputs = importlib.import_module(inputs_file_name)
 
-cases = inputs.numCases
+variable_1_name = inputs.vble1name  # This must be either Thot or any other variable used in X_resolution
+variable_1_units = inputs.vble1units
+variable_1_values = inputs.vble1values
+variable_1_resolution = inputs.vble1resolution
+variable_2_name = inputs.vble2name # This must be the variable changed inside the if conditions in the inputs file
+variable_2_units = inputs.vble2units
+variable_2_values = inputs.vble2values  # [units] Variable name. Note: values used for variable 2 in the cases simulated
+variable_2_resolution = inputs.vble2resolution
+variable_3_name = inputs.vble3name # This must be the variable changed inside the if conditions in the inputs file
+variable_3_units = inputs.vble3units
+variable_3_values = inputs.vble3values  # [units] Variable name. Note: values used for variable 2 in the cases simulated
+variable_3_resolution = inputs.vble3resolution
+
+cases = inputs.numGroups
 hot_resolution = inputs.hotResolution
-cold_resolution = inputs.coldResolution
-X_resolution = inputs.xResolution
+span_resolution = inputs.TspanResolution
+
 Thot = inputs.Thotarr
-X_array = inputs.xArr
+Tspan = inputs.Tspanarr
 
 legends = []
 legends2 = []
 
-if X_resolution != 1:
-    variable_1_range = X_resolution
-    variable_1_values = X_array
-else:
-    variable_1_range = hot_resolution
-    variable_1_values = Thot
+# if X_resolution != 1:
+#     variable_1_range = X_resolution
+#     variable_1_values = X_array
+# else:
+#     variable_1_range = hot_resolution
+#     variable_1_values = Thot
 
-Qc = np.ones((cases, variable_1_range, cold_resolution))
-Tspan = np.ones((cases, variable_1_range, cold_resolution))
-dP = np.ones((cases, variable_1_range, cold_resolution))
+Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+# Tspan = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+# dP = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
 
 for files in os.listdir(directory):  # Goes over all files in the directory
 
     if '.txt' in files:
-        case = int(files.split('-')[1].split('.')[0])
-        z = int(np.floor(case / (cold_resolution * variable_1_range)))
-        y = case % cold_resolution
-        x = int(np.floor(case / cold_resolution) % variable_1_range)
+        if 'index' in files:
+            continue
+        # case = int(files.split('-')[1].split('.')[0])
+        case = int(files.split('.')[0])
+        casegroup = int(np.floor(case / (span_resolution * hot_resolution)))
+
+        a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
+        b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
+        c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
+        y = int(np.floor(case / span_resolution) % hot_resolution)
+        x = case % span_resolution
         # print(case, z, x, y)
         myfile = open(directory + '/' + files, "rt")
         contents = myfile.read()
         myfile.close()
-        Qc[z, x, y] = float(((contents.split('\n'))[1].split(','))[2])
-        Tspan[z, x, y] = float(((contents.split('\n'))[1].split(','))[0])
+        Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
+        # Tspan[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[0])
+        # dP[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[5])
         # 1. split contents into lines with contents.split('\n')
         # 2. split line with index 1 (second line) using the ',' character (contents.split('\n'))[1].split(',')
         # 3. Takes the element with index 2 (3rd element) from the 2nd line: ((contents.split('\n'))[1].split(','))[2]
         # 4. converts third element of second line from a string into a float number
-        dP[z, x, y] = float(((contents.split('\n'))[1].split(','))[5])
 
 
 mark = ["<", ">", "v", "x", "^", "s", "o", "+", "x", 'p']
-col = ["orangered", "blue", "green", "orange", "brown", "red", 'black', 'yellow', 'cyan', 'olive']
-
+col = ["orangered", "blue", "green", "orange", "brown", "red", 'black', 'gray', 'indigo', 'olive']
+# TODO from this point the code must be edited
 # ------ Plotting Tspan vs Qc ------ one figure for each value of variable_1
 
 if cases != 1:
 
-    for i in range(variable_1_range):
-        for k in range(cases):
-            plt.figure(i+1)  # This is in order to not plot over any of the previous figures
-            plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[k], color=col[k])
-            legends.append('{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units))
+    Question1 = input('Do you want to make one plot of Tspan vs Qc per {} in your data? y/n: '.format(variable_1_name))
 
-        # plt.title('Influence of aspect ratio')
-        plt.xlabel('Cooling capacity [W]')
-        plt.ylabel('$T_{span}$ [K]')
-        # plt.xlim(0, np.amax(Qc[:, :, :])+2)
-        plt.grid(which='major', axis='both')
-        plt.legend(legends, title='{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units)) # Use when there is more than one Thot in the results
-        # plt.legend(legends)  # Use when there is only one Thot in the results
+    while Question1 != 'y' and Question1 != 'n':
+        print('Invalid input. Please type either y or n.')
+        Question1 = input()
+
+    if Question1 == 'y':
+
+        for i in range(variable_1_range):
+            for k in range(cases):
+                plt.figure(i+1)  # This is in order to not plot over any of the previous figures
+                plt.plot(Qc[k, i, :], Tspan[k, i, :], marker=mark[k], color=col[k])
+                legends.append('{} = {} [{}]'.format(variable_2_name, variable_2_values[k], variable_2_units))
+
+            # plt.title('Influence of aspect ratio')
+            plt.xlabel('Cooling capacity [W]')
+            plt.ylabel('$T_{span}$ [K]')
+            # plt.xlim(0, np.amax(Qc[:, :, :])+2)
+            plt.grid(which='major', axis='both')
+            plt.legend(legends, title='{} = {} [{}]'.format(variable_1_name, variable_1_values[i], variable_1_units)) # Use when there is more than one Thot in the results
+            # plt.legend(legends)  # Use when there is only one Thot in the results
 
 # ------ Plotting Tspan vs Qc ------ one figure for each value of variable_2
+
+Question2 = input('Do you want to make one plot of Tspan vs Qc per {} in your data? y/n: '.format(variable_2_name))
+
+while Question2 != 'y' and Question2 != 'n':
+    print('Invalid input. Please type either y or n.')
+    Question2 = input()
+
+if Question2 == 'y':
 
     for k in range(cases):
         for i in range(variable_1_range):
@@ -99,7 +132,7 @@ if cases != 1:
 
 # ------------- Contour plot of Qc vs Vflow and Thot
 
-if variable_1_range != 1 and variable_2_values != []:
+if variable_1_range != 1 and len(variable_2_values) != 1:
 
     print('It is possible to make a contour plot with the data available. Do you want to proceed? y/n: ', end="")
     create_contour = input()
@@ -125,7 +158,8 @@ if variable_1_range != 1 and variable_2_values != []:
         X, Y = np.meshgrid(variable_1_values, variable_2_values)
 
         fig, ax = plt.subplots()
-        CS = ax.contourf(X, Y, Z, levels=np.linspace(0, np.amax(Z), 100), extend='neither', cmap='jet')
+        CS = ax.contourf(X, Y, Z, levels=np.linspace(0, 10, 100), extend='neither', cmap='jet')
+        # Set level to np.amax(Z) if desired that colorbar cover all values of Z only
         plt.colorbar(mappable=CS, aspect=10)
         CD = ax.contour(X, Y, Z, levels=[1, 3, 5, 7, 9], colors='grey', linewidths=0.75)
         plt.clabel(CD, fontsize=6, inline=True)

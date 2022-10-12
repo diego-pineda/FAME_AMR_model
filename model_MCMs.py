@@ -10,22 +10,22 @@ temperatures'''
 
 # Model material
 
-S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_S_h.txt')
-S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_S_c.txt')
+S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_S_h.txt')
+S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_S_c.txt')
 
-Mag_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_Mag_h.txt')
-Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_Mag_c.txt')
+Mag_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_Mag_h.txt')
+Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_Mag_c.txt')
 
-Cp_model_mat_h = np.loadtxt('sourcefiles/new_mat/M2/M2_cp_h.txt')
-Cp_model_mat_c = np.loadtxt('sourcefiles/new_mat/M2/M2_cp_c.txt')
+Cp_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_cp_h.txt')
+Cp_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_cp_c.txt')
 
 # Information required for creating the new data sets with shifted Tc
 
 dT_span = 27  # Difference in Tc of hottest and coldest layers
 Tc_cold = 281  # Transition temperature of the coldest layer
-T_offset = 16.2  # [K] Temperature offset of coldest layer w.r.t the original Tc of the model material
-num_mat = 30  # Number of layers in the AMR
-ini = 268  # Material numbering starts at
+T_offset = 9.380  # [K] Temperature offset of coldest layer w.r.t the original Tc of the model material (16.2 for M2)
+num_mat = 8  # Number of layers in the AMR
+ini = 614  # Material numbering starts at
 L = 60  # [m] Total length of AMR
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -37,15 +37,33 @@ This function can be linear or any other shape. In what follows a sigmoid functi
 
 dX = L/num_mat  # [mm] Length per layer
 
-# Sigmoid function
-lin = 5  # This parameter only has to do with the curvature of the sigmoid function
-A = dT_span / ((1/(1+np.exp(-lin))) - (1/(1+np.exp(lin))))
-B = 0.5*(L-dX)
-funct = '{}/(1+np.exp(-({}/{})*(x-{}))) + {} - {}/(1+np.exp({}))'.format(A, lin, B, B+dX/2, Tc_cold, A, lin)
+# # -------- Sigmoid function -------
+# lin = 5  # This parameter only has to do with the curvature of the sigmoid function
+# A = dT_span / ((1/(1+np.exp(-lin))) - (1/(1+np.exp(lin))))
+# B = 0.5*(L-dX)
+# funct = '{}/(1+np.exp(-({}/{})*(x-{}))) + {} - {}/(1+np.exp({}))'.format(A, lin, B, B+dX/2, Tc_cold, A, lin)
 
-# Calculation of shift in Tc of each layer
-x = np.linspace(dX/2, L-dX/2, num_mat)
-y = eval(funct)
+# ------- Linear function --------
+funct = '{} / {} * x + {} - {} * {} / {}'.format(dT_span, L-dX, Tc_cold, dT_span, dX/2, L-dX)
+
+# ------- Linear function with constant Tc at the ends -------
+# x = np.linspace(dX/2, L-dX/2, num_mat)
+# y = np.zeros(len(x))
+# x1 = 10
+# x2 = 50
+# i = 0
+# for i in range(len(x)):
+#     if x[i] <= x1:
+#         y[i] = Tc_cold
+#     elif x1 < x[i] <= x2:
+#         y[i] = (dT_span / (x2-x1+dX)) * x[i] + Tc_cold - dT_span * (x1 - dX/2) / (x2 - x1 + dX)
+#     elif x[i] > x2:
+#         y[i] = Tc_cold + dT_span
+
+# ------ Calculation of shift in Tc of each layer -------
+
+x = np.linspace(dX/2, L-dX/2, num_mat)  # Uncomment for sigmoid and linear
+y = eval(funct)                         # Uncomment for sigmoid and linear
 T_shift = y - Tc_cold
 
 # The peak of the in-field Cp heating curve is taken as a reference Tc for the definition of the new materials

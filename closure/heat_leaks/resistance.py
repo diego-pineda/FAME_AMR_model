@@ -15,8 +15,6 @@ import numpy as np
 def ThermalResistance(Dsp, Ud, fMu, fRho, kair, kf, kg10, r1, r2, r3, casing_th, fAMR, air_th):
     # Overall htc for the case of a Couette flow between AMR casing and magnets of cylindrical shape
     Ucouette = 0.1e1 / (0.5882352941e1 * (fRho * np.abs(Ud) * Dsp / fMu) ** (-0.79e0) / kf * Dsp + 0.1e1 / kg10 * r1 * np.log(r2 / r1) + 0.1e1 / kair * r1 * np.log(r3 / r2))
-
-
     return Ucouette
 
 

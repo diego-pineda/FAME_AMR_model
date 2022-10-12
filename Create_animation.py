@@ -8,7 +8,7 @@
 # the same file. If they are in different files, section 3) can be used to read the files, otherwise section 4) must be
 # used.
 
-# TODO: convert this into a GUI
+# TODO: convert this into a GUI or at least a function
 
 # 0) Importing libraries
 
@@ -19,18 +19,18 @@ import numpy as np
 
 # 1) Simulation parameters
 
-Thot        = 312    # [K]
-Tcold       = 285    # [K]
+Thot        = 302.5    # [K]
+Tcold       = 287.5    # [K]
 dThot       = 3      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
 dTcold      = 3      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
 Reng_Length = 60     # [mm]
 nodes       = 600    # [-]
-time_steps  = 200    # [-]
+time_steps  = 300    # [-]
 
 # 2) Input and output file names
 
-text_file_input = "./output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4/3725.0FAME_Dsp300um_B1400mT_ff_vfl4_reused.txt"  # "./3725.0FAME_Dsp300um_B1400mT_hys_ff_vfl.txt"
-gif_file_output = "./output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4/3725.0FAME_Dsp300um_B1400mT_ff_vfl4_reused_animation.gif"
+text_file_input = "./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.txt" #"./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/185.0FAME_Dsp300um_B1400mT_layering.txt"  # "./3725.0FAME_Dsp300um_B1400mT_hys_ff_vfl.txt"
+gif_file_output = "./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.gif" #"./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/185.0FAME_Dsp300um_B1400mT_layering_animation.gif"
 
 # 3) Getting temperature data if the file only contains data corresponding to the temperature of solid or fluid
 
@@ -63,13 +63,21 @@ solidTemp = solidTemp*(Thot-Tcold)+Tcold
 
 # 6) Plotting temperature of node at cold side of regenerator for verification purposes
 
-# cold = plt.figure(1)
-# plt.plot(fluidTemp[:, 0])
-# plt.xlabel("Time steps [-]")
-# plt.ylabel("T° of node on cold side of AMR [K]")
-# plt.title("Temperature of cold side as a function of time")
-# plt.grid(which='both',axis='both')
+cold = plt.figure(1)
+plt.plot(fluidTemp[:, 0])
+plt.xlabel("Time steps [-]")
+plt.ylabel("T° of fluid on cold side of AMR [K]")
+plt.title("Temperature of cold side as a function of time")
+plt.ylim([285.5, 289.5])
+plt.grid(which='both', axis='both')
 
+plt.figure(2)
+plt.plot(solidTemp[:, 0])
+plt.xlabel("Time steps [-]")
+plt.ylabel("T° of solid on cold side of AMR [K]")
+plt.title("Solid temperature of cold side as a function of time")
+plt.ylim([285.5, 290.5])
+plt.grid(which='both', axis='both')
 
 # 6) Plotting the animated figure
 

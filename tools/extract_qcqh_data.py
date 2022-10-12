@@ -2,12 +2,14 @@ import numpy as np
 import os
 import sys
 import importlib
+import pandas as pd
+from tools.write_data_to_file import FileSaveMatrix
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl" #"output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4" # "output/FAME_GD/FAME_Dsp300um_B1400mT_num_layers_Tspan_Gdlike"  # "output/FAME_20layer_nodes_sens/nodes_sens4"  # "output/FAME_20layer_cteTcold/cteTcold2"  # "output/FAME_20layer_timesteps_sens/timesteps_sens3"
+directory = "output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR"  #"output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl" #"output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4" # "output/FAME_GD/FAME_Dsp300um_B1400mT_num_layers_Tspan_Gdlike"  # "output/FAME_20layer_nodes_sens/nodes_sens4"  # "output/FAME_20layer_cteTcold/cteTcold2"  # "output/FAME_20layer_timesteps_sens/timesteps_sens3"
 # directory = "output/FAME_20layer_Dsp"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-inputs_file_name = "FAME_Dsp300um_B1400mT_Gd_ff_vfl" #"FAME_Dsp300um_B1400mT_num_layers_Tspan_Gdlike"  # "FAME_20layer_nodes_sens4"  # "Run_parallel" #"FAME_20layer_cteTcold2"  #"FAME_20layer_timesteps_sens3" #"FAME_20layer_cteTcold"  #
+inputs_file_name = "FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR" #"FAME_Dsp300um_B1400mT_num_layers_Tspan_Gdlike"  # "FAME_20layer_nodes_sens4"  # "Run_parallel" #"FAME_20layer_cteTcold2"  #"FAME_20layer_timesteps_sens3" #"FAME_20layer_cteTcold"  #
 
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 # inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
@@ -37,10 +39,10 @@ def extract_qc_qh_data(directory, inputs_file_name):
     Thot = inputs.Thotarr
     Tspan = inputs.Tspanarr
 
+    maxcase = inputs.maxcase
+
     legends = []
     legends2 = []
-
-    maxcase = inputs.maxcase
 
     Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
     Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
@@ -51,6 +53,8 @@ def extract_qc_qh_data(directory, inputs_file_name):
 
         if '.txt' in files:
             if 'index' in files:
+                continue
+            if 'READ' in files:
                 continue
             # case = int(files.split('-')[1].split('.')[0])
             case = int(files.split('.')[0])
@@ -73,7 +77,17 @@ def extract_qc_qh_data(directory, inputs_file_name):
             i = i + 1
 
     results = np.delete(results, slice(i, maxcase, 1), 0)
-    print(results[np.argsort(results[:, 0])])
+
+    # Saving the results to an excel file
+
+    # results_to_excel = pd.DataFrame(results)
+    # excel_file_path = './' + directory + '/Qc_Qh_data_per_case.txt'
+    # results_to_excel.to_excel(excel_file_path, index=False)
+
+    # Saving the results to a .txt file
+    # excel_file_path = './' + directory + '/Qc_Qh_data_per_case.txt'
+    # FileSaveMatrix(excel_file_path, results)
+    # print(results[np.argsort(results[:, 0])])
 
     np.save(directory+'/'+inputs_file_name+"_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
     np.save(directory+'/'+inputs_file_name+"_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
@@ -81,3 +95,8 @@ def extract_qc_qh_data(directory, inputs_file_name):
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
+
+
+if __name__ == "__main__":
+
+    extract_qc_qh_data(directory, inputs_file_name)
