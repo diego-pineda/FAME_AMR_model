@@ -481,7 +481,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     L_tot = np.max(x_discription)  # [m] Total length of the domain (regenerator assembly)
     DX    = L_tot / (N+1)          # [m] Real element size
 
-    freq  = ff                           # [Hz] Frequency of AMR cylce
+    freq  = ff                           # [Hz] Frequency of AMR cycle
     nt    = timesteps                    # [-] Number of time steps
     tau_c = 1/freq                       # [s] Period of AMR cycle
     dt    = 1 / (nt+1)                   # [-] The time step
@@ -1488,6 +1488,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     S_vd = 0
     S_condu_stat = 0
     S_condu_disp = 0
+    P_pump_AMR = 0
 
     Tf = y * (Thot - Tcold) + Tcold
     Ts = s * (Thot - Tcold) + Tcold
@@ -1500,6 +1501,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf[j, 0]) + (Tf[j, 0] - Tcold) / Tcold) * DT
         for i in range(N+1):
             S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf[j, i] - Ts[j, i])**2 * DX * DT / (Tf[j, i] * Ts[j, i])
+            P_pump_AMR = P_pump_AMR + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
             S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf[j, i]
             if i==0:
                 dTsdx = (Ts[j, i+1] - Ts[j, i]) / DX
@@ -1513,11 +1515,26 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * dTsdx**2 * DX * DT / Ts[j, i]**2
             S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * dTfdx**2 * DX * DT / Tf[j, i]**2
 
-    # -------------------------------------------------------------------------------------------------------------
+    # ----------------------------- 27/10/2022 Calculation of magnetic power input -------------------------------------
+
+    P_mag_AMR = 0
+    for i in range(N):  # Ghost nodes excluded from this calculation
+        ms_h = S_h_if_list[materials.index(species_descriptor[i+1])]
+        P_mag_node = 0
+        for n in range(nt):  # Ghost nodes excluded from this calculation
+            s_current = ms_h(Ts[n, i+1], int_field[n, i+1])[0, 0]
+            s_next = ms_h(Ts[n+1, i+1], int_field[n+1, i+1])[0, 0]
+            P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts[n, i+1] + Ts[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+        P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+
+    print('Total pumping power is: {} [W]'.format(P_pump_AMR))
+    print('Total magnetic power is: {} [W]'.format(P_mag_AMR))
+
+    # ------------------------------------------------------------------------------------------------------------------
 
     return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
            sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
            cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
-           S_vd, S_condu_stat, S_condu_disp
+           S_vd, S_condu_stat, S_condu_disp, P_pump_AMR, P_mag_AMR
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------

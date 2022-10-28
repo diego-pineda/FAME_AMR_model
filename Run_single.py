@@ -23,12 +23,12 @@ Tcold         = 281
 Tambset       = 288
 
 # Frequency of AMR cycle
-ff            = 1  # [Hz] frequency of AMR cycle
+ff            = 2  # [Hz] frequency of AMR cycle
 
 # Flow profile
 
 # FAME cooler
-dispV         = 2.5 * 16.667e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
+dispV         = 2 * 16.667e-6  # [m3/s] DP: device vol. flow rate = 1.84 L/min, 2 regenerators with simultaneous flow.
 acc_period    = 5
 max_flow_per  = 45
 full_magn_ang = 30
@@ -57,12 +57,12 @@ app_field = FAME_app_field.app_field(timesteps, nodes, mag_field)
 necessary to create a new configuration file each time a single parameter need to be changed. Take the following lines
 starting with R8 as an example.'''
 
-cName   = "PSB"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "Test_PSB_configuration"  # DP: use underlines to connect words because this is used as file name
+cName   = "PB"  # Name of file where the geometric configuration of the regenerator is defined
+jName   = "Test_mass_conservation"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
 
 dsp = 300e-6  # Note: this is particular for the packed bed and packed screen bed configuration
-msc = 2000  # Note: this is particular for the packed screen bed configuration
+#msc = 2000  # Note: this is particular for the packed screen bed configuration
 
 configuration = importlib.import_module('configurations.' + cName)
 
@@ -73,8 +73,8 @@ configuration.x_discription = [0, 0.060]
 configuration.reduct_coeff = dict(M0=1, M122=1, M123=1, M124=1, M125=1, M166=0.77, M167=0.77, M168=0.77, M169=0.77,
                        M170=0.77, M171=0.77, M172=0.77, M173=0.77, M174=0.77, M175=0.77, M176=0.77, M177=0.77, M178=0.77, M179=0.77)
 configuration.Dsp = dsp
-configuration.Msc = msc
-configuration.er = 1 - np.pi * dsp * msc**2 * np.sqrt(dsp**2 + msc**-2) / 4  # [] Porosity of the packed screen bed
+#configuration.Msc = msc
+#configuration.er = 1 - np.pi * dsp * msc**2 * np.sqrt(dsp**2 + msc**-2) / 4  # [] Porosity of the packed screen bed
 
 # Switches for activating and deactivating terms in governing equations
 CF   = 1
@@ -84,9 +84,9 @@ CVD  = 1
 CMCE = 1
 
 # Flow and Heat transfer models
-htc_model_name = 'psb_park_2002'  # Name of the file containing the function of the model for htc
+htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
 leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
-pdrop_model_name = 'psb_Armour_1968'
+pdrop_model_name = 'pb_ergun_1952'
 
 results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                     jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
@@ -98,8 +98,8 @@ results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, C
 # qc            2  |  y           14 |  qh          26 |  S_vd          38 |
 # qccor         3  |  s           15 |  cycleCount  27 |  S_condu_stat  39 |
 # (t1-t0)/60    4  |  pt          16 |  int_field   28 |  S_condu_disp  40 |
-# pave          5  |  np.max(pt)  17 |  htc_fs      29 |
-# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |
+# pave          5  |  np.max(pt)  17 |  htc_fs      29 |  P_pump_AMR    41 |
+# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_mag_AMR     42 |
 # eff_CB_HE     7  |  freq        19 |  mass_flow   31 |
 # tFce          8  |  t           20 |  dP/dx       32 |
 # tFhe          9  |  xloc        21 |  k_stat      33 |
@@ -107,11 +107,11 @@ results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, C
 # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
 
-fileName = "Gd_PSB_test.txt"
+fileName = "Gd_PB_conservation_mass.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot', 'S_ht_cold', 'S_ht_fs', 'S_vd', 'S_condu_stat', 'S_condu_disp'))
-FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{},{:7.4f},{:7.4f},{:7.4f},{:7.4f},{:7.4f},{:7.4f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40]))
+FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]'))
+FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42]))
 FileSave(fileNameSave, "Fluid temperatures\n")
 FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
 FileSave(fileNameSave, "Solid temperatures\n")
