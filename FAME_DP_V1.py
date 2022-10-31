@@ -1512,8 +1512,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             else:
                 dTsdx = (Ts[j, i+1] - Ts[j, i-1]) / (2 * DX)
                 dTfdx = (Tf[j, i+1] - Tf[j, i-1]) / (2 * DX)
-            S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * dTsdx**2 * DX * DT / Ts[j, i]**2
-            S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * dTfdx**2 * DX * DT / Tf[j, i]**2
+            S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * (1 - e_r[i]) * dTsdx**2 * DX * DT / Ts[j, i]**2
+            S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * e_r[i] * dTfdx**2 * DX * DT / Tf[j, i]**2
 
     # ----------------------------- 27/10/2022 Calculation of magnetic power input -------------------------------------
 
