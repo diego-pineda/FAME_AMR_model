@@ -1091,7 +1091,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
                         # --- Calculation of the coefficient of the heat leaks term
                         Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
-                        U_Pc_leaks[n, i ] = Lf[i]
+                        U_Pc_leaks[n, i] = Lf[i]
                         # --- Calculation of the effective thermal conductivity for the solid
                         ks[i] = kStat(e_r[i], kf_ave, mK)
                         k_stat[n, i] = ks[i]
@@ -1492,6 +1492,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     S_condu_stat = 0
     S_condu_disp = 0
     P_pump_AMR = 0
+    Q_leak = 0
 
     Tf = y * (Thot - Tcold) + Tcold
     Ts = s * (Thot - Tcold) + Tcold
@@ -1503,7 +1504,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         S_ht_hot = S_ht_hot + freq * np.abs(m_flow[j]) * cp_f_hot_ave * (np.log(Thot / Tf[j, -1]) + (Tf[j, -1] - Thot) / Thot) * DT
         S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf[j, 0]) + (Tf[j, 0] - Tcold) / Tcold) * DT
         for i in range(N+1):
-            S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf[j, i])**2 * dx * dt / (Tambset * Tf[j, i])
+            S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf[j, i])**2 * DX * DT / (Tambset * Tf[j, i])
+            Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf[j, i] - Tambset) * DX * DT
             S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf[j, i] - Ts[j, i])**2 * DX * DT / (Tf[j, i] * Ts[j, i])
             P_pump_AMR = P_pump_AMR + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
             S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf[j, i]
@@ -1539,6 +1541,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
            sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
            cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
-           S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR
+           S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak
     # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 # ------------------ DP: the function "Run_Active" ends here ----------------------------
