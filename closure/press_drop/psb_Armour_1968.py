@@ -5,8 +5,8 @@ import numpy as np
 # This function calculates the pressure drop term for a packed screen bed based on the correlation by Armour and Cannon
 
 
-@jit(nb.types.Tuple((f8, f8))(f8, f8, f8, f8, f8, f8, f8),nopython=True)
-def SPresM(Dsp, Ud, V, er, flMu, flRho, Af):
+@jit(nb.types.Tuple((f8, f8))(f8, f8, f8, f8, f8, f8, f8, f8, f8),nopython=True)
+def SPresM(Dsp, Ud, Ud_prev, DT, V, er, flMu, flRho, Af):
     # V: volumetric flow rate [m3/s]
     # Dsp: wire diameter [m]
     # Ud: superficial velocity [m/s]
