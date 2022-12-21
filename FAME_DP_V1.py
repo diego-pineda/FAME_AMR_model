@@ -1415,26 +1415,32 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     sHalfBlow = s[halft, :] * (Thot - Tcold) + Tcold # DP: temperature distribution of the solid in [K] at half time the cycle period
 
     coolingpowersum=0
+    power_in_out_cold_side = 0
     startint=0
     # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
     # It seems that it is performed following a rectangle rule. https://en.wikipedia.org/wiki/Numerical_integration
     for n in range(startint, nt):
         tF = y[n, 0] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold
-        coolPn =  freq * fCp((tF+tF1)/2,percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
+        coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
         coolingpowersum = coolingpowersum + coolPn
+        power_in_out_cold_side = power_in_out_cold_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
 
     qc = num_reg * coolingpowersum  # [W] Gross cooling power of the device
 
     heatingpowersum=0
+    power_in_out_hot_side = 0
     startint=0
     for n in range(startint, nt):
         tF = y[n, -1] * (Thot - Tcold) + Tcold
         tF1 = y[n+1, -1] * (Thot - Tcold) + Tcold
         heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
         heatingpowersum = heatingpowersum + heatPn
+        power_in_out_hot_side = power_in_out_hot_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
 
     qh = num_reg * heatingpowersum  # [W] Heating power of the device
+    print('Power in out cold side = {} [W]'.format(power_in_out_cold_side))
+    print('Power in out hot side = {} [W]'.format(power_in_out_hot_side))
 
     # Cooling power of FAME cooler is 7 times the cooling power of one regenerator.
     # Demonstrated in the file Cooling_capacity_calc.py
