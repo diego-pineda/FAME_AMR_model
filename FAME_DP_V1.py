@@ -172,7 +172,7 @@ def SolveFluid(iynext,isnext,yprev,sprev,Vd,    Cf,   Kfe,   Kfw,     Ff, Omegaf
             # Build tridagonal matrix coefficients
             # pg 112-113 Theo Christiaanse 2017
             Aw = alpha_pow(Ff[j]/Kfw[j])  # TODO: determine why using this?
-            Ae = alpha_pow(Ff[j+1]/Kfe[j])
+            Ae = alpha_pow(Ff[j+1]/Kfe[j])  # TODO: as I changed line 131, this is doing nothing at the moment
             # print(Aw, Ae)
             a[j] = -Ff[j]/(dx)-Aw*CF*Kfw[j]/(dx*2)+Omegaf[j+1]/2 # DP: indices coincide with thesis. Kfw is defined from node index i=1 to N-1
             # DP: Omegaf[0] is ignored, Kfw[0] corresponds to node i=1, Ff[0] corresponds to node i=0
@@ -543,7 +543,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         #     m_flow[i] = 0
 
         m_flow[i] = rho_f_in_ave * v
-        # TODO: fix unbalance flow -> mass flow rates in both directions will not match
+        # Note: by using a density calculated at the average temperature between Tcold and Thot, mass flow imbalance is
+        # avoided.
         i = i+1
     # ------------------------------------------------------------------------------------------------------------------
 
@@ -820,7 +821,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     while (not cycleTol  and cycleCount <= maxCycles): # DP comment: "not cycleTol" evaluates if cycleTol is zero or False and return True if so...
         # Account for pressure every time step (restart every cycle)
-        pt = np.zeros(nt + 1) # DP: total pressure drop along the regenerator as function of time
+        pt = np.zeros(nt + 1)  # DP: total pressure drop along the regenerator as function of time
         # DP comment: It seems these variables are not that relevant and that they are only created to keep a record
         minPrevHint = 0.5
         maxPrevHint = 0.5
@@ -840,11 +841,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         for i in range(N+1): # DP comment: This for loop intends to find a vector of Magnetic Field Modifiers for every position i along the flow path to account for the demagnetizing field in the MCM regenerators
             # Average Solid temperature
-            Ts_ave=np.mean(s[:,i]* (Thot - Tcold) + Tcold) # DP comment: this returns the average value of a vector containing the solid temperatures at position i for all time steps
+            Ts_ave=np.mean(s[:, i] * (Thot - Tcold) + Tcold) # DP comment: this returns the average value of a vector containing the solid temperatures at position i for all time steps
             # Maximum Applied Field
-            maxApliedField = np.amax(appliedFieldm[:,i]) # DP comment: this returns the maximum value of a vector containing the applied field at position i for all time steps
-            if maxApliedField==0: # DP comment: for the PM1 there will be many positions with maxApliedField == 0 because they are out of the range of the magnet. For FAME cooler, maxApliedField is never zero
-                MFM[i] = 0 # DP comment: MFM -> Magnetic Field Modifier, which was previously set to a matrix of ones
+            maxApliedField = np.amax(appliedFieldm[:, i]) # DP comment: this returns the maximum value of a vector containing the applied field at position i for all time steps
+            if maxApliedField == 0: # DP comment: for the PM1 there will be many positions with maxApliedField == 0 because they are out of the range of the magnet. For FAME cooler, maxApliedField is never zero
+                MFM[i] = 0  # DP comment: MFM -> Magnetic Field Modifier, which was previously set to a matrix of ones
             else:
                 # Maximum Magnetization at the maximum field
                 mag_c = Mag_c_if_list[materials.index(species_descriptor[i])]
@@ -1044,12 +1045,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Hint = appliedFieldm[n, i] * MFM[i]
                         int_field[n, i] = Hint  # Added on 03/04/2022
                         # --- Calculation of rho*cs fluid
-                        dT = 1  # DP (5-4-2022) This big dT value helps avoiding some noise in the backward calc of Cp
+                        dT = 0.5  # DP (5-4-2022) This big dT value helps avoiding some noise in the backward calc of Cp. Returned to 0.5 on 21/12/2022
                         Tr = psT[i]
                         aveField = (Hint + prevHintNew[i]) / 2  # current and previous time step average
-                        dsdT = (ms_c(sT[i]+dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]+dT, aveField)[0, 0] * 0.5) - (ms_c(sT[i]-dT, aveField)[0, 0] * 0.5 + ms_h(sT[i]-dT, aveField)[0, 0] * 0.5)
+                        dsdT = (ms_c(sT[i]+dT, Hint)[0, 0] * 0.5 + ms_h(sT[i]+dT, Hint)[0, 0] * 0.5) - (ms_c(sT[i]-dT, Hint)[0, 0] * 0.5 + ms_h(sT[i]-dT, Hint)[0, 0] * 0.5)
                         # TODO: not clear why aveField is used instead of Hint (current time step).
-                        cps_curr = Tr * (np.abs(dsdT) / (dT * 2))  # TODO: should not sT[i] be used instead of Tr?
+                        cps_curr = sT[i] * (np.abs(dsdT) / (dT * 2))  # TODO: should not sT[i] be used instead of Tr?
                         cps_ave = cps_curr * ww + cps_prev[i] * (1 - ww)  # DP: this is equation B.9 of Theo's thesis
                         rhos_cs_ave[i] = cps_ave * mRho
                         # --- Calculation of Smce
