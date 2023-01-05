@@ -144,6 +144,7 @@ import numpy as np
 from tkinter import *
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+import matplotlib.ticker as tick
 
 
 import os
@@ -152,10 +153,10 @@ import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
 # "output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
-directory = 'output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc'  # 'output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR' # 'output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl_intern_voids' #"output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "output/FAME_20layer_infl_Thot_flow2"
+directory = 'output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/ff_vflow_extended_300cases'  # 'output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR' # 'output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl_intern_voids' #"output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
 #"FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
-inputs_file_name = 'FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc'  # 'FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR'  # 'FAME_Dsp300um_B1400mT_ff_vfl_intern_voids'  #"FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "Run_parallel"
+inputs_file_name = 'FAME_Dsp300um_B1400mT_layering_ff_vflow_extended'  # 'FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR'  # 'FAME_Dsp300um_B1400mT_ff_vfl_intern_voids'  #"FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "Run_parallel"
 
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
@@ -215,8 +216,12 @@ legends2 = []
 Qc = np.load(directory + '/' + inputs_file_name + '_Qc.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qc.npy'
 Qh = np.load(directory + '/' + inputs_file_name + '_Qh.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qh.npy'
 
-COP_h = Qh / (Qh - Qc)
-COP_c = Qc / (Qh - Qc)
+# COP_h = Qh / (Qh - Qc)
+# COP_c = Qc / (Qh - Qc)
+
+COP_h = (Qh / (Qh - Qc)) / 11.48  # TODO Warning: hard coding
+COP_c = (Qc / (Qh - Qc)) / 11.48   # TODO Warning: hard coding
+
 # --------
 
 # Tspan = np.linspace(3, 30, 10)
@@ -250,7 +255,7 @@ class Window:
     def __init__(self, root):
         self.root = root
         self.root.title("AMR Simulation Plots")
-        self.root.geometry('1920x1130')
+        self.root.geometry('1920x1080')  # 1920 x 1080
 
         # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SECTION I - Contour plots %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -573,11 +578,15 @@ class Window:
         xlab = vble_names[aa-1] + ' [' + vble_units[aa-1] + ']'
         ylab = vble_names[bb-1] + ' [' + vble_units[bb-1] + ']'
 
-        figure = plt.figure(figsize=(6, 4), dpi=100)
+        figure = plt.figure(figsize=(7, 5), dpi=100)
         # figure.add_subplot(111).plot(t,y)
-        figure.add_subplot(111).plot(X, Y, 'dk', markersize=2)  # Plotting grid mesh
-        CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, abs(np.amax(Z)), 100), extend='neither', cmap='jet')
-        plt.colorbar(ticks=colorbar_ticks, mappable=CS, aspect=10)
+        figure.add_subplot(111).plot(X*1000/60, Y, 'dk', markersize=2)  # Plotting grid mesh
+        CS = figure.add_subplot(111).contourf(X*1000/60, Y, Z, levels=np.linspace(0, abs(np.amax(Z)), 100), extend='neither', cmap='jet')
+        clb = plt.colorbar(ticks=colorbar_ticks, mappable=CS, aspect=10)
+        clb.set_label(r'$\eta_{\rm Carnot}$ [-]', labelpad=-45, y=1.075, rotation=0)  # TODO Warning! hard coding
+        clb.ax.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
+        # clb.set_label(r'$\rm COP_{h}$ [-]', labelpad=-50, y=1.075, rotation=0)  # TODO Warning! hard coding
+        # clb.set_label(r'$\dot{Q}_{h}$ [W]', labelpad=-50, y=1.075, rotation=0)  # TODO Warning! hard coding
         chart = FigureCanvasTkAgg(figure, self.root)
         chart.get_tk_widget().grid(row=14, columnspan=5, padx=10)
 
@@ -589,8 +598,11 @@ class Window:
         axes = plt.axes()
         # axes.set_xlim([0, 6.3])
         # axes.set_ylim([-3, 3])
-        axes.set_xlabel(xlab)
-        axes.set_ylabel(ylab)
+
+        axes.set_xlabel(r'$\dot{m}_{f}$ [g/s]')   # TODO Warning! hard coding
+        axes.set_ylabel(r'$f_{\rm AMR}$ [Hz]')   # TODO Warning! hard coding
+        # axes.set_xlabel(xlab)
+        # axes.set_ylabel(ylab)
 
     def plot_Tspan_vs_Qc(self):
         indices = [2, 3, 4, 5]

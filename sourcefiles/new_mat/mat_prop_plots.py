@@ -29,8 +29,8 @@ particular nodes in the bed. To do so, uncomment the proper section below and se
 above.'''
 
 # Inputs
-id_first_mat = 86#166
-id_last_mat = 97#179
+id_first_mat = 328#166
+id_last_mat = 357#179
 materials = []
 mag_field_to_plot = 1.4
 for i in range(id_first_mat, id_last_mat + 1):
@@ -109,7 +109,7 @@ for mat in materials:
     # plt.plot(T_set, dT_hi_field, color=colors[index], linestyle='dashed')
 
     plt.figure(4)  # ST diagram
-    plt.plot(T_s_h, s_h[1:, 1], color=colors[index], linestyle='dotted')  # Heating low field
+    plt.plot(T_s_h, s_h[1:, 1], color=colors[index], linestyle='solid')  # Heating low field
     # plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
     plt.plot(T_s_h, s_h[1:, i_mag_field], color=colors[index], linestyle='solid')  # Heating high field
     # plt.plot(T_s_c, s_c[1:, i_mag_field], color=colors[index], linestyle='dashdot')  # Cooling high field
@@ -192,14 +192,14 @@ plt.grid(which='major', axis='both')
 # plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
 
 plt.figure(4)  # S vs T
-plt.xlabel('T [K]')
-plt.ylabel('s [J kg$^{-1}$ K$^{-1}$]')
+plt.xlabel(r'$T_s$ [K]')
+plt.ylabel(r'$s$ [J kg$^{-1}$ K$^{-1}$]')
 # plt.xlim(temperature_range[0], temperature_range[1])
-plt.xlim(270, 320)
-plt.ylim(50, 120)
-plt.grid(which='major', axis='both')
+plt.xlim(280, 315)
+plt.ylim(60, 120)
+# plt.grid(which='major', axis='both')
 # plt.legend(s_legends, loc='upper left')
-plt.legend(['0 T', '1.4 T'])
+# plt.legend(['0 T', '1.4 T'])
 
 plt.figure(5)
 plt.xlabel('T [K]')
@@ -211,7 +211,7 @@ plt.grid(which='major', axis='both')
 plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
 
 
-plt.show()
+# plt.show()
 
 
 # 2) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Ploting on TS diagrams %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -220,10 +220,10 @@ plt.show()
 import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4"  # "output/FAME_20layer_infl_Thot_flow2"
+directory = "output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering"  #   "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-inputs_file_name = "FAME_Dsp300um_B1400mT_ff_vfl4"  # "Run_parallel"
-case = 3363
+inputs_file_name = "FAME_Dsp300um_B1400mT_layering"  #  "Run_parallel"
+case = 354
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
 
@@ -268,7 +268,7 @@ applied_field = 1.4
 # dTcold      = 4      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
 Reg_Length = 0.060  # [mm]
 nodes       = 600   #  1800  # [-]
-time_steps  = 200  # 600     # [-]
+time_steps  = 217  # 600     # [-]
 # node = [48, 143, 237, 332, 427, 521, 616, 711, 805, 900, 995, 1089, 1184, 1279, 1373, 1468, 1563, 1657, 1752] # 19 layers 1800 columns in temperature matrices
 # node = [16, 48, 79, 111, 142, 174, 205, 237, 268, 300, 332, 363, 395, 426, 458, 489, 521, 552, 584]  # for 19 layers
 
@@ -293,13 +293,13 @@ for i in range(nodes+1):  # sets 0->N-2 which is from 1st node with material to 
     int_discription[i] = nn
     species_descriptor.append(materials[nn])
 # TODO get the list of first, middle and last node of each layer automatically
-node_min = [1, 51,101,151,201,251,301,351,401,451,501,551]
-node_mid = [25,75,125,175,225,275,325,375,425,475,525,575]
-node_max = [50,100,150,200,250,300,350,400,450,500,550,600]
+# node_min = [1, 51,101,151,201,251,301,351,401,451,501,551]
+# node_mid = [25,75,125,175,225,275,325,375,425,475,525,575]
+# node_max = [50,100,150,200,250,300,350,400,450,500,550,600]
 
-# node_min = [1,  21, 41, 61,  81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501, 521, 541, 561, 581]  # [1, 61, 121, 181, 241, 301, 361, 421, 481, 541]  #[1, 151, 301, 451]  # for 12 layers 600 columns in temperature matrix
-# node_mid = [10, 30, 50, 70,  90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 570, 590]  # [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]  #[75,	225, 375, 525]
-# node_max = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600]  # [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  #[150, 300, 450, 600]
+node_min = [1,  21, 41, 61,  81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501, 521, 541, 561, 581]  # [1, 61, 121, 181, 241, 301, 361, 421, 481, 541]  #[1, 151, 301, 451]  # for 12 layers 600 columns in temperature matrix
+node_mid = [10, 30, 50, 70,  90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 570, 590]  # [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]  #[75,	225, 375, 525]
+node_max = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600]  # [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  #[150, 300, 450, 600]
 
 # node = [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]
 # node = [15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345, 375, 405, 435, 465, 495, 525, 555, 585]
@@ -310,7 +310,7 @@ node_max = [50,100,150,200,250,300,350,400,450,500,550,600]
 # text_file_input = "../../output/FAME_Dsp300um_B900mT_ff_vfl2/2177.0FAME_Dsp300um_B900mT_ff_vfl2_reused.txt"
 # text_file_input = "../../output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl4/2637.0FAME_Dsp300um_B1400mT_ff_vfl4_reused.txt"  # TODO: never use the complementary words again, e.g. "reused"
 text_file_input = '../../' + directory + '/' + str(case) + '.0' + inputs_file_name #+ '.txt'  # TODO
-text_file_input = text_file_input + '_reused.txt'  # TODO: generalize. This is only for cases reused from previous simulations
+text_file_input = text_file_input + '.txt'  # TODO: generalize. This is only for cases reused from previous simulations
 #
 # 2.3) %%%%%% Getting temperature data if the file only contains data corresponding to the temp. of solid or fluid %%%%%
 
@@ -329,7 +329,7 @@ myfile.close()
 
 fluidTemp = np.ones((time_steps+1, nodes+1))
 solidTemp = np.ones((time_steps+1, nodes+1))
-int_mag_field = np.ones((time_steps+1, int(nodes/2)+1))  # np.ones((time_steps+1, nodes+1))  # TODO
+int_mag_field = np.ones((time_steps+1, int(nodes)+1))  # np.ones((time_steps+1, nodes+1))  # TODO
 
 for j in range(time_steps+1):
     # fluid T matrix must start in row 3
@@ -345,27 +345,27 @@ solidTemp = solidTemp*(Thot-Tcold)+Tcold
 
 # ----------------------- Calculation of the area of loops in TS diagram ------------------------ (section in between)
 
-# s_int_functions = []
-# for mat in materials:
-#     S = np.loadtxt(mat+'/'+mat+'_S_h.txt')
-#     # plt.figure(4)
-#     s_int_functions.append(matS_h(S))
-#
-# W_mag_AMR = 0
-# for node in range(nodes):
-#     w_mag_node = 0
-#     for n in range(time_steps):
-#         s_current = s_int_functions[int_discription[node+1]](solidTemp[n, node + 1], int_mag_field[n, int((node+1)/2)])[0, 0]
-#         s_next = s_int_functions[int_discription[node+1]](solidTemp[n+1, node + 1], int_mag_field[n+1, int((node+1)/2)])[0, 0]
-#         Area_loop = 0.5 * (solidTemp[n, node+1] + solidTemp[n+1, node+1]) * (s_next - s_current)
-#         print('ds = ', (s_next - s_current))
-#         w_mag_node = w_mag_node + Area_loop
-#     W_mag_node = w_mag_node * 6100 * (0.045*0.013*DX*(1-0.36))
-#     W_mag_AMR = W_mag_AMR + W_mag_node
-#
-# ff = variable_2_values[b]
-# P_mag_AMR = W_mag_AMR * ff
-# print('Total magnetic power is: {} [W]'.format(P_mag_AMR))
+s_int_functions = []
+for mat in materials:
+    S = np.loadtxt(mat+'/'+mat+'_S_h.txt')
+    # plt.figure(4)
+    s_int_functions.append(matS_h(S))
+
+W_mag_AMR = 0
+for node in range(nodes):
+    w_mag_node = 0
+    for n in range(time_steps):
+        s_current = s_int_functions[int_discription[node+1]](solidTemp[n, node + 1], int_mag_field[n, int((node+1)/2)])[0, 0]
+        s_next = s_int_functions[int_discription[node+1]](solidTemp[n+1, node + 1], int_mag_field[n+1, int((node+1)/2)])[0, 0]
+        Area_loop = 0.5 * (solidTemp[n, node+1] + solidTemp[n+1, node+1]) * (s_next - s_current)
+        print('ds = ', (s_next - s_current))
+        w_mag_node = w_mag_node + Area_loop
+    W_mag_node = w_mag_node * 6100 * (0.045*0.013*DX*(1-0.36))
+    W_mag_AMR = W_mag_AMR + W_mag_node
+
+ff = variable_2_values[b]
+P_mag_AMR = W_mag_AMR * ff
+print('Total magnetic power is: {} [W]'.format(P_mag_AMR))
 
 # ----- Plotting thermodynamic cycles experienced by the center node of each layer on a ST diagram
 
@@ -392,9 +392,9 @@ for mat in materials:
     entropy_max = np.zeros((time_steps + 1, len(materials)))
     for n in range(time_steps + 1):
         # entropy[n, index] = s_if(solidTemp[n, node[index]], ap_field[n, node[index]])[0, 0]
-        entropy_min[n, index] = s_if(solidTemp[n, node_min[index]], int_mag_field[n, int(node_min[index]/2)])[0, 0]
-        entropy_mid[n, index] = s_if(solidTemp[n, node_mid[index]], int_mag_field[n, int(node_mid[index]/2)])[0, 0]
-        entropy_max[n, index] = s_if(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index]/2)])[0, 0]
+        entropy_min[n, index] = s_if(solidTemp[n, node_min[index]], int_mag_field[n, int(node_min[index])])[0, 0]
+        entropy_mid[n, index] = s_if(solidTemp[n, node_mid[index]], int_mag_field[n, int(node_mid[index])])[0, 0]
+        entropy_max[n, index] = s_if(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index])])[0, 0]
 
         # ----------- 4-4-22 trial --------------
 
@@ -404,9 +404,9 @@ for mat in materials:
 
         # -----------
 
-    plt.plot(solidTemp[:, node_min[index]], entropy_min[:, index], color=colors[index], marker='+')
-    plt.plot(solidTemp[:, node_mid[index]], entropy_mid[:, index], color=colors[index], marker='o')
-    plt.plot(solidTemp[:, node_max[index]], entropy_max[:, index], color=colors[index], marker='s')
+    # plt.plot(solidTemp[:, node_min[index]], entropy_min[:, index], color=colors[index], marker='v', markersize=2, markerfacecolor='white')
+    plt.plot(solidTemp[:, node_mid[index]], entropy_mid[:, index], color=colors[index], marker='o', markersize=2, markerfacecolor='white')
+    # plt.plot(solidTemp[:, node_max[index]], entropy_max[:, index], color=colors[index], marker='s', markersize=2, markerfacecolor='white')
 
 
 
@@ -459,7 +459,7 @@ for mat in materials:
     # ----------------------------------- end section Cp loops --------------------------------------------
 
     index = index + 1
-
+plt.plot([270, 320, 320, 270], [75, 75, 105, 105], '-k')
 plt.show()
 
 # ------------------------------------------------------------------------

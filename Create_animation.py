@@ -19,18 +19,18 @@ import numpy as np
 
 # 1) Simulation parameters
 
-Thot        = 302.5    # [K]
-Tcold       = 287.5    # [K]
-dThot       = 3      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
-dTcold      = 3      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
+Thot        = 308    # [K]
+Tcold       = 275   # [K]
+dThot       = 2      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
+dTcold      = 2      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
 Reng_Length = 60     # [mm]
 nodes       = 600    # [-]
-time_steps  = 300    # [-]
+time_steps  = 217    # [-]
 
 # 2) Input and output file names
 
-text_file_input = "./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.txt" #"./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/185.0FAME_Dsp300um_B1400mT_layering.txt"  # "./3725.0FAME_Dsp300um_B1400mT_hys_ff_vfl.txt"
-gif_file_output = "./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.gif" #"./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/185.0FAME_Dsp300um_B1400mT_layering_animation.gif"
+text_file_input = "./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/224.0FAME_Dsp300um_B1400mT_layering.txt"  #"./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.txt" #  # "./3725.0FAME_Dsp300um_B1400mT_hys_ff_vfl.txt"
+gif_file_output = "./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/224.0FAME_Dsp300um_B1400mT_layering_animation.gif"  #"./output/FAME_GD/FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc/155.0FAME_PSB_Dsp300um_B1400mT_ff_vfl_Msc.gif" #
 
 # 3) Getting temperature data if the file only contains data corresponding to the temperature of solid or fluid
 
@@ -63,21 +63,30 @@ solidTemp = solidTemp*(Thot-Tcold)+Tcold
 
 # 6) Plotting temperature of node at cold side of regenerator for verification purposes
 
-cold = plt.figure(1)
-plt.plot(fluidTemp[:, 0])
-plt.xlabel("Time steps [-]")
+plt.figure(1)
+plt.plot(np.linspace(0, 1, np.shape(fluidTemp[:, 0])[0]), fluidTemp[:, 0])
+plt.xlabel("Fraction of AMR cycle period [-]")
 plt.ylabel("T° of fluid on cold side of AMR [K]")
 plt.title("Temperature of cold side as a function of time")
-plt.ylim([285.5, 289.5])
+plt.ylim([296.5, 299.5])
 plt.grid(which='both', axis='both')
 
 plt.figure(2)
-plt.plot(solidTemp[:, 0])
-plt.xlabel("Time steps [-]")
+plt.plot(np.linspace(0, 1, np.shape(fluidTemp[:, 0])[0]), solidTemp[:, 0])
+plt.xlabel("Fraction of AMR cycle period [-]")
 plt.ylabel("T° of solid on cold side of AMR [K]")
 plt.title("Solid temperature of cold side as a function of time")
-plt.ylim([285.5, 290.5])
+plt.ylim([296.5, 299.5])
 plt.grid(which='both', axis='both')
+
+plt.figure(3)
+plt.plot(np.linspace(0, 1, np.shape(fluidTemp[:, 0])[0]), fluidTemp[:, -1], '-b')
+plt.plot(np.linspace(0, 1, np.shape(fluidTemp[:, 0])[0]), solidTemp[:, -1], '--r')
+plt.xlabel("Fraction of AMR cycle period [-]")
+plt.ylabel("T [K]")
+plt.xlim([0, 1])
+plt.grid(which='both', axis='both')
+plt.legend(['Fluid temperature', 'Solid temperature'])
 
 # 6) Plotting the animated figure
 

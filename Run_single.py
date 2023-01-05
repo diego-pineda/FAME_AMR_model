@@ -9,8 +9,8 @@ import importlib
 caseNumber    = 1
 
 # Numerical parameters
-nodes         = 1800
-timesteps     = 600
+nodes         = 2000
+timesteps     = 1000
 time_limit    = 8400  # [min] Time limit for the simulation in minutes
 cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
@@ -58,7 +58,7 @@ necessary to create a new configuration file each time a single parameter need t
 starting with R8 as an example.'''
 
 cName   = "PB"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "Test_mass_conservation"  # DP: use underlines to connect words because this is used as file name
+jName   = "Test_Gd_entropy"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
 
 dsp = 300e-6  # Note: this is particular for the packed bed and packed screen bed configuration
@@ -69,7 +69,9 @@ configuration = importlib.import_module('configurations.' + cName)
 # Overwriting variables in the configuration file for this particular simulation
 
 configuration.species_discription = ['reg-M0']
-configuration.x_discription = [0, 0.060]
+configuration.x_discription = [0, 0.0327418]
+configuration.W_reg = 0.0824634
+configuration.L_reg1 = 0.0327418
 configuration.reduct_coeff = dict(M0=1, M122=1, M123=1, M124=1, M125=1, M166=0.77, M167=0.77, M168=0.77, M169=0.77,
                        M170=0.77, M171=0.77, M172=0.77, M173=0.77, M174=0.77, M175=0.77, M176=0.77, M177=0.77, M178=0.77, M179=0.77)
 configuration.Dsp = dsp
@@ -98,29 +100,29 @@ results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, C
 # qc            2  |  y           14 |  qh          26 |  S_vd          38 |
 # qccor         3  |  s           15 |  cycleCount  27 |  S_condu_stat  39 |
 # (t1-t0)/60    4  |  pt          16 |  int_field   28 |  S_condu_disp  40 |
-# pave          5  |  np.max(pt)  17 |  htc_fs      29 |  P_pump_AMR    41 |
-# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_mag_AMR     42 |
-# eff_CB_HE     7  |  freq        19 |  mass_flow   31 |
-# tFce          8  |  t           20 |  dP/dx       32 |
+# pave          5  |  np.max(pt)  17 |  htc_fs      29 |  S_ht_amb      41 |
+# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_pump_AMR    41 |
+# eff_CB_HE     7  |  freq        19 |  mass_flow   31 |  P_mag_AMR     42 |
+# tFce          8  |  t           20 |  dP/dx       32 |  Q_leak        44 |
 # tFhe          9  |  xloc        21 |  k_stat      33 |
 # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |
 # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
 
-fileName = "Gd_PB_conservation_mass.txt"
+fileName = "Gd_test_cp_solid_change.txt"
 fileNameSave = './output/' + fileName
 #FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
 FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]'))
 FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44]))
 FileSave(fileNameSave, "Fluid temperatures\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
+FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 4, 2))
 FileSave(fileNameSave, "Solid temperatures\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 3, 2))
+FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 4, 2))
 FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
 FileSaveVector(fileNameSave, results[16])
 FileSave(fileNameSave, "\nInternal Magnetic Field\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 3, 2))
+FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 4, 2))
 FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 3, 2))
+FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 4, 2))
 FileSave(fileNameSave, "\nMass flow rate\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 3, 2))
+FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 4, 2))

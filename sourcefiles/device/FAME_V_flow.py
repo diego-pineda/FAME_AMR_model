@@ -57,14 +57,22 @@ if __name__ == '__main__':
 
     nt = 400 # number of nodes in the time domain
     N = 1 # number of nodes in the spatial domain. This is just for the applied field function
-    mag_field = 0.9
+    mag_field = 1.4
 
     ap_field = app_field(nt, N, mag_field)
     print(ap_field)
 
-    # fig, plot1 = plt.subplots()
-    plt.figure(1)
-    plt.plot(np.linspace(0, 180, nt+1), ap_field[:, 0])
+    fig, plot1 = plt.subplots()
+    plot1.plot(np.linspace(0, 1, nt+1), ap_field[:, 0], '-', color='red')
+    plot1.set_xlabel("Fraction of AMR cycle period [-]")
+    plot1.set_ylabel("Applied field [T]", color='red')
+    plot1.set_ylim([-1.5, 1.5])
+    plot1.set_xlim([0, 1])
+    plot1.set_yticks([-1.4, -0.7, 0, 0.7, 1.4])
+
+    # plot1.set_xticks(np.arange(0, 1, 10))
+    # plt.figure(1)
+    # plt.plot(np.linspace(0, 180, nt+1), ap_field[:, 0], '-')
     # plt.xlabel("Angle [°]")
     # plt.ylabel("Applied field [T]")
     # plt.title("Applied magnetic field as a function of rotation angle")
@@ -84,14 +92,19 @@ if __name__ == '__main__':
     volumetric_rate = vol_flow_rate(nt, V_rate, acc_period, max_flow_period, full_magn_ang, unbal_rat)
     # print(np.abs(volumetric_rate[25] / (0.045*0.013)))
 
-    plot1 = plt.figure(1)
-    plt.plot(np.linspace(0, 180, (nt+1)), volumetric_rate)
-
-    plt.xlabel("Angle [°]")
-    plt.ylabel("Normalized flow rate [-] / Applied field [T]")
-    # plt.title("Normalized flow rate and applied field as function of rotation angle")
+    # plot2 = plt.figure(1)
+    plot2 = plot1.twinx()
+    plot2.plot([0.9, 1], [0, 0], '-', color='red')  # This is just for the legend
+    plot2.plot(np.linspace(0, 1, (nt+1)), volumetric_rate, '--', color='blue')
+    plot2.set_ylabel("Normalized flow rate [-]", color='blue')
+    plt.tight_layout()
+    # plt.plot(np.linspace(0, 180, (nt+1)), volumetric_rate, '--')
+    # plt.xlabel("Angle [°]")
+    # plt.ylabel("Normalized flow rate [-] / Applied field [T]")
+    # # plt.title("Normalized flow rate and applied field as function of rotation angle")
     plt.legend(['Applied field', 'Flow rate'])
-    plt.grid(which='both', axis='both')
+    # plt.xticks(np.arange(0, 181, 15))  # [30, 60, 75, 90, 105, 120, 150, 165, 180]
+    # plt.grid(which='both', axis='both')
     #plt.minorticks_on()
     #plot1.xaxis.set_major_locator(MultipleLocator(10))
     # plt.show()
@@ -115,7 +128,7 @@ if __name__ == '__main__':
     # print(reg2ind,reg3ind,reg4ind,reg5ind,reg6ind,reg7ind)
     # print(reg1twocycles,reg5twocycles)
 
-    fig, plot2 = plt.subplots()
+    fig2, plot3 = plt.subplots()
 
     plt.plot(np.linspace(0, 360, 2*(nt+1)), reg1twocycles)
     # plt.plot(np.linspace(0, 360, 2*(nt+1)), reg2twocycles)
@@ -129,7 +142,7 @@ if __name__ == '__main__':
     plt.ylabel("Volumetric flow rate [$m^{3}/s$]")
     plt.title("Volumetric flow rate as a function of rotation angle")
     plt.grid(which='both', axis='both')
-    plot2.xaxis.set_major_locator(MultipleLocator(15))
+    plot3.xaxis.set_major_locator(MultipleLocator(15))
     # plt.show()
 
     # Recalculating the flow profile
