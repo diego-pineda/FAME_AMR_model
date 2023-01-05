@@ -474,6 +474,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     #     from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, L_reg
 
     # Start Timer
+    
+    gain = 1  # TODO gain should be an input of the runActive() function defined by the user in the inputs file
     t0 = time.time()
     # The space discretization considers all layers in the regenerator assembly including voids and passive layers
     N     = nodes                  # [-] Spatial nodes in which the reg. assembly is splitted for sim. No ghost nodes.
