@@ -265,7 +265,7 @@ def AbsTolFunc2d(var1,var2,Tol):
 # ---------------------------- RUN ACTIVE ------------------------------
 
 
-def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name, pdrop_model_name, num_reg):
+def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, ConfName, jobName, time_lim, cycle_tol, max_step_iter, max_cycle_iter, vol_flow_profile, app_field, htc_model_name, leaks_model_name, pdrop_model_name, num_reg, gain):
     '''
     # runActive : Runs a AMR simulation of a pre-setup geometry
     # Arguments :
@@ -474,8 +474,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     #     from configurations.R7 import Ac, Nd, MOD_CL, Pc, kair, kg10, kult, mK, mRho, percGly, species_discription, x_discription, CL_set, ch_fac, casing_th, air_th, L_reg
 
     # Start Timer
-    
-    gain = 1  # TODO gain should be an input of the runActive() function defined by the user in the inputs file
     t0 = time.time()
     # The space discretization considers all layers in the regenerator assembly including voids and passive layers
     N     = nodes                  # [-] Spatial nodes in which the reg. assembly is splitted for sim. No ghost nodes.
@@ -1280,7 +1278,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # Check if current cycle is close to previous cycle.
         [bool_y_check, max_val_y_diff] = AbsTolFunc2d(y, iyCycle, maxCycleTol)
         [bool_s_check, max_val_s_diff] = AbsTolFunc2d(s, isCycle, maxCycleTol)
-        cycleTol = bool_y_check and bool_s_check  # DP comment: this will return True if both arguments are True, otherwise it returns False, which will keep the cycle while loop running
+
         # DP: change the time step tolerance
         if (max_val_y_diff/10) < maxStepTol[stepTolInt]:
             stepTolInt = stepTolInt + 1
@@ -1351,9 +1349,15 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             print("Saving pickle file...", flush=True)
             # Quit Program
             sys.exit()
+
         # Copy last value to the first of the next cycle.
-        s[0, :] = np.copy(s[-1, :])
-        y[0, :] = np.copy(y[-1, :])
+        if cycleCount % 2 == 0:  # Convergence accelation implemented. Reference: Int J Refrig. 65 (2016) 250-257
+            cycleTol = bool_y_check and bool_s_check  # DP comment: this will return True if both arguments are True, otherwise it returns False, which will keep the cycle while loop running
+            s[0, :] = s[-1, :] + gain * (s[-1, :] - s[0, :])
+            y[0, :] = y[-1, :] + gain * (y[-1, :] - y[0, :])
+        else:
+            s[0, :] = np.copy(s[-1, :])
+            y[0, :] = np.copy(y[-1, :])
         # Add Cycle
         cycleCount = cycleCount + 1
         # Did we hit the maximum number of cycles
