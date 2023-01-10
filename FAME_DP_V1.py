@@ -552,7 +552,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     for i in range(int(np.floor((nt+1)/2))):
         v_disp = V[i]*DT  # Integration using the rectangle rule
         vol_disp = vol_disp + v_disp  # Volume displaced in one blowing process
-    print("\nVolume displaced in one blowing process: {:.3e} [L]".format(vol_disp*1000), flush = True)
+    print("\nVolume displaced in one blowing process: {:.3e} [L]".format(vol_disp*1000), flush=True)
 
     pdrop = lambda at, dP, sf: dP * sf * np.pi * np.sin(2 * np.pi * sf * at) + np.sign(np.sin(2 * np.pi * sf * at)) * sys.float_info.epsilon * 2
     # DP comment: Not very clear what this function does
@@ -1282,6 +1282,55 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # DP: change the time step tolerance
         if (max_val_y_diff/10) < maxStepTol[stepTolInt]:
             stepTolInt = stepTolInt + 1
+
+            # ----------------------------- printing some results when tolerance changes -------------------------------
+            # DP: 9/1/2023 Write some outputs every time it changes tolerance. This allows to see influence of tolerance
+            coolingpowersum = 0
+            heatingpowersum = 0
+            P_pump_AMR_tol = 0
+            Q_leak_tol = 0
+            P_mag_AMR_tol = 0
+            startint=0
+            for n in range(startint, nt):
+                # DP: this for loop is for the numerical integration of the equation 3.33 of Theo's thesis (which misses the integrand, dt).
+                tF = y[n, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n
+                tF1 = y[n+1, 0] * (Thot - Tcold) + Tcold  # DP: temperature in [K] at the cold end at time step n+1
+                coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
+                coolingpowersum = coolingpowersum + coolPn
+
+                # DP: Heating power
+                tF_h = y[n, -1]*(Thot - Tcold) + Tcold
+                tF1_h = y[n+1, -1]*(Thot - Tcold) + Tcold
+                heatPn = freq*fCp((tF_h+tF1_h)/2, percGly) * m_flow[n] * DT * ((tF_h+tF1_h)/2 - Thot)
+                heatingpowersum = heatingpowersum + heatPn
+
+            qc = num_reg * coolingpowersum  # DP: 2 changed by 7 to account for the number of regenerators of the device
+            qh = num_reg * heatingpowersum
+            Tf_tol = y * (Thot - Tcold) + Tcold
+            Ts_tol = s * (Thot - Tcold) + Tcold
+
+            for j in range(nt+1):
+                for i in range(N+1):
+                    Q_leak_tol = Q_leak_tol + freq * U_Pc_leaks[j, i] * (Tf_tol[j, i] - Tambset) * DX * DT
+                    P_pump_AMR_tol = P_pump_AMR_tol + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
+
+            for i in range(N):  # Ghost nodes excluded from this calculation
+                ms_h = S_h_if_list[materials.index(species_descriptor[i+1])]
+                P_mag_node = 0
+                for n in range(nt):  # Ghost nodes excluded from this calculation
+                    s_current = ms_h(Ts_tol[n, i+1], int_field[n, i+1])[0, 0]
+                    s_next = ms_h(Ts_tol[n+1, i+1], int_field[n+1, i+1])[0, 0]
+                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts_tol[n, i+1] + Ts_tol[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                P_mag_AMR_tol = P_mag_AMR_tol + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+
+            print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20} {6:<29} {7:<29} {8:<29} {9:<29}"
+                  .format("CycleCount {:d}".format(cycleCount),
+                          "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
+                          "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
+                          "Run time {:6.1f} [min]".format((time.time()-t0)/60), "Pump power {:2.5e}".format(P_pump_AMR_tol), "Mag power {:2.5e}".format(P_mag_AMR_tol), "Heat leak {:2.5e}".format(Q_leak_tol), "Pout-Pin {:2.5e}".format(qh+Q_leak_tol-qc-P_pump_AMR_tol+P_mag_AMR_tol)), flush=True)
+
+            # ---------------------------- printing some results when tolerance changes -------------------------------
+
             if stepTolInt == len(maxStepTol):  # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
                 stepTolInt=len(maxStepTol)-1
 
@@ -1350,8 +1399,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             # Quit Program
             sys.exit()
 
-        Ts = s * (Thot - Tcold) + Tcold  # Last cycle solid temperature before updating initial condition for new cycle
-        Tf = y * (Thot - Tcold) + Tcold  # Last cycle fluid temperature before updating initial condition for new cycle
+        Ts_last = s * (Thot - Tcold) + Tcold  # Last cycle solid temperature before updating initial condition for new cycle
+        Tf_last = y * (Thot - Tcold) + Tcold  # Last cycle fluid temperature before updating initial condition for new cycle
 
         # Copy last value to the first of the next cycle.
         if cycleCount % 2 == 0:  # Convergence accelation implemented. Reference: Int J Refrig. 65 (2016) 250-257
@@ -1429,8 +1478,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
     # It seems that it is performed following a rectangle rule. https://en.wikipedia.org/wiki/Numerical_integration
     for n in range(startint, nt):
-        tF = Tf[n, 0]
-        tF1 = Tf[n+1, 0]
+        tF = Tf_last[n, 0]
+        tF1 = Tf_last[n+1, 0]
         coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
         coolingpowersum = coolingpowersum + coolPn
         power_in_out_cold_side = power_in_out_cold_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
@@ -1441,8 +1490,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     power_in_out_hot_side = 0
     startint=0
     for n in range(startint, nt):
-        tF = Tf[n, -1]
-        tF1 = Tf[n+1, -1]
+        tF = Tf_last[n, -1]
+        tF1 = Tf_last[n+1, -1]
         heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
         heatingpowersum = heatingpowersum + heatPn
         power_in_out_hot_side = power_in_out_hot_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
@@ -1463,7 +1512,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     pave = np.trapz(pt[halft:], x=t[halft:]) / (tau_c/2)  # DP: average pressure drop across the regenerator
 
     print("\n{:<15} {:<29} {:<29} {:20} {:20} {:<20}"
-          .format("CycleCount {:d}".format(cycleCount),
+          .format("CycleCount {:d}".format(cycleCount-1),
                   "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                   "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
                   "Run time {:4.1f} [min]".format((t1-t0)/60)), flush=True)
@@ -1507,6 +1556,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     S_vd = 0
     S_condu_stat = 0
     S_condu_disp = 0
+
     P_pump_AMR = 0
     Q_leak = 0
 
@@ -1515,27 +1565,27 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     beta = 6 * (1 - er) / Dsp
 
     for j in range(nt+1):
-        cp_f_hot_ave = fCp((Tf[j, -1] + Thot) / 2, percGly)
-        cp_f_cold_ave = fCp((Tf[j, 0] + Tcold) / 2, percGly)
-        S_ht_hot = S_ht_hot + freq * np.abs(m_flow[j]) * cp_f_hot_ave * (np.log(Thot / Tf[j, -1]) + (Tf[j, -1] - Thot) / Thot) * DT
-        S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf[j, 0]) + (Tf[j, 0] - Tcold) / Tcold) * DT
+        cp_f_hot_ave = fCp((Tf_last[j, -1] + Thot) / 2, percGly)
+        cp_f_cold_ave = fCp((Tf_last[j, 0] + Tcold) / 2, percGly)
+        S_ht_hot = S_ht_hot + freq * np.abs(m_flow[j]) * cp_f_hot_ave * (np.log(Thot / Tf_last[j, -1]) + (Tf_last[j, -1] - Thot) / Thot) * DT
+        S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf_last[j, 0]) + (Tf_last[j, 0] - Tcold) / Tcold) * DT
         for i in range(N+1):
-            S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf[j, i])**2 * DX * DT / (Tambset * Tf[j, i])
-            Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf[j, i] - Tambset) * DX * DT
-            S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf[j, i] - Ts[j, i])**2 * DX * DT / (Tf[j, i] * Ts[j, i])
+            S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf_last[j, i])**2 * DX * DT / (Tambset * Tf_last[j, i])
+            Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf_last[j, i] - Tambset) * DX * DT
+            S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf_last[j, i] - Ts_last[j, i])**2 * DX * DT / (Tf_last[j, i] * Ts_last[j, i])
             P_pump_AMR = P_pump_AMR + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
-            S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf[j, i]
+            S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf_last[j, i]
             if i==0:
-                dTsdx = (Ts[j, i+1] - Ts[j, i]) / DX
-                dTfdx = (Tf[j, i+1] - Tf[j, i]) / DX
+                dTsdx = (Ts_last[j, i+1] - Ts_last[j, i]) / DX
+                dTfdx = (Tf_last[j, i+1] - Tf_last[j, i]) / DX
             elif i==nodes:
-                dTsdx = (Ts[j, i] - Ts[j, i-1]) / DX
-                dTfdx = (Tf[j, i] - Tf[j, i-1]) / DX
+                dTsdx = (Ts_last[j, i] - Ts_last[j, i-1]) / DX
+                dTfdx = (Tf_last[j, i] - Tf_last[j, i-1]) / DX
             else:
-                dTsdx = (Ts[j, i+1] - Ts[j, i-1]) / (2 * DX)
-                dTfdx = (Tf[j, i+1] - Tf[j, i-1]) / (2 * DX)
-            S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * (1 - e_r[i]) * dTsdx**2 * DX * DT / Ts[j, i]**2
-            S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * e_r[i] * dTfdx**2 * DX * DT / Tf[j, i]**2
+                dTsdx = (Ts_last[j, i+1] - Ts_last[j, i-1]) / (2 * DX)
+                dTfdx = (Tf_last[j, i+1] - Tf_last[j, i-1]) / (2 * DX)
+            S_condu_stat = S_condu_stat + freq * k_stat[j, i] * Ac * (1 - e_r[i]) * dTsdx**2 * DX * DT / Ts_last[j, i]**2
+            S_condu_disp = S_condu_disp + freq * k_disp[j, i] * Ac * e_r[i] * dTfdx**2 * DX * DT / Tf_last[j, i]**2
 
     # ----------------------------- 27/10/2022 Calculation of magnetic power input -------------------------------------
     P_mag_AMR = 0
@@ -1543,9 +1593,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         ms_h = S_h_if_list[materials.index(species_descriptor[i+1])]
         P_mag_node = 0
         for n in range(nt):  # Ghost nodes excluded from this calculation
-            s_current = ms_h(Ts[n, i+1], int_field[n, i+1])[0, 0]
-            s_next = ms_h(Ts[n+1, i+1], int_field[n+1, i+1])[0, 0]
-            P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts[n, i+1] + Ts[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+            s_current = ms_h(Ts_last[n, i+1], int_field[n, i+1])[0, 0]
+            s_next = ms_h(Ts_last[n+1, i+1], int_field[n+1, i+1])[0, 0]
+            P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts_last[n, i+1] + Ts_last[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
         P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
     # ------------------------------------------------------------------------------------------------------------------
 

@@ -9,13 +9,14 @@ import importlib
 caseNumber    = 1
 
 # Numerical parameters
-nodes         = 2000
-timesteps     = 1000
+nodes         = 400
+timesteps     = 200
 time_limit    = 8400  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+cycle_toler   = 1e-6  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 2000  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
+gain          = 0
 
 # Simulation temperatures
 Thot          = 308
@@ -92,7 +93,7 @@ pdrop_model_name = 'pb_ergun_1952'
 
 results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                     jName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
-                    htc_model_name, leaks_model_name, pdrop_model_name, num_reg)
+                    htc_model_name, leaks_model_name, pdrop_model_name, num_reg, gain)
 
 #  runActive():  returns
 # Thot          0  |  sHalfBlow   12 |  sMaxCBlow   24 |  S_ht_cold     36 |
