@@ -1408,6 +1408,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             s[0, :] = s[-1, :] + gain * (s[-1, :] - s[0, :])
             y[0, :] = y[-1, :] + gain * (y[-1, :] - y[0, :])
         else:
+            if gain == 0:  # This is necessary in order to check tolerance every cycle when convergence acceleration option is not used
+                cycleTol = bool_y_check and bool_s_check
             s[0, :] = np.copy(s[-1, :])
             y[0, :] = np.copy(y[-1, :])
         # Add Cycle
