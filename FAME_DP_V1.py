@@ -1591,18 +1591,22 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
     # ----------------------------- 27/10/2022 Calculation of magnetic power input -------------------------------------
     P_mag_AMR = 0
-    for i in range(N):  # Ghost nodes excluded from this calculation
-        ms_h = S_h_if_list[materials.index(species_descriptor[i+1])]
+    for i in range(N+1):
+        ms_h = S_h_if_list[materials.index(species_descriptor[i])]
         P_mag_node = 0
-        for n in range(nt):  # Ghost nodes excluded from this calculation
-            s_current = ms_h(Ts_last[n, i+1], int_field[n, i+1])[0, 0]
-            s_next = ms_h(Ts_last[n+1, i+1], int_field[n+1, i+1])[0, 0]
-            P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts_last[n, i+1] + Ts_last[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+        for n in range(nt):
+            s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
+            s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
+            P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
         P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
     # ------------------------------------------------------------------------------------------------------------------
 
-    print('Total pumping power is: {} [W]'.format(P_pump_AMR))
-    print('Total magnetic power is: {} [W]'.format(P_mag_AMR))
+    print('Cycle average cooling capacity = {} [W]'.format(qc))
+    print('Cycle average heating capacity = {} [W]'.format(qh))
+    print('Cycle average heat leaks = {} [W]'.format(Q_leak))
+    print('Cycle average pumping power = {} [W]'.format(P_pump_AMR))
+    print('Cycle average magnetic power = {} [W]'.format(P_mag_AMR))
+    print('error in power input = {} [%]'.format(abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)))
 
     return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
            sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
