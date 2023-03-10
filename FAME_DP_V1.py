@@ -1409,8 +1409,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # Copy last value to the first of the next cycle.
         if cycleCount % 2 == 0:  # Convergence accelation implemented. Reference: Int J Refrig. 65 (2016) 250-257
             cycleTol = bool_y_check and bool_s_check  # DP comment: this will return True if both arguments are True, otherwise it returns False, which will keep the cycle while loop running
-            s[0, :] = s[-1, :] + gain * (s[-1, :] - s[0, :])
-            y[0, :] = y[-1, :] + gain * (y[-1, :] - y[0, :])
+            s[0, :] = np.copy(s[-1, :]) + gain * (s[-1, :] - s[0, :])
+            y[0, :] = np.copy(y[-1, :]) + gain * (y[-1, :] - y[0, :])
         else:
             if gain == 0:  # This is necessary in order to check tolerance every cycle when convergence acceleration option is not used
                 cycleTol = bool_y_check and bool_s_check
