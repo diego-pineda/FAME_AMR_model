@@ -1609,18 +1609,23 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
             P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
         # ------------------------------------------------------------------------------------------------------------------
-
+        error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        error2 = abs((power_in_out_hot_side+Q_leak-power_in_out_cold_side)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        print('Enthalpy in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
+        print('Enthalpy in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)
         print('Cycle average heating capacity = {} [W]'.format(qh), flush=True)
         print('Cycle average heat leaks = {} [W]'.format(Q_leak), flush=True)
         print('Cycle average pumping power = {} [W]'.format(P_pump_AMR), flush=True)
         print('Cycle average magnetic power = {} [W]'.format(P_mag_AMR), flush=True)
-        print('error in power input = {} [%]'.format(abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)), flush=True)
+        print('error in power input 1 = {} [%]'.format(error1), flush=True)
+        print('error in power input 2 = {} [%]'.format(error2), flush=True)
+        print('outputs,{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2), flush=True)
 
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
-               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak
+               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak, power_in_out_cold_side, power_in_out_hot_side
         # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 
     elif time_limit_reached == 1:

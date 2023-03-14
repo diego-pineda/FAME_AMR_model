@@ -169,8 +169,8 @@ if __name__ == '__main__':
         # eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_pump_AMR    42 |
         # eff_CB_HE     7  |  freq        19 |  mass_flow   31 |  P_mag_AMR     43 |
         # tFce          8  |  t           20 |  dP/dx       32 |  Q_leak        44 |
-        # tFhe          9  |  xloc        21 |  k_stat      33 |
-        # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |
+        # tFhe          9  |  xloc        21 |  k_stat      33 |  Power_cold    45 |
+        # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |  Power_hot     46 |
         # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
         # This is for the HPC11 cluster at TU Delft
@@ -187,8 +187,8 @@ if __name__ == '__main__':
 
         if len(results) > 10:
 
-            FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]'))
-            FileSave(fileNameSave, "{},{:7.6f},{:7.6f},{},{:7.6f},{:7.6f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44]))
+            FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]', 'Qc2 [W]', 'Qh2 [W]'))
+            FileSave(fileNameSave, "{},{:7.6f},{:7.6f},{},{:7.6f},{:7.6f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44], results[45], results[46]))
             FileSave(fileNameSave, "Fluid temperatures\n")
             FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
             FileSave(fileNameSave, "Solid temperatures\n")
