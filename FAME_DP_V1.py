@@ -873,6 +873,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         ###################### DP: The "for loop" to run over the time steps of a cycle starts here ###################
 
+        Q_MCE = 0  # Added on 21/03/2023 to see the difference between Q_MCE and W_mag
+
         for n in range(1, nt+1):  # 1->nt
 
             # Initial
@@ -1068,6 +1070,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Scur       = S_c_curr * (1 - ch_factor[i]) + S_h_curr * ch_factor[i]
                         #Mod        = 0.5*(Sirr_cur+Sirr_prev[i])*np.abs((2*dT)/dsdT)
                         Smce[i] = (Reduct * A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i] - Scur)) / (DT * (Thot - Tcold))
+                        Q_MCE = Q_MCE + Smce[i]*(Thot - Tcold)*DX*DT*freq  # Added on 21/03/2023 to see dif between Q_MCE and W_mag
                         # Eq. B.20 of Theo's thesis states that the entropy difference should be Scur-Sprev. So, there
                         # is a error in the thesis cuz it is ignoring the minus sign in front of the Qmce expression.
 
@@ -1621,7 +1624,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
         print('outputs,{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2), flush=True)
-
+        print('Q_MCE = {}'.format(Q_MCE), flush=True)
+        
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \

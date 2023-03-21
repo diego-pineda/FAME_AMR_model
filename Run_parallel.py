@@ -52,7 +52,9 @@ maxcase = numGroups * hotResolution * TspanResolution
 
 # Numerical parameters
 nodes         = 600
+node_reduct_factor = 3
 timesteps     = 600
+timestep_reduct_factor = 2
 time_limit    = 7200  # [min] Time limit for the simulation in minutes
 cycle_toler   = 1e-4  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
@@ -179,34 +181,34 @@ if __name__ == '__main__':
 
         # This is for the DelftBlue cluster at TU Delft
         #fileNameSave = '/scratch/dfpinedaquijan/' + str(case) + fileName
-        #PickleFileName = "./scratch/dfpinedaquijan/{0:}-{1:d}".format(jobName, int(case))
+        #PickleFileName = "/scratch/dfpinedaquijan/{0:}-{1:d}".format(jobName, int(case))
 
         # This is for the THCHEM cluster at RU Nijmegen
         # fileNameSave = '/scratch/dpineda/' + str(case) + fileName
-        #PickleFileName = "./scratch/dpineda/{0:}-{1:d}".format(jobName, int(case))
+        #PickleFileName = "/scratch/dpineda/{0:}-{1:d}".format(jobName, int(case))
 
         if len(results) > 10:
 
             FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]', 'Qc2 [W]', 'Qh2 [W]'))
             FileSave(fileNameSave, "{},{:7.6f},{:7.6f},{},{:7.6f},{:7.6f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44], results[45], results[46]))
             FileSave(fileNameSave, "Fluid temperatures\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "Solid temperatures\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
             FileSaveVector(fileNameSave, results[16])
             FileSave(fileNameSave, "\nInternal Magnetic Field\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "\nMass flow rate\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "\nPressure drop per unit length\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[32], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[32], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "\nEffective thermal conductivity of solid\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[33], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[33], node_reduct_factor, timestep_reduct_factor))
             FileSave(fileNameSave, "\nEffective thermal conductivity of fluid\n")
-            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[34], 3, 2))
+            FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[34], node_reduct_factor, timestep_reduct_factor))
 
         else:  # Save Pickle data
 
