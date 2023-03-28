@@ -579,7 +579,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     if CL_set=="Tamb":
         # Ambiant Temperature non-diamentionilized
         yamb = np.ones(N + 1) * ((Tambset - Tcold) / (Thot - Tcold))
-        CL = np.ones(N+1) # DP comment: CL is the switch in the fluid GE to turn on or off the heat leaks term
+        if CL == 0:
+            CL = np.zeros(N+1)
+        elif CL == 1:
+            CL = np.ones(N+1) # DP comment: CL is the switch in the fluid GE to turn on or off the heat leaks term
     if CL_set=="f292":
         yamb = np.ones(N + 1) * ((292 - Tcold) / (Thot - Tcold))
         CL = np.ones(N+1)
@@ -648,6 +651,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             if outer_descriptor[i] == 'air':
                 yamb[i] = ((Tambset - Tcold) / (Thot - Tcold))
                 CL[i]   = 1
+
 
     ## Field settings for PM1
     nn = 0
@@ -1315,16 +1319,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
             for j in range(nt+1):
                 for i in range(N+1):
-                    Q_leak_tol = Q_leak_tol + freq * U_Pc_leaks[j, i] * (Tf_tol[j, i] - Tambset) * DX * DT
+                    Q_leak_tol = Q_leak_tol + freq * U_Pc_leaks[j, i] * (Tf_tol[j, i] - Tambset) * DX * DT * CL[i]
                     P_pump_AMR_tol = P_pump_AMR_tol + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
 
-            for i in range(N):  # Ghost nodes excluded from this calculation
-                ms_h = S_h_if_list[materials.index(species_descriptor[i+1])]
+            for i in range(N+1):  # Ghost nodes excluded from this calculation
+                ms_h = S_h_if_list[materials.index(species_descriptor[i])]
                 P_mag_node = 0
                 for n in range(nt):  # Ghost nodes excluded from this calculation
-                    s_current = ms_h(Ts_tol[n, i+1], int_field[n, i+1])[0, 0]
-                    s_next = ms_h(Ts_tol[n+1, i+1], int_field[n+1, i+1])[0, 0]
-                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i+1])) * 0.5 * (Ts_tol[n, i+1] + Ts_tol[n+1, i+1]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                    s_current = ms_h(Ts_tol[n, i], int_field[n, i])[0, 0]
+                    s_next = ms_h(Ts_tol[n+1, i], int_field[n+1, i])[0, 0]
+                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_tol[n, i] + Ts_tol[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
                 P_mag_AMR_tol = P_mag_AMR_tol + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
 
             print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20} {6:<29} {7:<29} {8:<29} {9:<29}"
@@ -1585,7 +1589,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf_last[j, 0]) + (Tf_last[j, 0] - Tcold) / Tcold) * DT
             for i in range(N+1):
                 S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf_last[j, i])**2 * DX * DT / (Tambset * Tf_last[j, i])
-                Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf_last[j, i] - Tambset) * DX * DT
+                Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf_last[j, i] - Tambset) * DX * DT * CL[i]
                 S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf_last[j, i] - Ts_last[j, i])**2 * DX * DT / (Tf_last[j, i] * Ts_last[j, i])
                 P_pump_AMR = P_pump_AMR + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
                 S_vd = S_vd + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT / Tf_last[j, i]
@@ -1625,7 +1629,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
         print('outputs,{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2), flush=True)
         print('Q_MCE = {}'.format(Q_MCE), flush=True)
-        
+
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \

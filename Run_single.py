@@ -3,16 +3,19 @@ from tools.write_data_to_file import FileSave, FileSaveMatrix, FileSaveVector
 from tools.reduce_matrix import reduce_matrix
 import numpy as np
 import importlib
+import pickle
 
 # ---------------------------------- Calculation of just one case --------------------------------------
 
 caseNumber    = 1
 
 # Numerical parameters
-nodes         = 400
-timesteps     = 200
+nodes         = 100
+node_reduct_factor = 1
+timesteps     = 50
+timestep_reduct_factor = 1
 time_limit    = 8400  # [min] Time limit for the simulation in minutes
-cycle_toler   = 1e-6  # Maximum cycle tolerance: criterion for ending the iterative calculation process
+cycle_toler   = 1e-3  # Maximum cycle tolerance: criterion for ending the iterative calculation process
 maxStepIter   = 2000  # Maximum time step iterations the simulation is allowed to take
 maxCycleIter  = 2000  # Maximum cycle iterations the simulation is allowed to take
 cen_loc       = 0
@@ -59,7 +62,7 @@ necessary to create a new configuration file each time a single parameter need t
 starting with R8 as an example.'''
 
 cName   = "PB"  # Name of file where the geometric configuration of the regenerator is defined
-jName   = "Test_Gd_entropy"  # DP: use underlines to connect words because this is used as file name
+jName   = "Test_Gd_Qleak_disable"  # DP: use underlines to connect words because this is used as file name
 num_reg = 1
 
 dsp = 300e-6  # Note: this is particular for the packed bed and packed screen bed configuration
@@ -82,7 +85,7 @@ configuration.Dsp = dsp
 # Switches for activating and deactivating terms in governing equations
 CF   = 1
 CS   = 1
-CL   = 1
+CL   = 0
 CVD  = 1
 CMCE = 1
 
@@ -102,28 +105,44 @@ results = runActive(caseNumber, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, C
 # qccor         3  |  s           15 |  cycleCount  27 |  S_condu_stat  39 |
 # (t1-t0)/60    4  |  pt          16 |  int_field   28 |  S_condu_disp  40 |
 # pave          5  |  np.max(pt)  17 |  htc_fs      29 |  S_ht_amb      41 |
-# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_pump_AMR    41 |
-# eff_CB_HE     7  |  freq        19 |  mass_flow   31 |  P_mag_AMR     42 |
+# eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_pump_AMR    42 |
+# eff_CB_HE     7  |  freq        19 |  mass_flow   31 |  P_mag_AMR     43 |
 # tFce          8  |  t           20 |  dP/dx       32 |  Q_leak        44 |
-# tFhe          9  |  xloc        21 |  k_stat      33 |
-# yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |
+# tFhe          9  |  xloc        21 |  k_stat      33 |  Power_cold    45 |
+# yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |  Power_hot     46 |
 # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
 
-fileName = "Gd_test_cp_solid_change.txt"
+fileName = "Gd_test_Qleak_disable.txt"
 fileNameSave = './output/' + fileName
-#FileSave(fileNameSave,"{},{},{},{},{},{},{} \n".format(results[0], results[1], results[2], results[3], results[4], results[5],results[26]))
-FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]'))
-FileSave(fileNameSave, "{},{:7.4f},{:7.4f},{},{:7.4f},{:7.4f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44]))
-FileSave(fileNameSave, "Fluid temperatures\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], 4, 2))
-FileSave(fileNameSave, "Solid temperatures\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], 4, 2))
-FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
-FileSaveVector(fileNameSave, results[16])
-FileSave(fileNameSave, "\nInternal Magnetic Field\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], 4, 2))
-FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], 4, 2))
-FileSave(fileNameSave, "\nMass flow rate\n")
-FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], 4, 2))
+PickleFileName = "./pickleddata/{0:}-{1:d}".format(jName, int(caseNumber))
+
+if len(results) > 10:
+
+    FileSave(fileNameSave, "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {} \n".format('Tspan [K]', 'Qh [W]', 'Qc [W]', 'Cycles [-]', 'Run time [min]', 'Max. Pressure drop [Pa]', 'Thot [K]', 'Tcold [K]', 'S_ht_hot [W/K]', 'S_ht_cold [W/K]', 'S_ht_fs [W/K]', 'S_vd [W/K]', 'S_condu_stat [W/K]', 'S_condu_disp [W/K]', 'S_ht_amb [W/K]', 'Pump_power_input [W]', 'Mag_power_input [W]', 'Q_leak [W]', 'Qc2 [W]', 'Qh2 [W]'))
+    FileSave(fileNameSave, "{},{:7.6f},{:7.6f},{},{:7.6f},{:7.6f},{},{},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f},{:7.6f} \n".format(results[0]-results[1], results[26], results[2], results[27], results[4], results[17], Thot, Tcold, results[35], results[36], results[37], results[38], results[39], results[40], results[41], results[42], results[43], results[44], results[45], results[46]))
+    FileSave(fileNameSave, "Fluid temperatures\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[14], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "Solid temperatures\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[15], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "Pressure drop accross the regenerator for the entire cycle\n")
+    FileSaveVector(fileNameSave, results[16])
+    FileSave(fileNameSave, "\nInternal Magnetic Field\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[28], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "\nHeat transfer coefficient between solid and fluid in the packed bed\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[29], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "\nMass flow rate\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[31], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "\nPressure drop per unit length\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[32], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "\nEffective thermal conductivity of solid\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[33], node_reduct_factor, timestep_reduct_factor))
+    FileSave(fileNameSave, "\nEffective thermal conductivity of fluid\n")
+    FileSaveMatrix(fileNameSave, reduce_matrix(nodes, timesteps, results[34], node_reduct_factor, timestep_reduct_factor))
+
+else:  # Save Pickle data
+
+    aaa = (results[0], results[1], results[2], results[3], results[4])
+    fileObject = open(PickleFileName, 'wb')  # open the file for writing
+    pickle.dump(aaa, fileObject)  # this writes the object aaa to the file named 'PickleFileName'
+    fileObject.close()  # here we close the fileObject
