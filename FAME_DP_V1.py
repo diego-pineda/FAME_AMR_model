@@ -1020,7 +1020,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     # because the weighting value is 0.5. There are actually three options here: one is to calculate
                     # the properties at the temperature of the current time step, the second is to calculate the
                     # properties at the temperature of the previous time step, and the third is to take the average of
-                    # both as it was chosen here.
+                    # both as it was chosen here. There is even a fourth option, which is calculate the properties at
+                    # the average temperature between current and previous time step.
 
                     # Properties of fluid at location i and temperature of current time step
                     cpf_ave = fCp(fT[i], percGly) * ww + cpf_prev[i] * (1 - ww)  # Specific heat
@@ -1032,6 +1033,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     fluid_dens[n, i] = fRho(fT[i], percGly)  # Added on 03/01/2022
                     mass_flow[n, i] = fluid_dens[n, i] * V[n]  # Added on 03/01/2022
                     Vf[n, i] = m_flow[n] / rhof_ave  # Added on 28/09/2022
+                    ### Fluid term
+                    # Ff[i] = (rhof_cf_ave[i] * Vf[n, i]) / L_tot  # Modified on 30/03/2023. This is possibly the error
+                    Ff[i] = cpf_ave * m_flow[n] / L_tot # Modified on 31/03/2023.
+                    # DP: this is divided by L_tot because in the FluidSolver function Ff is divided by
+                    # dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
 
                     if species_descriptor[i].startswith("reg"):
                         cp_c = cp_c_if_list[materials.index(species_descriptor[i])]
@@ -1182,14 +1188,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     # DP: pt[n] returns the pressure drop along the regenerator at the current time step
 
                 ### Capacitance fluid
-                Cf = rhof_cf_ave * A_c * e_r * freq
+                Cf = rhof_cf_ave * A_c * e_r * freq  # Freq is required here as Cf is divided by dt not DT in the solver
                 # DP: in Numpy A*B is an element wise multiplication, which means that both matrices must have same size
                 # DP: Matrix multiplication in the row-by-column way is performed using np.matmul(A,B)
                 # where A is an lxm matrix and B is an mxn matrix so that A*B is an lxn matrix
 
-                ### Fluid term
-                Ff = (rhof_cf_ave * Vf[n, i]) / L_tot  # DP: this is divided by L_tot because in the FluidSolver function Ff
-                # is divided by dx = 1/(N+1) instead of DX. So, it is necessary to include L_tot so that dx*L_tot = DX
                 Sp = Spres / (Thot - Tcold)
 
                 Kfw = np.zeros(N - 1)
@@ -1322,7 +1325,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     Q_leak_tol = Q_leak_tol + freq * U_Pc_leaks[j, i] * (Tf_tol[j, i] - Tambset) * DX * DT * CL[i]
                     P_pump_AMR_tol = P_pump_AMR_tol + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
 
-            for i in range(N+1):  # Ghost nodes excluded from this calculation
+            for i in range(N+1):
                 ms_h = S_h_if_list[materials.index(species_descriptor[i])]
                 P_mag_node = 0
                 for n in range(nt):  # Ghost nodes excluded from this calculation
