@@ -1495,6 +1495,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         coolingpowersum=0
         power_in_out_cold_side = 0
+        Qc_var_cp = 0
         startint=0
         # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
         # It seems that it is performed following a rectangle rule. https://en.wikipedia.org/wiki/Numerical_integration
@@ -1505,10 +1506,16 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             coolingpowersum = coolingpowersum + coolPn
             power_in_out_cold_side = power_in_out_cold_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
 
+            Trange = np.linspace((tF+tF1)/2, Tcold, 500)
+            # dT = (tF-Thot)/(500-1)
+            for i in range(500-1):
+                Qc_var_cp = Qc_var_cp + freq * m_flow[n] * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
+
         qc = num_reg * coolingpowersum  # [W] Gross cooling power of the device
 
         heatingpowersum=0
         power_in_out_hot_side = 0
+        Qh_var_cp = 0
         startint=0
         for n in range(startint, nt):
             tF = Tf_last[n, -1]
@@ -1516,6 +1523,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
             heatingpowersum = heatingpowersum + heatPn
             power_in_out_hot_side = power_in_out_hot_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
+
+            Trange = np.linspace(Thot, (tF+tF1)/2, 500)
+            # dT = (tF-Thot)/(100-1)
+            for i in range(500-1):
+                Qh_var_cp = Qh_var_cp + freq * m_flow[n] * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
 
         qh = num_reg * heatingpowersum  # [W] Heating power of the device
         print('Power in out cold side = {} [W]'.format(power_in_out_cold_side))
@@ -1620,9 +1632,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
         # ------------------------------------------------------------------------------------------------------------------
         error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        error2 = abs((power_in_out_hot_side+Q_leak-power_in_out_cold_side)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        print('Enthalpy in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
-        print('Enthalpy in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
+        error2 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        print('Enthalpy in out cold side = {} [W]'.format(Qc_var_cp), flush=True)
+        print('Enthalpy in out hot side = {} [W]'.format(Qh_var_cp), flush=True)
         print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)
         print('Cycle average heating capacity = {} [W]'.format(qh), flush=True)
         print('Cycle average heat leaks = {} [W]'.format(Q_leak), flush=True)
@@ -1636,7 +1648,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
-               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak, power_in_out_cold_side, power_in_out_hot_side
+               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak, Qc_var_cp, Qh_var_cp
         # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 
     elif time_limit_reached == 1:
