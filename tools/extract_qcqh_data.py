@@ -15,7 +15,7 @@ inputs_file_name = "FAME_Dsp300um_B1400mT_layering" #"FAME_Dsp300um_B1400mT_num_
 # inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
 
 
-def extract_qc_qh_data(directory, inputs_file_name):
+def extract_qc_qh_data(directory, inputs_file_name, matrices='yes'):
 
     inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
 
@@ -44,10 +44,11 @@ def extract_qc_qh_data(directory, inputs_file_name):
     legends = []
     legends2 = []
 
-    Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
-    Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
+    Qc = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution)) * -1
+    Qh = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution)) * -1
+    Win = np.ones((variable_3_resolution, variable_2_resolution, variable_1_resolution, hot_resolution, span_resolution))
 
-    results = np.ones((maxcase, 13))  # This is for making a table of | case | Qc | Qh |
+    results = np.ones((maxcase, 15))  # This is for making a table of | case | Qc | Qh |
     i = 0
     for files in os.listdir(directory):  # Goes over all files in the directory
 
@@ -55,6 +56,8 @@ def extract_qc_qh_data(directory, inputs_file_name):
             if 'index' in files:
                 continue
             if 'READ' in files:
+                continue
+            if 'Output' in files:
                 continue
             # case = int(files.split('-')[1].split('.')[0])
             case = int(files.split('.')[0])
@@ -72,6 +75,7 @@ def extract_qc_qh_data(directory, inputs_file_name):
             myfile.close()
             Qc[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[2])
             Qh[c, b, a, y, x] = float(((contents.split('\n'))[1].split(','))[1])
+            Win[c, b, a, y, x]= float(((contents.split('\n'))[1].split(','))[15]) - float(((contents.split('\n'))[1].split(','))[16])
             results[i, 1] = float(((contents.split('\n'))[1].split(','))[2])  # Qc [W]
             results[i, 2] = float(((contents.split('\n'))[1].split(','))[1])  # Qh [W]
             results[i, 3] = float(((contents.split('\n'))[1].split(','))[8])  # S_ht_hot [W/K]
@@ -84,9 +88,12 @@ def extract_qc_qh_data(directory, inputs_file_name):
             results[i, 10] = float(((contents.split('\n'))[1].split(','))[15])  # Pump_power_input [W]
             results[i, 11] = float(((contents.split('\n'))[1].split(','))[16])  # Mag_power_input [W]
             results[i, 12] = float(((contents.split('\n'))[1].split(','))[17])  # Q_leak [W]
+            results[i, 13] = float(((contents.split('\n'))[1].split(','))[3])  # Cycles [-]
+            results[i, 14] = float(((contents.split('\n'))[1].split(','))[4])  # Time [min]
             i = i + 1
 
-    results = np.delete(results, slice(i, maxcase, 1), 0)  # TODO what is this for?
+    results = np.delete(results, slice(i, maxcase, 1), 0)
+    # Note: This is to remove the ones from the results matrix corresponding to the unresolved cases
     print(results)
     # Saving the results to an excel file
 
@@ -99,13 +106,17 @@ def extract_qc_qh_data(directory, inputs_file_name):
     FileSaveMatrix(file_path, results)
     # print(results[np.argsort(results[:, 0])])
 
-    np.save(directory+'/'+inputs_file_name+"_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
-    np.save(directory+'/'+inputs_file_name+"_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
+    if matrices == 'yes':
+
+        np.save(directory+'/'+inputs_file_name+"_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
+        np.save(directory+'/'+inputs_file_name+"_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
+        np.save(directory+'/'+inputs_file_name+"_Win.npy", Win, allow_pickle=True, fix_imports=True)
 
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
     # np.save("output/FAME_Dsp300um_B1400mT_ff_vfl/FAME_Dsp300um_B1400mT_ff_vfl_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
 
+    return results
 
 if __name__ == "__main__":
 
