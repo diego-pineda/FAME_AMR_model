@@ -171,8 +171,8 @@ if __name__ == '__main__':
         # eff_HB_CE     6  |  Uti         18 |  fluid_dens  30 |  P_pump_AMR    42 |
         # eff_CB_HE     7  |  freq        19 |  mass_flow   31 |  P_mag_AMR     43 |
         # tFce          8  |  t           20 |  dP/dx       32 |  Q_leak        44 |
-        # tFhe          9  |  xloc        21 |  k_stat      33 |  Power_cold    45 |
-        # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |  Power_hot     46 |
+        # tFhe          9  |  xloc        21 |  k_stat      33 |  Qc_var_cp     45 |
+        # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |  Qh_var_cp     46 |
         # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
 
         # This is for the HPC11 cluster at TU Delft
