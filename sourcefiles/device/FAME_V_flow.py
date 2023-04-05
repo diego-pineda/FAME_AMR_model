@@ -65,10 +65,11 @@ if __name__ == '__main__':
     fig, plot1 = plt.subplots()
     plot1.plot(np.linspace(0, 1, nt+1), ap_field[:, 0], '-', color='red')
     plot1.set_xlabel("Fraction of AMR cycle period [-]")
-    plot1.set_ylabel("Applied field [T]", color='red')
+    plot1.set_ylabel("Applied magnetic field [T]", color='red')
     plot1.set_ylim([-1.5, 1.5])
     plot1.set_xlim([0, 1])
     plot1.set_yticks([-1.4, -0.7, 0, 0.7, 1.4])
+
 
     # plot1.set_xticks(np.arange(0, 1, 10))
     # plt.figure(1)
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     # plt.xlabel("Angle [°]")
     # plt.ylabel("Normalized flow rate [-] / Applied field [T]")
     # # plt.title("Normalized flow rate and applied field as function of rotation angle")
-    plt.legend(['Applied field', 'Flow rate'])
+    plt.legend(['Applied magnetic field', 'Normalized flow rate'])
     # plt.xticks(np.arange(0, 181, 15))  # [30, 60, 75, 90, 105, 120, 150, 165, 180]
     # plt.grid(which='both', axis='both')
     #plt.minorticks_on()
