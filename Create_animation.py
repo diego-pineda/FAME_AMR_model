@@ -20,7 +20,7 @@ import numpy as np
 # 1) Simulation parameters
 
 Thot        = 308    # [K]
-Tcold       = 275   # [K]
+Tcold       = 275  # [K]
 dThot       = 2      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
 dTcold      = 2      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
 Reng_Length = 60     # [mm]
