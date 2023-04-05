@@ -94,7 +94,7 @@ kult  =  0.122  # [W/(m K)] Thermal conductivity Ultem (https://www.plasticsintl
 # Other parameters
 
 percGly = 20 # [%] Percentage of glycol in the water glycol mixture used as HTF
-CL_set  = "Tamb"  # Casing BC assumption
+CL_set  = "Tamb"  # Casing BC assumption. This can be set to "grad", "adiabatic", or "f292"
 MOD_CL  = 0  # Do we wish to use experimental modication of the BC
 ch_fac  = 0.5  # Averaging heating and cooling properties
 
