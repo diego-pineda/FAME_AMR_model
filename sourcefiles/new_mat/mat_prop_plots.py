@@ -29,11 +29,12 @@ particular nodes in the bed. To do so, uncomment the proper section below and se
 above.'''
 
 # Inputs
-id_first_mat = 328#166
-id_last_mat = 357#179
+id_first_mat = 268  #328 #166
+id_last_mat = 297 #357 #179
+increment = 29
 materials = []
 mag_field_to_plot = 1.4
-for i in range(id_first_mat, id_last_mat + 1):
+for i in [268, 283, 297]:  # range(id_first_mat, id_last_mat + 1, increment):
     materials.append('M' + str(i))
 # materials = ['M6', 'M7', 'M8',  'M9', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15']
 # materials = ['M0', 'M2']
@@ -220,10 +221,10 @@ plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.
 import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering"  #   "output/FAME_20layer_infl_Thot_flow2"
+directory = "output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/Thot_extended_Tspan27K"  #   "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-inputs_file_name = "FAME_Dsp300um_B1400mT_layering"  #  "Run_parallel"
-case = 354
+inputs_file_name = "FAME_Dsp300um_B1400mT_layering_Thot_extended_Tspan27K"  #  "Run_parallel"
+case = 29
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
 
@@ -301,6 +302,7 @@ node_min = [1,  21, 41, 61,  81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 28
 node_mid = [10, 30, 50, 70,  90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 570, 590]  # [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]  #[75,	225, 375, 525]
 node_max = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600]  # [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  #[150, 300, 450, 600]
 
+
 # node = [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]
 # node = [15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345, 375, 405, 435, 465, 495, 525, 555, 585]
 
@@ -352,16 +354,26 @@ for mat in materials:
     s_int_functions.append(matS_h(S))
 
 W_mag_AMR = 0
+s_t0 = np.zeros(nodes+1)
+s_t126 = np.zeros(nodes+1)
 for node in range(nodes):
     w_mag_node = 0
     for n in range(time_steps):
         s_current = s_int_functions[int_discription[node+1]](solidTemp[n, node + 1], int_mag_field[n, int((node+1)/2)])[0, 0]
         s_next = s_int_functions[int_discription[node+1]](solidTemp[n+1, node + 1], int_mag_field[n+1, int((node+1)/2)])[0, 0]
         Area_loop = 0.5 * (solidTemp[n, node+1] + solidTemp[n+1, node+1]) * (s_next - s_current)
-        print('ds = ', (s_next - s_current))
+        # print('ds = ', (s_next - s_current))
         w_mag_node = w_mag_node + Area_loop
+        if n==0:
+            s_t0[node] = s_current
+        if n==126:
+            s_t126[node] = s_current
     W_mag_node = w_mag_node * 6100 * (0.045*0.013*DX*(1-0.36))
     W_mag_AMR = W_mag_AMR + W_mag_node
+
+plt.figure(4)
+plt.scatter(solidTemp[0, :], s_t0)
+plt.scatter(solidTemp[126, :], s_t126)
 
 ff = variable_2_values[b]
 P_mag_AMR = W_mag_AMR * ff
@@ -403,135 +415,139 @@ for mat in materials:
         # entropy_max[n, index] = 0.5 * s_if_c(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index])])[0, 0]
 
         # -----------
+    if mat in ['M268', 'M283', 'M297']:
+        # plt.plot(solidTemp[:, node_min[index]], entropy_min[:, index], color=colors[index], marker='v', markersize=2, markerfacecolor='white')
+        plt.plot(solidTemp[:, node_mid[index]], entropy_mid[:, index], color=colors[index], marker='o', markersize=2, markerfacecolor='white')  # TODO. Activate this to plot cycle of center node
+        # plt.plot(solidTemp[:, node_max[index]], entropy_max[:, index], color=colors[index], marker='s', markersize=2, markerfacecolor='white')
 
-    # plt.plot(solidTemp[:, node_min[index]], entropy_min[:, index], color=colors[index], marker='v', markersize=2, markerfacecolor='white')
-    plt.plot(solidTemp[:, node_mid[index]], entropy_mid[:, index], color=colors[index], marker='o', markersize=2, markerfacecolor='white')
-    # plt.plot(solidTemp[:, node_max[index]], entropy_max[:, index], color=colors[index], marker='s', markersize=2, markerfacecolor='white')
-
-
-
-
-    # ------------ Plotting cycles on a Cp vs T diagram (experienced by the center node of each layer) -------------
-
-    # C = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
-    # c_if = matCp_h(C)
-    #
-    # heatcap_min = np.zeros((time_steps + 1, len(materials)))
-    # heatcap_mid = np.zeros((time_steps + 1, len(materials)))
-    # heatcap_max = np.zeros((time_steps + 1, len(materials)))
-    #
-    # # ----------- 4-4-22 trial --------------
-    # C_c = np.loadtxt(mat+'/'+mat+'_cp_c.txt')
-    # C_h = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
-    # c_if_c = matCp_h(C_c)
-    # c_if_h = matCp_h(C_h)
-    # heatcap_hys_min = np.zeros((time_steps + 1, len(materials)))
-    # heatcap_hys_mid = np.zeros((time_steps + 1, len(materials)))
-    # heatcap_hys_max = np.zeros((time_steps + 1, len(materials)))
-    # dT = 0.5
-    # # -------------------
-    # for n in range(time_steps + 1):
-    #     # heatcap[n, index] = c_if(solidTemp[n, node[index]], ap_field[n, node[index]])[0, 0]
-    #     heatcap_min[n, index] = c_if(solidTemp[n, node_min[index]], int_mag_field[n, int(node_min[index]/2)])[0, 0]
-    #     heatcap_mid[n, index] = c_if(solidTemp[n, node_mid[index]], int_mag_field[n, int(node_mid[index]/2)])[0, 0]
-    #     heatcap_max[n, index] = c_if(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index]/2)])[0, 0]
-    #
-    #     # ----------- 4-4-22 trial --------------
-    #     # ds = (0.5 * s_if_c(solidTemp[n, node_min[index]] + dT, int_mag_field[n, int(node_min[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_min[index]] + dT, int_mag_field[n, int(node_min[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_min[index]] - dT, int_mag_field[n, int(node_min[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_min[index]] - dT, int_mag_field[n, int(node_min[index])])[0, 0])
-    #     # heatcap_hys_min[n, index] = solidTemp[n, node_min[index]] * ds / (2 * dT)
-    #     # ds = (0.5 * s_if_c(solidTemp[n, node_mid[index]] + dT, int_mag_field[n, int(node_mid[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_mid[index]] + dT, int_mag_field[n, int(node_mid[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_mid[index]] - dT, int_mag_field[n, int(node_mid[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_mid[index]] - dT, int_mag_field[n, int(node_mid[index])])[0, 0])
-    #     # heatcap_hys_mid[n, index] = solidTemp[n, node_mid[index]] * ds / (2 * dT)
-    #     # ds = (0.5 * s_if_c(solidTemp[n, node_max[index]] + dT, int_mag_field[n, int(node_max[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_max[index]] + dT, int_mag_field[n, int(node_max[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_max[index]] - dT, int_mag_field[n, int(node_max[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_max[index]] - dT, int_mag_field[n, int(node_max[index])])[0, 0])
-    #     # heatcap_hys_max[n, index] = solidTemp[n, node_max[index]] * ds / (2 * dT)
-    #     # -------------------
-    #
-    # plt.figure(1)
-    # plt.plot(solidTemp[:, node_min[index]], heatcap_min[:, index], color=colors[index], marker='+')
-    # plt.plot(solidTemp[:, node_mid[index]], heatcap_mid[:, index], color=colors[index], marker='+')  # TODO uncomment for plots without hysteresis
-    # plt.plot(solidTemp[:, node_max[index]], heatcap_max[:, index], color=colors[index], marker='+')
-    #
-    # # ----------- 4-4-22 trial --------------
-    # # plt.plot(solidTemp[:, node_min[index]], heatcap_hys_min[:, index], color=colors[index], marker='+')
-    # # plt.plot(solidTemp[:, node_mid[index]], heatcap_hys_mid[:, index], color=colors[index], marker='o')
-    # # plt.plot(solidTemp[:, node_max[index]], heatcap_hys_max[:, index], color=colors[index], marker='s')
-    # # -------------------
-
-    # ----------------------------------- end section Cp loops --------------------------------------------
-
+#
+#
+#
+#     # ------------ Plotting cycles on a Cp vs T diagram (experienced by the center node of each layer) -------------
+#
+#     # C = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
+#     # c_if = matCp_h(C)
+#     #
+#     # heatcap_min = np.zeros((time_steps + 1, len(materials)))
+#     # heatcap_mid = np.zeros((time_steps + 1, len(materials)))
+#     # heatcap_max = np.zeros((time_steps + 1, len(materials)))
+#     #
+#     # # ----------- 4-4-22 trial --------------
+#     # C_c = np.loadtxt(mat+'/'+mat+'_cp_c.txt')
+#     # C_h = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
+#     # c_if_c = matCp_h(C_c)
+#     # c_if_h = matCp_h(C_h)
+#     # heatcap_hys_min = np.zeros((time_steps + 1, len(materials)))
+#     # heatcap_hys_mid = np.zeros((time_steps + 1, len(materials)))
+#     # heatcap_hys_max = np.zeros((time_steps + 1, len(materials)))
+#     # dT = 0.5
+#     # # -------------------
+#     # for n in range(time_steps + 1):
+#     #     # heatcap[n, index] = c_if(solidTemp[n, node[index]], ap_field[n, node[index]])[0, 0]
+#     #     heatcap_min[n, index] = c_if(solidTemp[n, node_min[index]], int_mag_field[n, int(node_min[index]/2)])[0, 0]
+#     #     heatcap_mid[n, index] = c_if(solidTemp[n, node_mid[index]], int_mag_field[n, int(node_mid[index]/2)])[0, 0]
+#     #     heatcap_max[n, index] = c_if(solidTemp[n, node_max[index]], int_mag_field[n, int(node_max[index]/2)])[0, 0]
+#     #
+#     #     # ----------- 4-4-22 trial --------------
+#     #     # ds = (0.5 * s_if_c(solidTemp[n, node_min[index]] + dT, int_mag_field[n, int(node_min[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_min[index]] + dT, int_mag_field[n, int(node_min[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_min[index]] - dT, int_mag_field[n, int(node_min[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_min[index]] - dT, int_mag_field[n, int(node_min[index])])[0, 0])
+#     #     # heatcap_hys_min[n, index] = solidTemp[n, node_min[index]] * ds / (2 * dT)
+#     #     # ds = (0.5 * s_if_c(solidTemp[n, node_mid[index]] + dT, int_mag_field[n, int(node_mid[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_mid[index]] + dT, int_mag_field[n, int(node_mid[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_mid[index]] - dT, int_mag_field[n, int(node_mid[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_mid[index]] - dT, int_mag_field[n, int(node_mid[index])])[0, 0])
+#     #     # heatcap_hys_mid[n, index] = solidTemp[n, node_mid[index]] * ds / (2 * dT)
+#     #     # ds = (0.5 * s_if_c(solidTemp[n, node_max[index]] + dT, int_mag_field[n, int(node_max[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_max[index]] + dT, int_mag_field[n, int(node_max[index])])[0, 0]) - (0.5 * s_if_c(solidTemp[n, node_max[index]] - dT, int_mag_field[n, int(node_max[index])])[0, 0] + 0.5 * s_if_h(solidTemp[n, node_max[index]] - dT, int_mag_field[n, int(node_max[index])])[0, 0])
+#     #     # heatcap_hys_max[n, index] = solidTemp[n, node_max[index]] * ds / (2 * dT)
+#     #     # -------------------
+#     #
+#     # plt.figure(1)
+#     # plt.plot(solidTemp[:, node_min[index]], heatcap_min[:, index], color=colors[index], marker='+')
+#     # plt.plot(solidTemp[:, node_mid[index]], heatcap_mid[:, index], color=colors[index], marker='+')  # TODO uncomment for plots without hysteresis
+#     # plt.plot(solidTemp[:, node_max[index]], heatcap_max[:, index], color=colors[index], marker='+')
+#     #
+#     # # ----------- 4-4-22 trial --------------
+#     # # plt.plot(solidTemp[:, node_min[index]], heatcap_hys_min[:, index], color=colors[index], marker='+')
+#     # # plt.plot(solidTemp[:, node_mid[index]], heatcap_hys_mid[:, index], color=colors[index], marker='o')
+#     # # plt.plot(solidTemp[:, node_max[index]], heatcap_hys_max[:, index], color=colors[index], marker='s')
+#     # # -------------------
+#
+#     # ----------------------------------- end section Cp loops --------------------------------------------
+#
     index = index + 1
+plt.figure(4)
 plt.plot([270, 320, 320, 270], [75, 75, 105, 105], '-k')
+# plt.plot([293.59, 293.59, 303.65, 303.65], [0, 150, 150, 0], '-k')  # [277.39, 277.39, 287.45, 287.45]
+# plt.figure(3)
+# plt.plot([293.59, 293.59, 303.65, 303.65], [0, 3, 3, 0], '-k')
 plt.show()
-
-# ------------------------------------------------------------------------
-
+#
+# # ------------------------------------------------------------------------
+#
+# # #
+# # # from sourcefiles.device.FAME_app_field import app_field
+# # # ap_field = app_field(time_steps, nodes, applied_field)
+# # #
+# # # ff = 2
+# # # dispV         = 3 * 16.667e-6
+# # # acc_period    = 5
+# # # max_flow_per  = 45
+# # # full_magn_ang = 30
+# # # unbal_rat     = 1
+# # # from sourcefiles.device.FAME_V_flow import vol_flow_rate
+# # # volum_flow_profile = vol_flow_rate(time_steps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
+#
+#
+#
+# # 3) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Instantaneous utilization %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#
+# # nn = 0
+# # DX = Reng_Length / (nodes-1)
+# # int_discription = np.zeros(nodes+1, dtype=np.int)
+# # species_descriptor = []
+# # xloc = np.zeros(nodes+1)
+# # species_discription = ['reg-M6', 'reg-M7', 'reg-M8', 'reg-M9', 'reg-M10', 'reg-M11', 'reg-M12', 'reg-M13', 'reg-M14', 'reg-M15']
+# # x_discription = [0, 0.006, 0.012, 0.018, 0.024, 0.030, 0.036, 0.042, 0.048, 0.054, 0.060]
+# # # Set the rest of the nodes to id with geoDis(cription)
 # #
-# # from sourcefiles.device.FAME_app_field import app_field
-# # ap_field = app_field(time_steps, nodes, applied_field)
+# # for i in range(nodes+1): # sets 0->N
+# #     xloc[i] = (DX * i + DX / 2)  #modify i so 0->
 # #
-# # ff = 2
-# # dispV         = 3 * 16.667e-6
-# # acc_period    = 5
-# # max_flow_per  = 45
-# # full_magn_ang = 30
-# # unbal_rat     = 1
-# # from sourcefiles.device.FAME_V_flow import vol_flow_rate
-# # volum_flow_profile = vol_flow_rate(time_steps, dispV, acc_period, max_flow_per, full_magn_ang, unbal_rat)
-
-
-
-# 3) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Instantaneous utilization %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# nn = 0
-# DX = Reng_Length / (nodes-1)
-# int_discription = np.zeros(nodes+1, dtype=np.int)
-# species_descriptor = []
-# xloc = np.zeros(nodes+1)
-# species_discription = ['reg-M6', 'reg-M7', 'reg-M8', 'reg-M9', 'reg-M10', 'reg-M11', 'reg-M12', 'reg-M13', 'reg-M14', 'reg-M15']
-# x_discription = [0, 0.006, 0.012, 0.018, 0.024, 0.030, 0.036, 0.042, 0.048, 0.054, 0.060]
-# # Set the rest of the nodes to id with geoDis(cription)
+# #     if xloc[i] >= x_discription[nn + 1]+DX and i != nodes:
+# #         nn = nn + 1
+# #     print(i, xloc[i], x_discription[nn]+DX, nn)
+# #     int_discription[i] = nn
+# #     species_descriptor.append(materials[nn])
+# #
+# # inst_cp = np.zeros(time_steps+1)
+# # inst_uti = np.zeros(time_steps+1)
+# #
+# # c_int_funct = []
+# # for mat in materials:
+# #     C = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
+# #     c_int_funct.append(matCp_h(C))
+# #
+# #
+# # for n in range(time_steps + 1):
+# #
+# #     # This part is for the calculation of the instantaneous utilization
+# #     mCp_MCM = 0
+# #     for x in range(1, nodes):
+# #         # if x < 5 or x > nodes - 5:
+# #         #     print(x)
+# #         c_if = c_int_funct[int_discription[x]]
+# #         mCp_MCM = mCp_MCM + 6100 * (0.045 * 0.013 * 0.060 * 0.64) / (nodes-2) * c_if(solidTemp[n, x], ap_field[n, x])[0, 0]
+# #     inst_cp[n] = mCp_MCM
+# #     inst_uti[n] = 1000 * volum_flow_profile[n] * 4200 * (50 / 180) * ff / mCp_MCM
+# #
+# # plt.figure(5)
+# # plt.plot(np.linspace(0, time_steps, time_steps+1), inst_uti)
+# # plt.grid(which='major', axis='both')
+# # plt.xlabel('Time steps []')
+# # plt.ylabel("Instantaneous utilization of bed [J/K]")
+# #
+# # plt.figure(6)
+# # plt.plot(np.linspace(0, time_steps, time_steps+1), inst_cp)
+# # plt.grid(which='major', axis='both')
+# # plt.xlabel('Time steps []')
+# # plt.ylabel("Instantaneous thermal mass of bed [J/K]")
+# #
+# # plt.show()
 #
-# for i in range(nodes+1): # sets 0->N
-#     xloc[i] = (DX * i + DX / 2)  #modify i so 0->
 #
-#     if xloc[i] >= x_discription[nn + 1]+DX and i != nodes:
-#         nn = nn + 1
-#     print(i, xloc[i], x_discription[nn]+DX, nn)
-#     int_discription[i] = nn
-#     species_descriptor.append(materials[nn])
-#
-# inst_cp = np.zeros(time_steps+1)
-# inst_uti = np.zeros(time_steps+1)
-#
-# c_int_funct = []
-# for mat in materials:
-#     C = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
-#     c_int_funct.append(matCp_h(C))
-#
-#
-# for n in range(time_steps + 1):
-#
-#     # This part is for the calculation of the instantaneous utilization
-#     mCp_MCM = 0
-#     for x in range(1, nodes):
-#         # if x < 5 or x > nodes - 5:
-#         #     print(x)
-#         c_if = c_int_funct[int_discription[x]]
-#         mCp_MCM = mCp_MCM + 6100 * (0.045 * 0.013 * 0.060 * 0.64) / (nodes-2) * c_if(solidTemp[n, x], ap_field[n, x])[0, 0]
-#     inst_cp[n] = mCp_MCM
-#     inst_uti[n] = 1000 * volum_flow_profile[n] * 4200 * (50 / 180) * ff / mCp_MCM
-#
-# plt.figure(5)
-# plt.plot(np.linspace(0, time_steps, time_steps+1), inst_uti)
-# plt.grid(which='major', axis='both')
-# plt.xlabel('Time steps []')
-# plt.ylabel("Instantaneous utilization of bed [J/K]")
-#
-# plt.figure(6)
-# plt.plot(np.linspace(0, time_steps, time_steps+1), inst_cp)
-# plt.grid(which='major', axis='both')
-# plt.xlabel('Time steps []')
-# plt.ylabel("Instantaneous thermal mass of bed [J/K]")
-#
-# plt.show()
-
-
