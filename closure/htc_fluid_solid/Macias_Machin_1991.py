@@ -4,7 +4,7 @@ import numpy as np
 # Heat transfer coefficient between fluid and solid for a packed bed of spherical particles
 
 # Based on the correlation proposed by Macias-Machin, 1991.
-# Nu = 2 + 0.11 Re^0.6 Pr ^ (1/3)
+# Nu = 1.27 + 2.66 Re^0.56 Pr ^ (-0.41) * ((1-er)/er)^0.29, based on pore velocity and particle diameter
 
 # A degradation factor, DF, is also included to take into account the temperature gradients inside the solid.
 # See paper: K.L. Engelbrecht, G.F. Nellis, and S.A. Klein, “The effect of internal temperature gradients on regenerator matrix performance,” 2006.
