@@ -478,9 +478,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     time_limit_reached = 0
     # The space discretization considers all layers in the regenerator assembly including voids and passive layers
     N     = nodes                  # [-] Spatial nodes in which the reg. assembly is splitted for sim. No ghost nodes.
-    dx    = 1 / (N+1)              # [-] Molecule size
+    dx    = 1 / (N-1)              # [-] Molecule size
     L_tot = np.max(x_discription)  # [m] Total length of the domain (regenerator assembly)
-    DX    = L_tot / (N+1)          # [m] Real element size
+    DX    = L_tot / (N-1)          # [m] Real element size
 
     freq  = ff                           # [Hz] Frequency of AMR cycle
     nt    = timesteps                    # [-] Number of time steps
@@ -1504,12 +1504,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             tF1 = Tf_last[n+1, 0]
             coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
             coolingpowersum = coolingpowersum + coolPn
-            power_in_out_cold_side = power_in_out_cold_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
+            power_in_out_cold_side = power_in_out_cold_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF - Tcold)
 
-            Trange = np.linspace((tF+tF1)/2, Tcold, 500)
+            Trange = np.linspace(tF, Tcold, 500)
             # dT = (tF-Thot)/(500-1)
             for i in range(500-1):
-                Qc_var_cp = Qc_var_cp + freq * m_flow[n] * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
+                Qc_var_cp = Qc_var_cp + freq * np.abs(m_flow[n]) * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
 
         qc = num_reg * coolingpowersum  # [W] Gross cooling power of the device
 
@@ -1522,9 +1522,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             tF1 = Tf_last[n+1, -1]
             heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
             heatingpowersum = heatingpowersum + heatPn
-            power_in_out_hot_side = power_in_out_hot_side + freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * (tF+tF1)/2
+            power_in_out_hot_side = power_in_out_hot_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF-Thot)
 
-            Trange = np.linspace(Thot, (tF+tF1)/2, 500)
+            Trange = np.linspace(Thot, tF, 500)
             # dT = (tF-Thot)/(100-1)
             for i in range(500-1):
                 Qh_var_cp = Qh_var_cp + freq * m_flow[n] * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
