@@ -1642,8 +1642,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # ------------------------------------------------------------------------------------------------------------------
         error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
         error2 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        print('Enthalpy in out cold side = {} [W]'.format(Qc_var_cp), flush=True)
-        print('Enthalpy in out hot side = {} [W]'.format(Qh_var_cp), flush=True)
+        error3 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
+        print('Qh variable cp = {} [W]'.format(Qh_var_cp), flush=True)
         print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)
         print('Cycle average heating capacity = {} [W]'.format(qh), flush=True)
         print('Cycle average heat leaks = {} [W]'.format(Q_leak), flush=True)
