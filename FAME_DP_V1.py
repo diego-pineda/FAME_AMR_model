@@ -1622,13 +1622,22 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         # ----------------------------- 27/10/2022 Calculation of magnetic power input -------------------------------------
         P_mag_AMR = 0
-        for i in range(N+1):
+        W_mag = 0
+        for i in range(1, N, 1):  # Ghost nodes excluded
             ms_h = S_h_if_list[materials.index(species_descriptor[i])]
             P_mag_node = 0
-            for n in range(nt):
+            for n in range(nt+1):
                 s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
-                s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
-                P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                if n == nt:
+                    s_next = ms_h(Ts_last[0, i], int_field[0, i])[0, 0]
+                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[0, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                    W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[0, i] * (ms_h(Ts_last[0, i]+0.5, int_field[0, i])[0, 0] - ms_h(Ts_last[0, i]-0.5, int_field[0, i])[0, 0])) * (Ts_last[0, i] - Ts_last[n, i])
+                                                                                 + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[0, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+                else:
+                    s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
+                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                    W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
+                                                                            + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
             P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
         # ------------------------------------------------------------------------------------------------------------------
         error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
