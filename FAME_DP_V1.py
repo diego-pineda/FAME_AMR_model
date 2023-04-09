@@ -1530,8 +1530,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 Qh_var_cp = Qh_var_cp + freq * m_flow[n] * (fCp(Trange[i], percGly) + fCp(Trange[i+1], percGly)) / 2 * (Trange[i+1]-Trange[i]) * DT
 
         qh = num_reg * heatingpowersum  # [W] Heating power of the device
-        print('Power in out cold side = {} [W]'.format(power_in_out_cold_side))
-        print('Power in out hot side = {} [W]'.format(power_in_out_hot_side))
 
         # Cooling power of FAME cooler is 7 times the cooling power of one regenerator.
         # Demonstrated in the file Cooling_capacity_calc.py
@@ -1597,12 +1595,18 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         #Ts = s * (Thot - Tcold) + Tcold
         beta = 6 * (1 - er) / Dsp
 
+        E_accum_liq = 0
+        for i in range(1, N, 1):
+            E_accum_liq = E_accum_liq + freq * 0.5 * (fRho(Tf_last[-1, i], percGly) + fRho(Tf_last[0, i], percGly)) * \
+                          0.5 * (fCp(Tf_last[-1, i], percGly) + fCp(Tf_last[0, i], percGly)) * e_r[i] * A_c[i] * \
+                          (Tf_last[0, i] - Tf_last[-1, i]) * DX
+
         for j in range(nt+1):
             cp_f_hot_ave = fCp((Tf_last[j, -1] + Thot) / 2, percGly)
             cp_f_cold_ave = fCp((Tf_last[j, 0] + Tcold) / 2, percGly)
             S_ht_hot = S_ht_hot + freq * np.abs(m_flow[j]) * cp_f_hot_ave * (np.log(Thot / Tf_last[j, -1]) + (Tf_last[j, -1] - Thot) / Thot) * DT
             S_ht_cold = S_ht_cold + freq * np.abs(m_flow[j]) * cp_f_cold_ave * (np.log(Tcold / Tf_last[j, 0]) + (Tf_last[j, 0] - Tcold) / Tcold) * DT
-            for i in range(N+1):
+            for i in range(1, N, 1):
                 S_ht_amb = S_ht_amb + freq * U_Pc_leaks[j, i] * (Tambset - Tf_last[j, i])**2 * DX * DT / (Tambset * Tf_last[j, i])
                 Q_leak = Q_leak + freq * U_Pc_leaks[j, i] * (Tf_last[j, i] - Tambset) * DX * DT * CL[i]
                 S_ht_fs = S_ht_fs + freq * htc_fs[j, i] * beta * Ac * (Tf_last[j, i] - Ts_last[j, i])**2 * DX * DT / (Tf_last[j, i] * Ts_last[j, i])
@@ -1644,6 +1648,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         error2 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
         error3 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
         error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
+        print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
         print('Qh variable cp = {} [W]'.format(Qh_var_cp), flush=True)
         print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)
@@ -1651,10 +1657,12 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average heat leaks = {} [W]'.format(Q_leak), flush=True)
         print('Cycle average pumping power = {} [W]'.format(P_pump_AMR), flush=True)
         print('Cycle average magnetic power = {} [W]'.format(P_mag_AMR), flush=True)
+        print('Cycle average magnetic power2 = {} [W]'.format(W_mag), flush=True)
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
         print('outputs,{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2), flush=True)
         print('Q_MCE = {}'.format(Q_MCE), flush=True)
+        print('E_accum_liq = {} [W]'.format(E_accum_liq))
 
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
