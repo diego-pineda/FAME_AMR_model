@@ -1660,7 +1660,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average magnetic power2 = {} [W]'.format(W_mag), flush=True)
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
-        print('outputs,{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2), flush=True)
+        print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4), flush=True)
         print('Q_MCE = {}'.format(Q_MCE), flush=True)
         print('E_accum_liq = {} [W]'.format(E_accum_liq))
 
