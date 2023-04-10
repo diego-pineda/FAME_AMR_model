@@ -1644,10 +1644,29 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                                                                             + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
             P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
         # ------------------------------------------------------------------------------------------------------------------
+        # ------------------ Magnetic power old version without repeating the first time step at the end -------------
+        P_mag_AMR_old = 0
+        W_mag_old = 0
+        for i in range(1, N, 1):  # Ghost nodes excluded
+            ms_h = S_h_if_list[materials.index(species_descriptor[i])]
+            P_mag_node = 0
+            for n in range(nt):
+                s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
+                s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
+                P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                W_mag_old = W_mag_old + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
+                                                                             + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+            P_mag_AMR_old = P_mag_AMR_old + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+
+        # ----------------------------------------------------------------------------
         error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
         error2 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
         error3 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
         error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error5 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+        error6 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+        error7 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+        error8 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
         print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
         print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
@@ -1658,11 +1677,13 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average pumping power = {} [W]'.format(P_pump_AMR), flush=True)
         print('Cycle average magnetic power = {} [W]'.format(P_mag_AMR), flush=True)
         print('Cycle average magnetic power2 = {} [W]'.format(W_mag), flush=True)
+        print('Cycle average magnetic power old = {} [W]'.format(P_mag_AMR_old), flush=True)
+        print('Cycle average magnetic power2 old = {} [W]'.format(W_mag_old), flush=True)
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
-        print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4), flush=True)
+        print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4,error5,error6,error7,error8), flush=True)
         print('Q_MCE = {}'.format(Q_MCE), flush=True)
-        print('E_accum_liq = {} [W]'.format(E_accum_liq))
+        print('E_accum_liq = {} [W]'.format(E_accum_liq), flush=True)
 
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
