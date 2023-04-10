@@ -478,9 +478,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     time_limit_reached = 0
     # The space discretization considers all layers in the regenerator assembly including voids and passive layers
     N     = nodes                  # [-] Spatial nodes in which the reg. assembly is splitted for sim. No ghost nodes.
-    dx    = 1 / (N-1)              # [-] Molecule size
+    dx    = 1 / (N+1)              # [-] Molecule size
     L_tot = np.max(x_discription)  # [m] Total length of the domain (regenerator assembly)
-    DX    = L_tot / (N-1)          # [m] Real element size
+    DX    = L_tot / (N+1)          # [m] Real element size
 
     freq  = ff                           # [Hz] Frequency of AMR cycle
     nt    = timesteps                    # [-] Number of time steps
