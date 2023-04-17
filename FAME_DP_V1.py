@@ -1495,6 +1495,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         coolingpowersum=0
         power_in_out_cold_side = 0
+        enthalpy_flow_cold = 0
         Qc_var_cp = 0
         startint=0
         # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
@@ -1505,6 +1506,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
             coolingpowersum = coolingpowersum + coolPn
             power_in_out_cold_side = power_in_out_cold_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF - Tcold)
+            enthalpy_flow_cold = enthalpy_flow_cold + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
 
             Trange = np.linspace(tF, Tcold, 500)
             # dT = (tF-Thot)/(500-1)
@@ -1515,6 +1517,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         heatingpowersum=0
         power_in_out_hot_side = 0
+        enthalpy_flow_hot = 0
         Qh_var_cp = 0
         startint=0
         for n in range(startint, nt):
@@ -1523,6 +1526,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
             heatingpowersum = heatingpowersum + heatPn
             power_in_out_hot_side = power_in_out_hot_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF-Thot)
+            enthalpy_flow_hot = enthalpy_flow_hot + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
 
             Trange = np.linspace(Thot, tF, 500)
             # dT = (tF-Thot)/(100-1)
@@ -1574,6 +1578,17 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             print("\nWe removed the pickle file", flush=True)
         except FileNotFoundError:
             print('\nThe calculation converged!', flush=True)
+
+        # ----------------------------- Heat conduction at the boundaries where dTf/dx != 0 ----------------------------
+        Q_diff_cold = 0
+        Q_diff_hot = 0
+        for n in range(nt):
+            K_eff_cold = (0.5 / (A_c[0] * e_r[0] * k_disp[n+1, 0]) + 0.5 / (A_c[1] * e_r[1] * k_disp[n+1, 1])) ** -1 / DX
+            Q_diff_cold = Q_diff_cold + (1/freq) * K_eff_cold * (0.5 * (Tf_last[n, 1]+Tf_last[n+1, 1]) - 0.5 * (Tf_last[n, 0]+Tf_last[n+1, 0])) * DT
+            # Note: I am assuming this is a positive quantity in the negative x direction at x=0, so leaving the AMR.
+            K_eff_hot= (0.5 / (A_c[-1] * e_r[-1] * k_disp[n+1, -1]) + 0.5 / (A_c[-2] * e_r[-2] * k_disp[n+1, -2])) ** -1 / DX
+            Q_diff_hot = Q_diff_hot + (1/freq) * K_eff_hot * (0.5 * (Tf_last[n, -1]+Tf_last[n+1, -1]) - 0.5 * (Tf_last[n, -2]+Tf_last[n+1, -2])) * DT
+            # Note: I am assuming this is a positive quantity in the negative x direction at x=L, so entering the AMR.
 
         # -------------------------------------- Entropy generation calculations --------------------------------------
 
@@ -1667,6 +1682,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         error6 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
         error7 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
         error8 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+        print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)
+        print('Enthalpy flow hot side = {} [W]'.format(enthalpy_flow_hot), flush=True)
         print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
         print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
@@ -1681,9 +1698,11 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average magnetic power2 old = {} [W]'.format(W_mag_old), flush=True)
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
-        print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4,error5,error6,error7,error8), flush=True)
         print('Q_MCE = {}'.format(Q_MCE), flush=True)
         print('E_accum_liq = {} [W]'.format(E_accum_liq), flush=True)
+        print('Q_diff_cold = {} [W]'.format(Q_diff_cold), flush=True)
+        print('Q_diff_hot = {} [W]'.format(Q_diff_hot), flush=True)
+        print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4,error5,error6,error7,error8), flush=True)
 
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
