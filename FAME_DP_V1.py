@@ -1578,6 +1578,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             print("\nWe removed the pickle file", flush=True)
         except FileNotFoundError:
             print('\nThe calculation converged!', flush=True)
+        except:
+            print('\nPickle file could not be removed for an unknown reason!')
 
         # ----------------------------- Heat conduction at the boundaries where dTf/dx != 0 ----------------------------
         Q_diff_cold = 0
