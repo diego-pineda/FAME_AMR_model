@@ -485,8 +485,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     freq  = ff                           # [Hz] Frequency of AMR cycle
     nt    = timesteps                    # [-] Number of time steps
     tau_c = 1/freq                       # [s] Period of AMR cycle
-    dt    = 1 / (nt+1)                   # [-] The time step
-    DT    = tau_c/(nt+1)                 # [s] Time step # DP comment: ok
+    dt    = 1 / nt                   # [-] The time step
+    DT    = tau_c / nt                 # [s] Time step # DP comment: ok # TODO: 18/04/2023 this should probably be tau/nt
     t     = np.linspace(0, tau_c, nt+1)  # [s] Time vector from beginning, 0 [s], to the end of AMR cycle, tau [s].
 
     # DP comment: not sure why the denominator of dt is nt+1. Maybe it is also because there a time node for zero.
@@ -1496,6 +1496,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         coolingpowersum=0
         power_in_out_cold_side = 0
         enthalpy_flow_cold = 0
+        enthalpy_flow_cold_tF = 0
         Qc_var_cp = 0
         startint=0
         # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
@@ -1507,6 +1508,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             coolingpowersum = coolingpowersum + coolPn
             power_in_out_cold_side = power_in_out_cold_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF - Tcold)
             enthalpy_flow_cold = enthalpy_flow_cold + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
+            enthalpy_flow_cold_tF = enthalpy_flow_cold_tF + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF
 
             Trange = np.linspace(tF, Tcold, 500)
             # dT = (tF-Thot)/(500-1)
@@ -1518,6 +1520,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         heatingpowersum=0
         power_in_out_hot_side = 0
         enthalpy_flow_hot = 0
+        enthalpy_flow_hot_tF = 0
         Qh_var_cp = 0
         startint=0
         for n in range(startint, nt):
@@ -1527,6 +1530,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             heatingpowersum = heatingpowersum + heatPn
             power_in_out_hot_side = power_in_out_hot_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF-Thot)
             enthalpy_flow_hot = enthalpy_flow_hot + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
+            enthalpy_flow_hot_tF = enthalpy_flow_hot_tF + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF
 
             Trange = np.linspace(Thot, tF, 500)
             # dT = (tF-Thot)/(100-1)
@@ -1676,16 +1680,31 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             P_mag_AMR_old = P_mag_AMR_old + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
 
         # ----------------------------------------------------------------------------
+
         error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        error2 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        error3 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
-        error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
-        error5 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
-        error6 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
-        error7 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
-        error8 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+        error2 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+
+        error3 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+
+        error5 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        error6 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+
+        error7 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error8 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)  # This is the one I trust more
+
+        print('Error 1 = {} [%]'.format(error1), flush=True)
+        print('Error 2 = {} [%]'.format(error2), flush=True)
+        print('Error 3 = {} [%]'.format(error3), flush=True)
+        print('Error 4 = {} [%]'.format(error4), flush=True)
+        print('Error 5 = {} [%]'.format(error5), flush=True)
+        print('Error 6 = {} [%]'.format(error6), flush=True)
+        print('Error 7 = {} [%]'.format(error7), flush=True)
+        print('Error 8 = {} [%]'.format(error8), flush=True)
         print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)
         print('Enthalpy flow hot side = {} [W]'.format(enthalpy_flow_hot), flush=True)
+        print('Enthalpy_flow_cold_side_tF = {} [W]'.format(enthalpy_flow_cold_tF), flush=True)
+        print('Enthalpy_flow_hot_side_tF = {} [W]'.format(enthalpy_flow_hot_tF), flush=True)
         print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
         print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
