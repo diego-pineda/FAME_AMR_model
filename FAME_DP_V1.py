@@ -1507,8 +1507,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             coolPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2 - Tcold)
             coolingpowersum = coolingpowersum + coolPn
             power_in_out_cold_side = power_in_out_cold_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF - Tcold)
-            enthalpy_flow_cold = enthalpy_flow_cold + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
-            enthalpy_flow_cold_tF = enthalpy_flow_cold_tF + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF
+            enthalpy_flow_cold = enthalpy_flow_cold + freq * fCp(tF1, percGly) * m_flow[n+1] * DT * tF1
+            enthalpy_flow_cold_tF = enthalpy_flow_cold_tF + freq * fCp(tF, percGly) * m_flow[n] * DT * tF
 
             Trange = np.linspace(tF, Tcold, 500)
             # dT = (tF-Thot)/(500-1)
@@ -1529,8 +1529,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             heatPn = freq * fCp((tF+tF1)/2, percGly) * m_flow[n] * DT * ((tF+tF1)/2-Thot)
             heatingpowersum = heatingpowersum + heatPn
             power_in_out_hot_side = power_in_out_hot_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF-Thot)
-            enthalpy_flow_hot = enthalpy_flow_hot + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF1
-            enthalpy_flow_hot_tF = enthalpy_flow_hot_tF + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * tF
+            enthalpy_flow_hot = enthalpy_flow_hot + freq * fCp(tF1, percGly) * m_flow[n+1] * DT * tF1
+            enthalpy_flow_hot_tF = enthalpy_flow_hot_tF + freq * fCp(tF, percGly) * m_flow[n] * DT * tF
 
             Trange = np.linspace(Thot, tF, 500)
             # dT = (tF-Thot)/(100-1)
@@ -1681,17 +1681,20 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
 
         # ----------------------------------------------------------------------------
 
-        error1 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        error2 = abs((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+        error1 = ((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        error2 = ((qh+Q_leak-qc)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
 
-        error3 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
-        error4 = abs((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+        error3 = ((qh+Q_leak-qc)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error4 = ((qh+Q_leak-qc)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
 
-        error5 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
-        error6 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
+        error5 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR))*100/(P_pump_AMR-P_mag_AMR)
+        error6 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
 
-        error7 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
-        error8 = abs((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)  # This is the one I trust more
+        error7 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
+        error8 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)  # This is the one I trust more
+
+        error9 = ((enthalpy_flow_hot+Q_leak-enthalpy_flow_cold) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
+        error10 = ((enthalpy_flow_hot+Q_leak+Q_diff_cold-enthalpy_flow_cold-Q_diff_hot) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
 
         print('Error 1 = {} [%]'.format(error1), flush=True)
         print('Error 2 = {} [%]'.format(error2), flush=True)
@@ -1701,6 +1704,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Error 6 = {} [%]'.format(error6), flush=True)
         print('Error 7 = {} [%]'.format(error7), flush=True)
         print('Error 8 = {} [%]'.format(error8), flush=True)
+        print('Error 9 = {} [%]'.format(error9), flush=True)
+        print('Error 10 = {} [%]'.format(error10), flush=True)
         print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)
         print('Enthalpy flow hot side = {} [W]'.format(enthalpy_flow_hot), flush=True)
         print('Enthalpy_flow_cold_side_tF = {} [W]'.format(enthalpy_flow_cold_tF), flush=True)
