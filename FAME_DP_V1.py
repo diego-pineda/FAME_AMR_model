@@ -1498,6 +1498,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         power_in_out_cold_side = 0
         enthalpy_flow_cold = 0
         enthalpy_flow_cold_tF = 0
+        enthalpy_flow_cold_ave_cp = 0
         Qc_var_cp = 0
         startint=0
         # DP: this is the numerical integration of freq*integral(m*Cp*(Tf,cold_end-Tcold)*dt) from 0 to tau, equation 3.33 of Theo's thesis.
@@ -1510,6 +1511,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             power_in_out_cold_side = power_in_out_cold_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF - Tcold)
             enthalpy_flow_cold = enthalpy_flow_cold + freq * fCp(tF1, percGly) * m_flow[n+1] * DT * tF1
             enthalpy_flow_cold_tF = enthalpy_flow_cold_tF + freq * fCp(tF, percGly) * m_flow[n] * DT * tF
+            enthalpy_flow_cold_ave_cp = enthalpy_flow_cold_ave_cp + freq * fCp((tF+tF1)/2, percGly) * m_flow[n+1] * DT * tF1
 
             Trange = np.linspace(tF, Tcold, 500)
             # dT = (tF-Thot)/(500-1)
@@ -1522,6 +1524,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         power_in_out_hot_side = 0
         enthalpy_flow_hot = 0
         enthalpy_flow_hot_tF = 0
+        enthalpy_flow_hot_ave_cp = 0
         Qh_var_cp = 0
         startint=0
         for n in range(startint, nt):
@@ -1532,6 +1535,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             power_in_out_hot_side = power_in_out_hot_side + freq * ((fCp(tF, percGly) + fCp(tF1, percGly)) / 2) * m_flow[n] * DT * (tF-Thot)
             enthalpy_flow_hot = enthalpy_flow_hot + freq * fCp(tF1, percGly) * m_flow[n+1] * DT * tF1
             enthalpy_flow_hot_tF = enthalpy_flow_hot_tF + freq * fCp(tF, percGly) * m_flow[n] * DT * tF
+            enthalpy_flow_hot_ave_cp = enthalpy_flow_hot_ave_cp + freq * fCp((tF+tF1)/2, percGly) * m_flow[n+1] * DT * tF1
 
             Trange = np.linspace(Thot, tF, 500)
             # dT = (tF-Thot)/(100-1)
@@ -1669,6 +1673,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # ------------------ Magnetic power old version without repeating the first time step at the end -------------
         P_mag_AMR_old = 0
         W_mag_old = 0
+        Q_MCE2 = 0
         for i in range(1, N, 1):  # Ghost nodes excluded
             ms_h = S_h_if_list[materials.index(species_descriptor[i])]
             P_mag_node = 0
@@ -1678,6 +1683,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                 P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
                 W_mag_old = W_mag_old + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
                                                                              + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+                Q_MCE2 = Q_MCE2 + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0]))
             P_mag_AMR_old = P_mag_AMR_old + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
 
         # ----------------------------------------------------------------------------
@@ -1697,6 +1703,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         error9 = ((enthalpy_flow_hot+Q_leak-enthalpy_flow_cold) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
         error10 = ((enthalpy_flow_hot+Q_leak+Q_diff_cold-enthalpy_flow_cold-Q_diff_hot) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
 
+        error11 = ((enthalpy_flow_hot_ave_cp+Q_leak-enthalpy_flow_cold_ave_cp) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
+        error12 = ((enthalpy_flow_hot_ave_cp+Q_leak+Q_diff_cold-enthalpy_flow_cold_ave_cp-Q_diff_hot) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
+
         print('Error 1 = {} [%]'.format(error1), flush=True)
         print('Error 2 = {} [%]'.format(error2), flush=True)
         print('Error 3 = {} [%]'.format(error3), flush=True)
@@ -1707,10 +1716,14 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Error 8 = {} [%]'.format(error8), flush=True)
         print('Error 9 = {} [%]'.format(error9), flush=True)
         print('Error 10 = {} [%]'.format(error10), flush=True)
+        print('Error 11 = {} [%]'.format(error11), flush=True)
+        print('Error 12 = {} [%]'.format(error12), flush=True)
         print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)
         print('Enthalpy flow hot side = {} [W]'.format(enthalpy_flow_hot), flush=True)
         print('Enthalpy_flow_cold_side_tF = {} [W]'.format(enthalpy_flow_cold_tF), flush=True)
         print('Enthalpy_flow_hot_side_tF = {} [W]'.format(enthalpy_flow_hot_tF), flush=True)
+        print('Enthalpy_flow_cold_side_ave_cp = {} [W]'.format(enthalpy_flow_cold_ave_cp), flush=True)
+        print('Enthalpy_flow_hot_side_ave_cp = {} [W]'.format(enthalpy_flow_hot_ave_cp), flush=True)
         print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
         print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
         print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
@@ -1723,9 +1736,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average magnetic power2 = {} [W]'.format(W_mag), flush=True)
         print('Cycle average magnetic power old = {} [W]'.format(P_mag_AMR_old), flush=True)
         print('Cycle average magnetic power2 old = {} [W]'.format(W_mag_old), flush=True)
-        print('error in power input 1 = {} [%]'.format(error1), flush=True)
-        print('error in power input 2 = {} [%]'.format(error2), flush=True)
         print('Q_MCE = {} [W]'.format(Q_MCE), flush=True)
+        print('Q_MCE2 = {} [W]'.format(Q_MCE2), flush=True)
         print('E_accum_liq = {} [W]'.format(E_accum_liq), flush=True)
         print('Q_diff_cold = {} [W]'.format(Q_diff_cold), flush=True)
         print('Q_diff_hot = {} [W]'.format(Q_diff_hot), flush=True)
