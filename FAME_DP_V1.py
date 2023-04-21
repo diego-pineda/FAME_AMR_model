@@ -983,6 +983,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
             ##################### DP: here is where the iteration at every time step begins ######################
 
             while not stepTol and stepCount <= maxSteps:  # Loop until stepTol is found or maxSteps is hit.
+
+                Q_MCE_time_step = 0
+
                 # Note:
                 # iynext is the guess n Fluid
                 # isnext is the guess n Solid
@@ -1080,7 +1083,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Scur       = S_c_curr * (1 - ch_factor[i]) + S_h_curr * ch_factor[i]
                         #Mod        = 0.5*(Sirr_cur+Sirr_prev[i])*np.abs((2*dT)/dsdT)
                         Smce[i] = (Reduct * A_c[i] * (1 - e_r[i]) * mRho * Tr * (Sprev[i] - Scur)) / (DT * (Thot - Tcold))
-                        Q_MCE = Q_MCE + Smce[i]*(Thot - Tcold)*DX*DT*freq  # Added on 21/03/2023 to see dif between Q_MCE and W_mag
+                        Q_MCE_time_step = Q_MCE_time_step + Smce[i]*(Thot - Tcold)*DX*DT*freq  # Added on 21/03/2023 to see dif between Q_MCE and W_mag
                         # Eq. B.20 of Theo's thesis states that the entropy difference should be Scur-Sprev. So, there
                         # is a error in the thesis cuz it is ignoring the minus sign in front of the Qmce expression.
 
@@ -1283,6 +1286,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     break # DP: this breaks the while loop for every time step
                 ################################################################
                 ################### ELSE ITERATE AGAIN - WHILE LOOP FOR EVERY TIME STEP FINISHES HERE ##################
+            Q_MCE = Q_MCE + Q_MCE_time_step
             # break the cycle calculation
             if ((time.time()-t0)/60) > time_lim:
                 break # DP: This breaks the for loop over the time steps
@@ -1293,7 +1297,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         # DP: change the time step tolerance
         if (max_val_y_diff/10) < maxStepTol[stepTolInt]:
             stepTolInt = stepTolInt + 1
-
+            if stepTolInt == len(maxStepTol):  # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
+                stepTolInt=len(maxStepTol)-1
             # ----------------------------- printing some results when tolerance changes -------------------------------
             # DP: 9/1/2023 Write some outputs every time it changes tolerance. This allows to see influence of tolerance
             coolingpowersum = 0
@@ -1341,10 +1346,6 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                           "Run time {:6.1f} [min]".format((time.time()-t0)/60), "Pump power {:2.5e}".format(P_pump_AMR_tol), "Mag power {:2.5e}".format(P_mag_AMR_tol), "Heat leak {:2.5e}".format(Q_leak_tol), "Pout-Pin {:2.5e}".format(qh+Q_leak_tol-qc-P_pump_AMR_tol+P_mag_AMR_tol)), flush=True)
 
             # ---------------------------- printing some results when tolerance changes -------------------------------
-
-            if stepTolInt == len(maxStepTol):  # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
-                stepTolInt=len(maxStepTol)-1
-
         # DP: it is useful to see on screen some results during the iterative calculation process
         if cycleCount % 10 == 1: # DP: this is true for cycleCount = 11 or 21 or 31 and so on. The operator % returns the modulus of the division
             coolingpowersum = 0
@@ -1724,7 +1725,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Cycle average magnetic power2 old = {} [W]'.format(W_mag_old), flush=True)
         print('error in power input 1 = {} [%]'.format(error1), flush=True)
         print('error in power input 2 = {} [%]'.format(error2), flush=True)
-        print('Q_MCE = {}'.format(Q_MCE), flush=True)
+        print('Q_MCE = {} [W]'.format(Q_MCE), flush=True)
         print('E_accum_liq = {} [W]'.format(E_accum_liq), flush=True)
         print('Q_diff_cold = {} [W]'.format(Q_diff_cold), flush=True)
         print('Q_diff_hot = {} [W]'.format(Q_diff_hot), flush=True)
