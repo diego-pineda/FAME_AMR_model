@@ -1698,7 +1698,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         error6 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-P_mag_AMR_old))*100/(P_pump_AMR-P_mag_AMR_old)
 
         error7 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag))*100/(P_pump_AMR-W_mag)
-        error8 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)  # This is the one I trust more
+        error8 = ((Qh_var_cp+Q_leak-Qc_var_cp)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)
+        error8_2 = ((Qh_var_cp+Q_leak-Qc_var_cp+Q_diff_cold-Q_diff_hot)-(P_pump_AMR-W_mag_old))*100/(P_pump_AMR-W_mag_old)  # This is the one I trust more
 
         error9 = ((enthalpy_flow_hot+Q_leak-enthalpy_flow_cold) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
         error10 = ((enthalpy_flow_hot+Q_leak+Q_diff_cold-enthalpy_flow_cold-Q_diff_hot) - (P_pump_AMR-W_mag_old))*100 / (P_pump_AMR-W_mag_old)
@@ -1714,6 +1715,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Error 6 = {} [%]'.format(error6), flush=True)
         print('Error 7 = {} [%]'.format(error7), flush=True)
         print('Error 8 = {} [%]'.format(error8), flush=True)
+        print('Error 8_2 = {} [%]'.format(error8_2), flush=True)
         print('Error 9 = {} [%]'.format(error9), flush=True)
         print('Error 10 = {} [%]'.format(error10), flush=True)
         print('Error 11 = {} [%]'.format(error11), flush=True)
