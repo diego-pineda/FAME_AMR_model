@@ -158,6 +158,20 @@ if __name__ == '__main__':
 
         print("Iteration: {}/{} Case group number: {}".format(case, maxcase-1, casegroup))
 
+        # This is for the HPC11 cluster at TU Delft
+        fileNameSave = './output/' + str(case) + fileName
+        PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName, int(case))
+
+        # This is for the DelftBlue cluster at TU Delft
+        #fileNameSave = '/scratch/dfpinedaquijan/' + str(case) + fileName
+        #PickleFileName = "/scratch/dfpinedaquijan/{0:}-{1:d}".format(jobName, int(case))
+
+        # This is for the THCHEM cluster at RU Nijmegen
+        # fileNameSave = '/scratch/dpineda/' + str(case) + fileName
+        #PickleFileName = "/scratch/dpineda/{0:}-{1:d}".format(jobName, int(case))
+
+        print('WARNING! Output files will be saved in: {}'.format(fileNameSave))
+
         results = runActive(case, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
                             htc_model_name, leaks_model_name, pdrop_model_name, num_reg, gain)
@@ -174,18 +188,6 @@ if __name__ == '__main__':
         # tFhe          9  |  xloc        21 |  k_stat      33 |  Qc_var_cp     45 |
         # yHalfBlow     10 |  yMaxCBlow   22 |  k_disp      34 |  Qh_var_cp     46 |
         # yEndBlow      11 |  yMaxHBlow   23 |  S_ht_hot    35 |
-
-        # This is for the HPC11 cluster at TU Delft
-        fileNameSave = './output/' + str(case) + fileName
-        PickleFileName = "./pickleddata/{0:}-{1:d}".format(jobName, int(case))
-
-        # This is for the DelftBlue cluster at TU Delft
-        #fileNameSave = '/scratch/dfpinedaquijan/' + str(case) + fileName
-        #PickleFileName = "/scratch/dfpinedaquijan/{0:}-{1:d}".format(jobName, int(case))
-
-        # This is for the THCHEM cluster at RU Nijmegen
-        # fileNameSave = '/scratch/dpineda/' + str(case) + fileName
-        #PickleFileName = "/scratch/dpineda/{0:}-{1:d}".format(jobName, int(case))
 
         if len(results) > 10:
 

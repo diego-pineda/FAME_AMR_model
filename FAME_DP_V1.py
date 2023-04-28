@@ -1720,17 +1720,17 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Error 10 = {} [%]'.format(error10), flush=True)
         print('Error 11 = {} [%]'.format(error11), flush=True)
         print('Error 12 = {} [%]'.format(error12), flush=True)
-        print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)
+        print('Enthalpy flow cold side = {} [W]'.format(enthalpy_flow_cold), flush=True)  # Enthalpy with current time step used for cp, m, and Tf
         print('Enthalpy flow hot side = {} [W]'.format(enthalpy_flow_hot), flush=True)
-        print('Enthalpy_flow_cold_side_tF = {} [W]'.format(enthalpy_flow_cold_tF), flush=True)
+        print('Enthalpy_flow_cold_side_tF = {} [W]'.format(enthalpy_flow_cold_tF), flush=True)  # Enthalpy with previous time step used for cp, m, and Tf
         print('Enthalpy_flow_hot_side_tF = {} [W]'.format(enthalpy_flow_hot_tF), flush=True)
-        print('Enthalpy_flow_cold_side_ave_cp = {} [W]'.format(enthalpy_flow_cold_ave_cp), flush=True)
+        print('Enthalpy_flow_cold_side_ave_cp = {} [W]'.format(enthalpy_flow_cold_ave_cp), flush=True)  # Enthalpy with current time step used m and Tf, and cp calculated at average temperature between current and previous time steps
         print('Enthalpy_flow_hot_side_ave_cp = {} [W]'.format(enthalpy_flow_hot_ave_cp), flush=True)
-        print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)
+        print('Power in out cold side = {} [W]'.format(power_in_out_cold_side), flush=True)  # m Cp (Tf - Tcold). m and Tf at previous time step and cp at average temperature between previous and current
         print('Power in out hot side = {} [W]'.format(power_in_out_hot_side), flush=True)
-        print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)
+        print('Qc variable cp = {} [W]'.format(Qc_var_cp), flush=True)  # m Cp(T) dT. m and Tf at previous time step and cp changes with temperature
         print('Qh variable cp = {} [W]'.format(Qh_var_cp), flush=True)
-        print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)
+        print('Cycle average cooling capacity = {} [W]'.format(qc), flush=True)  # m Cp (Tf-Tcold). m at previous time step and Cp and Tf at the average temperature between current and previous time steps
         print('Cycle average heating capacity = {} [W]'.format(qh), flush=True)
         print('Cycle average heat leaks = {} [W]'.format(Q_leak), flush=True)
         print('Cycle average pumping power = {} [W]'.format(P_pump_AMR), flush=True)
@@ -1748,7 +1748,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
                sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
-               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, P_mag_AMR, Q_leak, Qc_var_cp, Qh_var_cp
+               S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, W_mag_old, Q_leak, Qc_var_cp, Qh_var_cp, Q_diff_cold, Q_diff_hot, E_accum_liq
         # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
 
     elif time_limit_reached == 1:
