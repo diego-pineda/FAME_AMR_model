@@ -821,6 +821,10 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     cycleCount = 1  # DP comment: it was defined above that the maximum number of cycle iterations is 2000
 
     mu0 = 4 * 3.14e-7  # [Hm^-1] Vacuum permeability constant
+    # %%%%%%%%%%%% Test 2/05/2023 %%%%%%%%%%
+
+    max_val_y_diff_prev = 100
+    max_val_s_diff_prev = 100
 
     # %%%%%%%%%%%% DP: the iterative calculation process for the cycle starts here %%%%%%%%%%
 
@@ -1295,8 +1299,14 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         [bool_s_check, max_val_s_diff] = AbsTolFunc2d(s, isCycle, maxCycleTol)
 
         # DP: change the time step tolerance
-        if (max_val_y_diff/10) < maxStepTol[stepTolInt]:
-            stepTolInt = stepTolInt + 1
+        if (max_val_y_diff/10 < maxStepTol[stepTolInt] and max_val_s_diff/10 < maxStepTol[stepTolInt]):
+            if (max_val_y_diff_prev/10 < maxStepTol[stepTolInt] and max_val_s_diff_prev/10 < maxStepTol[stepTolInt]):
+                stepTolInt = stepTolInt + 1
+                print('stepTolInt = ' + str(stepTolInt), flush=True)
+                # Note: by checking fluid and solid tolerances as well as previous cycle tolerance the risk of running
+                # into endless "Hit max number of step iterations" loops will be avoided when acceleration is used.
+                # Only when the absolute temperature difference of solid and fluid divided by 10 is smaller than the
+                # step tolerance for two consecutive cycles, the stepTolInt will be increased.
             if stepTolInt == len(maxStepTol):  # DP: len([3, 6, 1, 4, 9]) returns 5, the number of elements in the list
                 stepTolInt=len(maxStepTol)-1
             # ----------------------------- printing some results when tolerance changes -------------------------------
@@ -1344,6 +1354,9 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                           "Cooling Power {:2.5e}".format(qc), "Heating Power {:2.5e}".format(qh),
                           "y-tol {:2.5e}".format(max_val_y_diff), "s-tol {:2.5e}".format(max_val_s_diff),
                           "Run time {:6.1f} [min]".format((time.time()-t0)/60), "Pump power {:2.5e}".format(P_pump_AMR_tol), "Mag power {:2.5e}".format(P_mag_AMR_tol), "Heat leak {:2.5e}".format(Q_leak_tol), "Pout-Pin {:2.5e}".format(qh+Q_leak_tol-qc-P_pump_AMR_tol+P_mag_AMR_tol)), flush=True)
+
+        max_val_y_diff_prev = max_val_y_diff
+        max_val_s_diff_prev = max_val_s_diff
 
             # ---------------------------- printing some results when tolerance changes -------------------------------
         # DP: it is useful to see on screen some results during the iterative calculation process
