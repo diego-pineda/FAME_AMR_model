@@ -1,21 +1,51 @@
 import numpy as np
 from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
+import pandas as pd
 
 
 def material_data(mat_name):
 
     # Note: this function returns numpy arrays with material data and receives as only input an string with the name of
     # the material, which according to the adopted convention must start with M followed by a consecutive number.
-
-    # Specifc Heat
-    cpdat_c   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_c.txt')
-    cpdat_h   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_h.txt')
-    # Magnetization
-    magdata_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_c.txt')
-    magdata_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_h.txt')
-    # Entropy
-    datstot_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_c.txt')
-    datstot_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_h.txt')
+    try:
+        cpdat_c_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_c.txt', sep='\t', lineterminator='\n', header=None)
+        cpdat_c    = pd.DataFrame(cpdat_c_df).to_numpy()
+        cpdat_h_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_h.txt', sep='\t', lineterminator='\n', header=None)
+        cpdat_h    = pd.DataFrame(cpdat_h_df).to_numpy()
+        # Magnetization
+        magdata_c_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_c.txt', sep='\t', lineterminator='\n', header=None)
+        magdata_c    = pd.DataFrame(magdata_c_df).to_numpy()
+        magdata_h_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_h.txt', sep='\t', lineterminator='\n', header=None)
+        magdata_h    = pd.DataFrame(magdata_h_df).to_numpy()
+        # Entropy
+        datstot_c_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_c.txt', sep='\t', lineterminator='\n', header=None)
+        datstot_c    = pd.DataFrame(datstot_c_df).to_numpy()
+        datstot_h_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_h.txt', sep='\t', lineterminator='\n', header=None)
+        datstot_h    = pd.DataFrame(datstot_h_df).to_numpy()
+    except FileNotFoundError:
+        cpdat_c_df   = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_c.csv', sep=';', header=None)
+        cpdat_c = pd.DataFrame(cpdat_c_df).to_numpy()
+        cpdat_h_df   = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_h.csv', sep=';', header=None)
+        cpdat_h  = pd.DataFrame(cpdat_h_df).to_numpy()
+        # Magnetization
+        magdata_c_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_c.csv', sep=';', header=None)
+        magdata_c = pd.DataFrame(magdata_c_df).to_numpy()
+        magdata_h_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_h.csv', sep=';', header=None)
+        magdata_h = pd.DataFrame(magdata_h_df).to_numpy()
+        # Entropy
+        datstot_c_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_c.csv', sep=';', header=None)
+        datstot_c = pd.DataFrame(datstot_c_df).to_numpy()
+        datstot_h_df = pd.read_csv('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_h.csv', sep=';', header=None)
+        datstot_h = pd.DataFrame(datstot_h_df).to_numpy()
+    # # Specifc Heat
+    # cpdat_c   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_c.txt')
+    # cpdat_h   = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_cp_h.txt')
+    # # Magnetization
+    # magdata_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_c.txt')
+    # magdata_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_Mag_h.txt')
+    # # Entropy
+    # datstot_c = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_c.txt')
+    # datstot_h = np.loadtxt('sourcefiles/new_mat/'+mat_name+'/'+mat_name+'_S_h.txt')
 
     return cpdat_c, cpdat_h, magdata_c, magdata_h, datstot_c, datstot_h
 
