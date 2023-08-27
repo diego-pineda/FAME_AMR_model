@@ -9,6 +9,7 @@ import numpy as np
 def kDyn_P(Dsp, er, fCp, fK, fRho, Ud):
     # DP: 28/03/2023 Pe should be calculated based on pore velocity and particle radius
     PeNum = fCp / fK * np.abs(Ud) * Dsp * fRho
+    print(PeNum)
     if PeNum < 0.01 :
         kd = fK + fRho ** 2 * fCp ** 2 / fK * np.sqrt(0.2e1) * (np.abs(Ud)**2) / (er** 2) * Dsp**2 * ((1 - er) ** (-0.1e1 / 0.2e1)) / 0.240e3
     else:

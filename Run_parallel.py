@@ -123,6 +123,8 @@ CMCE = 1  # Magnetocaloric effect
 htc_model_name = 'Macias_Machin_1991'  # Name of the file containing the function of the model for htc
 leaks_model_name = 'flow_btw_plates'  # Name of the file containing the function of the model for heat leaks
 pdrop_model_name = 'pb_ergun_1952'
+k_stat_model_name = 'pb_Hadley_1986'
+k_disp_model_name = 'pb_k_disp_Koch_Brady_1985'
 
 if __name__ == '__main__':
 
@@ -174,7 +176,7 @@ if __name__ == '__main__':
 
         results = runActive(case, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE, nodes, timesteps, cName,
                             jobName, time_limit, cycle_toler, maxStepIter, maxCycleIter, volum_flow_profile, app_field,
-                            htc_model_name, leaks_model_name, pdrop_model_name, num_reg, gain)
+                            htc_model_name, leaks_model_name, pdrop_model_name, k_stat_model_name, k_disp_model_name, num_reg, gain)
         #  runActive():  returns
         # Thot          0  |  sHalfBlow   12 |  sMaxCBlow   24 |  S_ht_cold     36 |
         # Tcold         1  |  sEndBlow    13 |  sMaxHBlow   25 |  S_ht_fs       37 |
