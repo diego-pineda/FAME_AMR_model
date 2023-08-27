@@ -305,8 +305,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)  # htc between solid and fluid
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)  # heat leaks through regenerator casing
     predrop = importlib.import_module('closure.press_drop.' + pdrop_model_name)  # pressure drop in the AMR bed
-    static_conduction = importlib.import_module('closure.static_conduction' + k_stat_model_name)  # Static thermal conductivity of the bed
-    dispersion = importlib.import_module('closure.dispersion' + k_disp_model_name)  # Dispersion enhanced conductivity of fluid
+    static_conduction = importlib.import_module('closure.static_conduction.' + k_stat_model_name)  # Static thermal conductivity of the bed
+    dispersion = importlib.import_module('closure.dispersion.' + k_disp_model_name)  # Dispersion enhanced conductivity of fluid
 
     # ------- Import the geometric configuration of the regenerator -------
 
