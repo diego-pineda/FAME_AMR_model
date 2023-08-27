@@ -305,8 +305,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     htc = importlib.import_module('closure.htc_fluid_solid.' + htc_model_name)  # htc between solid and fluid
     leaks = importlib.import_module('closure.heat_leaks.' + leaks_model_name)  # heat leaks through regenerator casing
     predrop = importlib.import_module('closure.press_drop.' + pdrop_model_name)  # pressure drop in the AMR bed
-    static_conduction = importlib.import_module('closure.static_conduction.' + k_stat_model_name)  # Static thermal conductivity of the bed
-    dispersion = importlib.import_module('closure.dispersion.' + k_disp_model_name)  # Dispersion enhanced conductivity of fluid
+    static_therm_conduct = importlib.import_module('closure.static_thermal_conductivity.' + k_stat_model_name)  # Static thermal conductivity of the bed
+    dispers = importlib.import_module('closure.dispersion.' + k_disp_model_name)  # Dispersion enhanced conductivity of fluid
 
     # ------- Import the geometric configuration of the regenerator -------
 
@@ -1097,7 +1097,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # average of the properties at the temperatures of current and previous time steps
 
                         # --- Calculation of effective thermal conductivity for fluid
-                        k[i] = dispersion.kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
+                        k[i] = dispers.kDyn_P(Dsp, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         k_disp[n, i] = k[i]  # Added on 15/09/2022 in order to calculate entropy generation
                         # --- Calculation of coefficient of heat transfer by convection term east of the P node
                         Omegaf[i] = A_c[i] * htc.beHeff(Dsp, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave, freq, cps_ave, mK, mRho, e_r[i])  # Beta Times Heff
@@ -1117,7 +1117,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Lf[i] = P_c[i] * leaks.ThermalResistance(Dsp, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave, kg10, r1, r2, r3, casing_th, freq, air_th)
                         U_Pc_leaks[n, i] = Lf[i]
                         # --- Calculation of the effective thermal conductivity for the solid
-                        ks[i] = static_conduction.kStat(e_r[i], kf_ave, mK, Dsp)
+                        ks[i] = static_therm_conduct.kStat(e_r[i], kf_ave, mK, Dsp)
                         k_stat[n, i] = ks[i]
                         # --- Calculation of capacitance of solid
                         Cs[i] = rhos_cs_ave[i] * A_c[i] * (1 - e_r[i]) * freq
@@ -1129,7 +1129,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # Effective Conduction for solid
                         rhos_cs_ave[i] = gsCp * gsRho
                         # Effective Conduction for fluid
-                        k[i] = dispersion.kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
+                        k[i] = dispers.kDyn_P(Dspgs, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         # Forced convection term east of the P node
 
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspgs, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
@@ -1141,7 +1141,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Lf[i] = P_c[i] * ThermalResistance(Dspgs, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
                                                        kg10, r1, r2, r3)
                         # Effective Conduction for solid
-                        ks[i] = static_conduction.kStat(e_r[i], kf_ave, gsK, Dspgs)
+                        ks[i] = static_therm_conduct.kStat(e_r[i], kf_ave, gsK, Dspgs)
                         #Smce
                         Smce[i] = 0
                         ### Capacitance solid
@@ -1151,7 +1151,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         # Effective Conduction for solid
                         rhos_cs_ave[i] = lsCp * lsRho
                         # Effective Conduction for fluid
-                        k[i] = dispersion.kDyn_P(Dspls, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
+                        k[i] = dispers.kDyn_P(Dspls, e_r[i], cpf_ave, kf_ave, rhof_ave, np.abs(Vf[n, i] / (A_c[i])))
                         # Forced convection term east of the P node
                         Omegaf[i] = A_c[i] * htc.beHeff(Dspls, np.abs(Vf[n, i] / (A_c[i])), cpf_ave, kf_ave, muf_ave, rhof_ave,
                                                       freq, lsCp, lsK, lsRho, e_r[i])  # Beta Times Heff
@@ -1162,7 +1162,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                         Lf[i] = P_c[i] * ThermalResistance(Dspls, np.abs(Vf[n, i] / (A_c[i])), muf_ave, rhof_ave, kair, kf_ave,
                                                        kg10, r1, r2, r3)
                         # Effective Conduction for solid
-                        ks[i] = static_conduction.kStat(e_r[i], kf_ave, lsK, Dspls)
+                        ks[i] = static_therm_conduct.kStat(e_r[i], kf_ave, lsK, Dspls)
                         #Smce
                         Smce[i] = 0
                         ### Capacitance solid
