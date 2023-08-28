@@ -1670,37 +1670,39 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         P_mag_AMR = 0
         W_mag = 0
         for i in range(1, N, 1):  # Ghost nodes excluded
-            ms_h = S_h_if_list[materials.index(species_descriptor[i])]
-            P_mag_node = 0
-            for n in range(nt+1):
-                s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
-                if n == nt:
-                    s_next = ms_h(Ts_last[0, i], int_field[0, i])[0, 0]
-                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[0, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
-                    W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[0, i] * (ms_h(Ts_last[0, i]+0.5, int_field[0, i])[0, 0] - ms_h(Ts_last[0, i]-0.5, int_field[0, i])[0, 0])) * (Ts_last[0, i] - Ts_last[n, i])
-                                                                                 + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[0, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
-                else:
-                    s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
-                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
-                    W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
-                                                                            + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
-            P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+            if species_descriptor[i].startswith('reg'):
+                ms_h = S_h_if_list[materials.index(species_descriptor[i])]
+                P_mag_node = 0
+                for n in range(nt+1):
+                    s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
+                    if n == nt:
+                        s_next = ms_h(Ts_last[0, i], int_field[0, i])[0, 0]
+                        P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[0, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                        W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[0, i] * (ms_h(Ts_last[0, i]+0.5, int_field[0, i])[0, 0] - ms_h(Ts_last[0, i]-0.5, int_field[0, i])[0, 0])) * (Ts_last[0, i] - Ts_last[n, i])
+                                                                                     + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[0, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+                    else:
+                        s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
+                        P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                        W_mag = W_mag + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
+                                                                                + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+                P_mag_AMR = P_mag_AMR + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
         # ------------------------------------------------------------------------------------------------------------------
         # ------------------ Magnetic power old version without repeating the first time step at the end -------------
         P_mag_AMR_old = 0
         W_mag_old = 0
         Q_MCE2 = 0
         for i in range(1, N, 1):  # Ghost nodes excluded
-            ms_h = S_h_if_list[materials.index(species_descriptor[i])]
-            P_mag_node = 0
-            for n in range(nt):
-                s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
-                s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
-                P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
-                W_mag_old = W_mag_old + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
-                                                                             + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
-                Q_MCE2 = Q_MCE2 + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0]))
-            P_mag_AMR_old = P_mag_AMR_old + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+            if species_descriptor[i].startswith('reg'):
+                ms_h = S_h_if_list[materials.index(species_descriptor[i])]
+                P_mag_node = 0
+                for n in range(nt):
+                    s_current = ms_h(Ts_last[n, i], int_field[n, i])[0, 0]
+                    s_next = ms_h(Ts_last[n+1, i], int_field[n+1, i])[0, 0]
+                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_last[n, i] + Ts_last[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                    W_mag_old = W_mag_old + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * ((0.5 * Ts_last[n, i] * (ms_h(Ts_last[n, i]+0.5, int_field[n, i])[0, 0] - ms_h(Ts_last[n, i]-0.5, int_field[n, i])[0, 0]) + 0.5 * Ts_last[n+1, i] * (ms_h(Ts_last[n+1, i]+0.5, int_field[n+1, i])[0, 0] - ms_h(Ts_last[n+1, i]-0.5, int_field[n+1, i])[0, 0])) * (Ts_last[n+1, i] - Ts_last[n, i])
+                                                                                 + (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0])))
+                    Q_MCE2 = Q_MCE2 + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * (Ts_last[n, i] * (ms_h(Ts_last[n, i], int_field[n+1, i])[0, 0] - ms_h(Ts_last[n, i], int_field[n, i])[0, 0]))
+                P_mag_AMR_old = P_mag_AMR_old + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
 
         # ----------------------------------------------------------------------------
 
