@@ -1343,13 +1343,14 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
                     P_pump_AMR_tol = P_pump_AMR_tol + freq * np.abs(Vf[j, i]) * dPdx[j, i] * DX * DT
 
             for i in range(N+1):
-                ms_h = S_h_if_list[materials.index(species_descriptor[i])]
-                P_mag_node = 0
-                for n in range(nt):  # Ghost nodes excluded from this calculation
-                    s_current = ms_h(Ts_tol[n, i], int_field[n, i])[0, 0]
-                    s_next = ms_h(Ts_tol[n+1, i], int_field[n+1, i])[0, 0]
-                    P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_tol[n, i] + Ts_tol[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
-                P_mag_AMR_tol = P_mag_AMR_tol + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
+                if species_descriptor[i].startswith("reg"):
+                    ms_h = S_h_if_list[materials.index(species_descriptor[i])]
+                    P_mag_node = 0
+                    for n in range(nt):  # Ghost nodes excluded from this calculation
+                        s_current = ms_h(Ts_tol[n, i], int_field[n, i])[0, 0]
+                        s_next = ms_h(Ts_tol[n+1, i], int_field[n+1, i])[0, 0]
+                        P_mag_node = P_mag_node + freq * mRho * (W_reg*H_reg*DX*(1-e_r[i])) * 0.5 * (Ts_tol[n, i] + Ts_tol[n+1, i]) * (s_next - s_current)  # [W] Magnetic power over the full cycle for the current node
+                    P_mag_AMR_tol = P_mag_AMR_tol + P_mag_node  # [W] Magnetic power over the entire AMR for the full cycle
 
             print("{0:<15} {1:<29} {2:<29} {3:20} {4:20} {5:<20} {6:<29} {7:<29} {8:<29} {9:<29}"
                   .format("CycleCount {:d}".format(cycleCount),
