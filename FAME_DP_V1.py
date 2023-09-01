@@ -1763,8 +1763,8 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
         print('Q_diff_hot = {} [W]'.format(Q_diff_hot), flush=True)
         print('outputs,{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}'.format(qc, qh, Q_leak, P_pump_AMR, P_mag_AMR, error1, power_in_out_cold_side, power_in_out_hot_side, error2,W_mag,Qc_var_cp,Qh_var_cp,E_accum_liq,error3,error4,error5,error6,error7,error8), flush=True)
 
-        return Thot, Tcold, qc, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
-               sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, qh, \
+        return Thot, Tcold, Qc_var_cp, qccor, (t1-t0)/60, pave, eff_HB_CE, eff_CB_HE, tFce, tFhe, yHalfBlow, yEndBlow, sHalfBlow, \
+               sEndBlow, y, s, pt, np.max(pt), Uti, freq, t, xloc, yMaxCBlow, yMaxHBlow, sMaxCBlow, sMaxHBlow, Qh_var_cp, \
                cycleCount, int_field, htc_fs, fluid_dens, mass_flow, dPdx, k_stat, k_disp, S_ht_hot, S_ht_cold, S_ht_fs, \
                S_vd, S_condu_stat, S_condu_disp, S_ht_amb, P_pump_AMR, W_mag_old, Q_leak, Qc_var_cp, Qh_var_cp, Q_diff_cold, Q_diff_hot, E_accum_liq
         # TODO remove from return the input parameters such as Thot, Tcold, freq, xloc
