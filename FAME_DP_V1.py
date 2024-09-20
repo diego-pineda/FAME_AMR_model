@@ -660,7 +660,7 @@ def runActive(caseNum, Thot, Tcold, cen_loc, Tambset, ff, CF, CS, CL, CVD, CMCE,
     # We need to distribute the space identifiers along a matrix to use it later.
     # This funcion cycles through x_discription until it finds a new domain then sets acording
     # to the int_discription
-    int_discription = np.zeros(N+1, dtype=np.int)
+    int_discription = np.zeros(N+1, dtype=int)
     species_descriptor = []
     xloc = np.zeros(N+1)
     # Set the rest of the nodes to id with geoDis(cription)
