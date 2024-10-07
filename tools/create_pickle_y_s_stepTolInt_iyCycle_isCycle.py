@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.interpolate import CubicSpline
 import pickle
+import importlib
 
 '''README
 This script creates a pickle file containing 5 elements: y, s, stepTolInt, iyCycle, and isCycle based on the results of
@@ -22,33 +23,66 @@ Note: for running in Python console just select all, right click, and run in Pyt
 button make sure there are two dots at the beginning of the variables old_directory and 
 '''
 
-# Inputs regarding the old simulation
-old_directory = "./output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/sensitivity_num_params/after_calc_corrections"
-old_cases = [80]  # [int(i) for i in np.linspace(0, 99, 100)]
-old_inputs_file_name = 'Linear_2500mHz_N_nt_vflow_after_calc_corrections_gain0'
-old_nodes = 1500
-old_time_steps = 100
-old_nodes_reduct_fact = 1
+# ------------ Inputs regarding the old simulation ------------
+
+old_directory = "output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/sensitivity_num_params/ff4500mHz"
+old_cases = [int(i) for i in np.linspace(0, 99, 100)]
+old_inputs_file_name = 'Linear_4500mHz_N_nt_vflow'
+# old_nodes = 1500
+# old_time_steps = 100
+# old_nodes_reduct_fact = 1
 old_time_steps_reduct_factor = 1
 
-# Inputs regarding the new simulation
-nodes = 1500
-time_steps = 100
+inputs = importlib.import_module(old_directory.replace('/', '.')+'.'+old_inputs_file_name)
+
+variable_1_values = inputs.vble1values
+variable_1_resolution = inputs.vble1resolution
+variable_2_values = inputs.vble2values  # [units] Variable name. Note: values used for variable 2 in the cases simulated
+variable_2_resolution = inputs.vble2resolution
+variable_3_values = inputs.vble3values  # [units] Variable name. Note: values used for variable 2 in the cases simulated
+variable_3_resolution = inputs.vble3resolution
+node_reduct_factors = inputs.node_reduct_factors
+# timestep_reduc_factors = inputs.timestep_reduc_factors
+hot_resolution = inputs.hotResolution
+span_resolution = inputs.TspanResolution
+# Thotarr = inputs.Thotarr
+# Tspanarr = inputs.Tspanarr
+
+# ------------- Inputs regarding the new simulation ---------------
+# nodes = 1500
+# time_steps = 100
 stepTolInt = 6
-new_case_numbers = [80]  # [int(i) for i in np.linspace(0, 99, 100)]
-new_inputs_file_name = 'Linear_2500mHz_N_nt_vflow_after_calc_corrections2_gain0'
+new_case_numbers = [int(i) for i in np.linspace(0, 99, 100)]
+new_inputs_file_name = 'Linear_4500mHz_Thot310K_Tspan27K_gain2_N_nt_vflow'
 
 # TODO: when this was set to zero it run many cycles: 64 in Delftblue and 99 locally (why the difference).
 #  Now testing what happens if this is set to 6. In case this does not really applies remove the warning above.
 i = 0
 for old_case in old_cases:
-    PickleFileName = "./pickleddata/{0:}-{1:d}".format(new_inputs_file_name, new_case_numbers[i])
+
+    casegroup = int(np.floor(old_case / (span_resolution * hot_resolution)))
+
+    a = int(np.floor((casegroup - variable_1_resolution * int(np.floor(casegroup / variable_1_resolution))) / 1))
+    b = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution)))) / variable_1_resolution))
+    c = int(np.floor((casegroup - variable_1_resolution * variable_2_resolution * variable_3_resolution * int(np.floor(casegroup / (variable_1_resolution * variable_2_resolution * variable_3_resolution)))) / (variable_1_resolution * variable_2_resolution)))
+    # y = int(np.floor(old_case / span_resolution) % hot_resolution)
+    # x = old_case % span_resolution
+
+    old_nodes = int(variable_1_values[a])
+    old_nodes_reduct_fact = int(node_reduct_factors[a])
+    old_time_steps = int(variable_2_values[b])
+    old_time_steps_reduct_factor = 1  # int(timestep_reduc_factors[b])
+
+    nodes = int(variable_1_values[a])
+    time_steps = int(variable_2_values[b])
+
+    PickleFileName = "../pickleddata/{0:}-{1:d}".format(new_inputs_file_name, new_case_numbers[i])
     # Getting the temperature data from the text file
-    data_file = old_directory + '/' + str(old_case) + '.0' + old_inputs_file_name + '.txt'
+    data_file = '../' + old_directory + '/' + str(old_case) + '.0' + old_inputs_file_name + '.txt'
     myfile = open(data_file, "rt")
     contents = myfile.read()
     myfile.close()
-
+    print(old_case, new_case_numbers[i])
     # New attempt: grab only last time step temperatures of existing results and use that to populate new matrices
 
     y1_old = [float(i) for i in ((contents.split('\n'))[3+int(old_time_steps/old_time_steps_reduct_factor)].split())]

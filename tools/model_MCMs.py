@@ -2,33 +2,37 @@ import numpy as np
 import os
 from tools.write_data_to_file import FileSaveMatrix
 
-'''README: this script is useful for creating a series of materials starting from the properties of one material. The 
+'''README: Run this script in the python console
+
+this script is useful for creating a series of materials starting from the properties of one material. The 
 properties of the new materials are the same as in the original material but shifted to different transition 
 temperatures'''
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# Model material
-
-S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_S_h.txt')
-S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_S_c.txt')
-
-Mag_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_Mag_h.txt')
-Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_Mag_c.txt')
-
-Cp_model_mat_h = np.loadtxt('sourcefiles/new_mat/M0/M0_cp_h.txt')
-Cp_model_mat_c = np.loadtxt('sourcefiles/new_mat/M0/M0_cp_c.txt')
-
 # Information required for creating the new data sets with shifted Tc
-
-dT_span = 27  # Difference in Tc of hottest and coldest layers
-Tc_cold = 281  # Transition temperature of the coldest layer
-T_offset = 9.380  # [K] Temperature offset of coldest layer w.r.t the original Tc of the model material (16.2 for M2)
-num_mat = 8  # Number of layers in the AMR
-ini = 614  # Material numbering starts at
-L = 60  # [m] Total length of AMR
+model_material_number = 502
+dT_span = 40  # Difference in Tc of hottest and coldest layers
+Tc_cold = 263  # Transition temperature of the coldest layer
+T_offset = 34.6  # [K] Temperature offset of coldest layer w.r.t the original Tc of the model material
+# Note: Tc is taken as the temperature of the peak of the Cp in high field (297.6 K for M2 in 1.4 T field)
+num_mat = 26  # Number of layers in the AMR
+ini = 754  # Material numbering starts at
+L = 0.120  # [m] Total length of AMR
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# Model material
+
+S_model_mat_h = np.loadtxt('sourcefiles/new_mat/M{}/M{}_S_h.txt'.format(model_material_number, model_material_number))
+S_model_mat_c = np.loadtxt('sourcefiles/new_mat/M{}/M{}_S_c.txt'.format(model_material_number, model_material_number))
+
+Mag_model_mat_h = np.loadtxt('sourcefiles/new_mat/M{}/M{}_Mag_h.txt'.format(model_material_number, model_material_number))
+Mag_model_mat_c = np.loadtxt('sourcefiles/new_mat/M{}/M{}_Mag_c.txt'.format(model_material_number, model_material_number))
+
+Cp_model_mat_h = np.loadtxt('sourcefiles/new_mat/M{}/M{}_cp_h.txt'.format(model_material_number, model_material_number))
+Cp_model_mat_c = np.loadtxt('sourcefiles/new_mat/M{}/M{}_cp_c.txt'.format(model_material_number, model_material_number))
+
 
 # Define the shift in Tc of each layer with respect to the coldest one
 
@@ -62,7 +66,7 @@ funct = '{} / {} * x + {} - {} * {} / {}'.format(dT_span, L-dX, Tc_cold, dT_span
 
 # ------ Calculation of shift in Tc of each layer -------
 
-x = np.linspace(dX/2, L-dX/2, num_mat)  # Uncomment for sigmoid and linear
+x = np.linspace(dX/2, L-dX/2, num_mat)  # Uncomment for sigmoid and linear. Position of center of each layer
 y = eval(funct)                         # Uncomment for sigmoid and linear
 T_shift = y - Tc_cold
 

@@ -24,10 +24,10 @@ colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k', 'olive', 'orangered', 'indigo', 'cr
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Inputs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-directory = "output/FAME_MnFePSi/internal_voids_DDMC/results"  # Directory where the results are stored
-inputs_file_name = "FAME_PSB_Dsp300um_B1400mT_L60mm_ff_vfl_Lvoid"  # File were the values of the input variables were defined. This file is supposed to be located in the directory defined above
-case = 6  # Number of the case for which the thermodynamic cycles will be plotted
-Reg_Length = 0.060  # [mm] This could be obtained from the inputs file in most cases, but it is preferred to leave it as a manual input to make more general
+directory = "output/FAME_MnFePSi/HG191_20K_PSB_120mm_400um_1400mT_NLayers"  # Directory where the results are stored
+inputs_file_name = "HG191_20K_PSB_120mm_400um_1400mT_NLayers"  # File were the values of the input variables were defined. This file is supposed to be located in the directory defined above
+case = 31  # Number of the case for which the thermodynamic cycles will be plotted
+Reg_Length = 0.120  # [mm] This could be obtained from the inputs file in most cases, but it is preferred to leave it as a manual input to make more general
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -127,6 +127,7 @@ index = 0
 for mat in materials:
 
     S = np.loadtxt('./sourcefiles/new_mat/' + mat+'/' + mat+'_S_h.txt')
+
     i_mag_field = list(S[0, :]).index(mag_field_to_plot)
 
     plt.figure(5)

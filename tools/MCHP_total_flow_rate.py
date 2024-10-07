@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 # Note: this applies for a MCHP with a magnet assembly consisting of two poles so that 2 AMR cycles are completed per
 # revolution of the magnet assembly. This does the same that the Simulink model does but with enhanced flexibility.
 
-number_of_AMRs = 14
+number_of_AMRs = 7
 # frequency_AMR = 1  # Hz
 # Max_vflow_per_AMR = 1  # Lpm
-time_steps = 2800  # One AMR cycle
-Fb = 55/180  # % tau. Blow fraction given as a percentage of cycle period
+time_steps = 200 * number_of_AMRs  # One AMR cycle. 200 is just an arbitrary number
+Fb = 2/7  # 4/15   # % tau. Blow fraction given as a percentage of cycle period
 
 
 flow_profile_AMRs = np.zeros((number_of_AMRs, 2*time_steps))
@@ -49,3 +49,6 @@ average_total_flow = np.average(total_flow)
 print(average_total_flow)
 plt.plot(np.linspace(1, 2*time_steps, 2*time_steps), total_flow)
 plt.show()
+
+'''Notes
+'''

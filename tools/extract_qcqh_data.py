@@ -102,12 +102,12 @@ def extract_qc_qh_data(directory, inputs_file_name, matrices='yes'):
     # results_to_excel.to_excel(excel_file_path, index=False)
 
     # Saving the results to a .txt file
-    file_path = './' + directory + '/Output_data_per_case.txt'
+    file_path = './' + directory + '/' + inputs_file_name + '_output_data.txt'
     FileSaveMatrix(file_path, results)
     # print(results[np.argsort(results[:, 0])])
 
     if matrices == 'yes':
-
+        # This is for saving pickle files with the data contained in the matrices
         np.save(directory+'/'+inputs_file_name+"_Qc.npy", Qc, allow_pickle=True, fix_imports=True)
         np.save(directory+'/'+inputs_file_name+"_Qh.npy", Qh, allow_pickle=True, fix_imports=True)
         np.save(directory+'/'+inputs_file_name+"_Win.npy", Win, allow_pickle=True, fix_imports=True)
