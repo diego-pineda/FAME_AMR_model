@@ -1,8 +1,13 @@
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import RectBivariateSpline, interp1d, interp2d
 import random
+import pandas as pd
+import PyQt5
+import addcopyfighandler
 
+mpl.use('Qt5Agg')
 # ----------------------------------------------------------------------------------------------------------------
 
 
@@ -29,18 +34,22 @@ particular nodes in the bed. To do so, uncomment the proper section below and se
 above.'''
 
 # Inputs
-id_first_mat = 268  #328 #166
-id_last_mat = 297 #357 #179
-increment = 29
+path_dir = './sourcefiles/new_mat/'
+id_first_mat = 1000  #328 #166
+id_last_mat = 1000 #357 #179
+increment = 1
 materials = []
-mag_field_to_plot = 1.4
-for i in [268, 283, 297]:  # range(id_first_mat, id_last_mat + 1, increment):
+mag_field_to_plot = 0.9
+for i in range(id_first_mat, id_last_mat + 1, increment):  # [268, 283, 297]:  #
     materials.append('M' + str(i))
 # materials = ['M6', 'M7', 'M8',  'M9', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15']
 # materials = ['M0', 'M2']
 # materials = ['M601', 'M333', 'M334',  'M335', 'M336', 'M337', 'M338', 'M339', 'M340', 'M341', 'M342', 'M343', 'M344', 'M345', 'M346', 'M347', 'M348', 'M349', 'M350', 'M351', 'M352', 'M602']
 temperature_range = [260, 310]  # [K] Used for plots
 colors = ['b', 'r', 'g', 'c', 'm', 'y', 'k', 'olive', 'orangered', 'indigo', 'crimson', 'grey', 'royalblue', 'khaki',
+          'darkorange', 'slategray', 'deeppink', 'teal', 'peru', 'darkviolet', 'hotpink', 'darkorange','rosybrown', 'sienna', 'steelblue',
+          'navy', 'khaki', 'gold', 'royalblue', 'tan',
+          'b', 'r', 'g', 'c', 'm', 'y', 'k', 'olive', 'orangered', 'indigo', 'crimson', 'grey', 'royalblue', 'khaki',
           'darkorange', 'slategray', 'deeppink', 'teal', 'peru', 'darkviolet', 'hotpink', 'darkorange','rosybrown', 'sienna', 'steelblue',
           'navy', 'khaki', 'gold', 'royalblue', 'tan']
 
@@ -54,41 +63,86 @@ index = 0
 for mat in materials:
     # print(mat)
     plt.figure(1)  # Heat capacity vs Temperature
-    cp_h = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
-    cp_c = np.loadtxt(mat+'/'+mat+'_cp_c.txt')
+    try:
+        cp_h_dataframe = pd.read_csv(mat+'/'+mat+'_cp_h.csv', sep=';', header=None)
+        cp_h = pd.DataFrame(cp_h_dataframe).to_numpy()
+        cp_c_dataframe = pd.read_csv(mat+'/'+mat+'_cp_c.csv', sep=';', header=None)
+        cp_c = pd.DataFrame(cp_c_dataframe).to_numpy()
+    except FileNotFoundError:
+        cp_h_dataframe = pd.read_csv(mat+'/'+mat+'_cp_h.txt', sep='\t', lineterminator='\n', header=None)
+        cp_h = pd.DataFrame(cp_h_dataframe).to_numpy()
+        cp_c_dataframe = pd.read_csv(mat+'/'+mat+'_cp_c.txt', sep='\t', lineterminator='\n', header=None)
+        cp_c = pd.DataFrame(cp_c_dataframe).to_numpy()
+
+    # cp_h = np.loadtxt(mat+'/'+mat+'_cp_h.txt')
+    # cp_c = np.loadtxt(mat+'/'+mat+'_cp_c.txt')
     T_cp_h = cp_h[1:, 0]
     T_cp_c = cp_c[1:, 0]
     # C_p_0T = cp_h[1:, 1]
-
+    print(cp_c[0, :])
     # if index == 0 or index == 21:
     #     i_mag_field = list(cp_h[0, :]).index(1)
     # else:
-    i_mag_field = list(cp_h[0, :]).index(mag_field_to_plot)
+    # i_mag_field = list(cp_h[0, :]).index(mag_field_to_plot)
+    i_mag_field = list(cp_c[0, :]).index(mag_field_to_plot)
 
     # C_p_09T = cp_h[1:, i_mag_field]
     # Cp_hi_field = cp_h[1:, i_mag_field]
-    plt.plot(T_cp_h, cp_h[1:, 1], color=colors[index], linestyle='dotted')  # Heating zero field
-    plt.plot(T_cp_c, cp_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling zero field
+    # plt.plot(T_cp_h, cp_h[1:, 1], color=colors[index], linestyle='dotted')  # Heating zero field
+    # plt.plot(T_cp_c, cp_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling zero field
     plt.plot(T_cp_h, cp_h[1:, i_mag_field], color=colors[index], linestyle='solid')  # Heating high field
-    plt.plot(T_cp_c, cp_c[1:, i_mag_field], color=colors[index], linestyle='dashdot')  # Cooling high field
+    # plt.plot(T_cp_c, cp_c[1:, i_mag_field], color=colors[index], linestyle='dashdot')  # Cooling high field
+    # plt.show()
 
-    cp_legends.append('{} - {} T heating'.format(mat, 0))
-    cp_legends.append('{} - {} T cooling'.format(mat, 0))
+    cp_legends.append('{} - {} T'.format(mat, 0))
+    # cp_legends.append('{} - {} T cooling'.format(mat, 0))
     cp_legends.append('{} - {} T'.format(mat, mag_field_to_plot))
-    cp_legends.append('{} - {} T cooling'.format(mat, mag_field_to_plot))
+    # cp_legends.append('{} - {} T cooling'.format(mat, mag_field_to_plot))
 
     # plt.plot(T_cp, Cp_hi_field, color=colors[index], linestyle='dashed')
 
+
+
+
     plt.figure(2)  # Magnetic entropy change vs Temperature
-    s_h = np.loadtxt(mat+'/'+mat+'_S_h.txt')
-    s_c = np.loadtxt(mat+'/'+mat+'_S_c.txt')
+
+    try:
+        s_h_df = pd.read_csv(mat+'/'+mat+'_S_h.csv', sep=';', header=None)
+        s_h = pd.DataFrame(s_h_df).to_numpy()
+        s_c_df = pd.read_csv(mat+'/'+mat+'_S_c.csv', sep=';', header=None)
+        s_c = pd.DataFrame(s_c_df).to_numpy()
+    except FileNotFoundError:
+        s_h_df = pd.read_csv(mat+'/'+mat+'_S_h.txt', sep='\t', lineterminator='\n', header=None)
+        s_h = pd.DataFrame(s_h_df).to_numpy()
+        s_c_df = pd.read_csv(mat+'/'+mat+'_S_c.txt', sep='\t', lineterminator='\n', header=None)
+        s_c = pd.DataFrame(s_c_df).to_numpy()
+
+    # s_h = np.loadtxt(mat+'/'+mat+'_S_h.txt')
+    # s_c = np.loadtxt(mat+'/'+mat+'_S_c.txt')
+
+
     T_s_h = s_h[1:, 0]
-    T_s_c = s_c[1:, 0]
+    # T_s_c = s_c[1:, 0]
     dS_m_h = s_h[1:, 1] - s_h[1:, i_mag_field]  # Negative magnetic entropy change from 0 T to 0.9 T
-    dS_m_c = s_c[1:, 1] - s_c[1:, i_mag_field]
+    # dS_m_c = s_c[1:, 1] - s_c[1:, i_mag_field]
     # dS_m_hi_field = s_h[1:, 1] - s_h[1:, 15]
     plt.plot(T_s_h, dS_m_h, color=colors[index], linestyle='solid')
-    plt.plot(T_s_c, dS_m_c, color=colors[index], linestyle='dashed')
+    # plt.plot(T_s_c, dS_m_c, color=colors[index], linestyle='dashed')
+
+
+
+    plt.figure(4)  # ST diagram
+    plt.plot(T_s_h, s_h[1:, 1], color=colors[index], linestyle='solid')  # Heating low field
+    # plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
+    plt.plot(T_s_h, s_h[1:, i_mag_field], color=colors[index], linestyle='solid')  # Heating high field
+    # plt.plot(T_s_c, s_c[1:, i_mag_field], color=colors[index], linestyle='dashdot')  # Cooling high field
+
+    s_legends.append('{} - {} T'.format(mat, 0))
+    # s_legends.append('{} - {} T cooling'.format(mat, 0))
+    s_legends.append('{} - {} T'.format(mat, mag_field_to_plot))
+    # s_legends.append('{} - {} T cooling'.format(mat, mag_field_to_plot))
+
+    # plt.show()
 
     plt.figure(3)  # Adiabatic temperature change vs Temperature
     s_0_h = interp1d(s_h[1:, 0], s_h[1:, 1], kind='cubic')
@@ -109,27 +163,32 @@ for mat in materials:
     # plt.plot(T_set, dT_ad_c, color=colors[index], linestyle='dashed')
     # plt.plot(T_set, dT_hi_field, color=colors[index], linestyle='dashed')
 
-    plt.figure(4)  # ST diagram
-    plt.plot(T_s_h, s_h[1:, 1], color=colors[index], linestyle='solid')  # Heating low field
-    # plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
-    plt.plot(T_s_h, s_h[1:, i_mag_field], color=colors[index], linestyle='solid')  # Heating high field
-    # plt.plot(T_s_c, s_c[1:, i_mag_field], color=colors[index], linestyle='dashdot')  # Cooling high field
-
-    # s_legends.append('{} - {} T heating'.format(mat, 0))
-    # s_legends.append('{} - {} T cooling'.format(mat, 0))
-    # s_legends.append('{} - {} T heating'.format(mat, mag_field_to_plot))
-    # s_legends.append('{} - {} T cooling'.format(mat, mag_field_to_plot))
-
     plt.figure(5)  # MT curves
-    Mag = np.loadtxt(mat+'/'+mat+'_Mag_h.txt')
+
+    try:
+        Mag_h_df = pd.read_csv(mat+'/'+mat+'_Mag_h.csv', sep=';', header=None)
+        Mag = pd.DataFrame(Mag_h_df).to_numpy()
+
+    except FileNotFoundError:
+        Mag_h_df = pd.read_csv(mat+'/'+mat+'_Mag_h.txt', sep='\t', lineterminator='\n', header=None)
+        Mag = pd.DataFrame(Mag_h_df).to_numpy()
+
+    # Mag = np.loadtxt(mat+'/'+mat+'_Mag_h.txt')
     T_mag = Mag[1:, 0]
 
     # Mag_0_1T = Mag[1:, 2]
-    i_mag_field = list(Mag[0, :]).index(mag_field_to_plot)
-    Mag_hi_field = Mag[1:, i_mag_field]
+    M_curves_to_plot = [0.6, 1, 1.4, 1.8]
+    for m in M_curves_to_plot:
+        i_mag_field = list(Mag[0, :]).index(m)
+        Mag_hi_field = Mag[1:, i_mag_field]
+        plt.plot(T_mag, Mag_hi_field, linestyle='solid')
+
+    # i_mag_field = list(Mag[0, :]).index(mag_field_to_plot)
+    # print(i_mag_field)
+    # Mag_hi_field = Mag[1:, i_mag_field]
     # plt.plot(T_mag, Mag_0_1T, color=colors[index])
-    plt.plot(T_mag, Mag_hi_field, color=colors[index], linestyle='solid')
-    plt.plot(T_mag, Mag[1:, 15], color=colors[index], linestyle='dashed')
+    # plt.plot(T_mag, Mag_hi_field, color=colors[index], linestyle='solid')
+    # plt.plot(T_mag, Mag[1:, 15], color=colors[index], linestyle='dashed')
 
     plt.figure(6)  # dMdT
     i = 0
@@ -169,35 +228,47 @@ for mat in materials:
 # Outputs
 # TODO include also magnetization curves? at 0 T and 0.9 T??
 plt.figure(1)  # Cp vs T
-plt.xlabel('T [K]')
-plt.ylabel('$C_{p}$ [J kg$^{-1}$ K$^{-1}$]')
+plt.xlabel('$T_s$ [K]', fontsize=12)
+plt.ylabel('$C_{p}$ [J kg$^{-1}$ K$^{-1}$]', fontsize=12)
+plt.yticks(fontsize=12)
+plt.xticks(fontsize=12)
 # plt.xlim(temperature_range[0], temperature_range[1])
-plt.grid(which='major', axis='both')
+# plt.grid(which='major', axis='both')
 # plt.legend(['Gd - 0 T', 'Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
-plt.legend(cp_legends, loc='upper left')
+# plt.legend(cp_legends, loc='upper left')
 
 plt.figure(2)  # Magnetic entropy change vs Temperature
 plt.xlabel('T [K]')
 plt.ylabel('$-\u0394s_{m}$ [J kg$^{-1}$ K$^{-1}$]')
 # plt.xlim(temperature_range[0], temperature_range[1])
-plt.grid(which='major', axis='both')
+# plt.grid(which='major', axis='both')
 # plt.legend(["HH path", "CC path"])
 # plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
 
 plt.figure(3)  # Adiabatic temperature change vs Temperature
-plt.xlabel('T [K]')
+plt.xlabel(r'$T_s$ [K]')
 plt.ylabel('$\u0394T_{ad}$ [K]')
+# plt.xlim(280, 315)
+# plt.ylim(0, 3)
+# plt.hlines(2, 260, 350, colors='k')
+# plt.vlines([293.608, 303.4515], 0, 3, colors=['k', 'k'])
+# plt.text(282, 2.7, 'a)', fontsize=15)
 # plt.xlim(temperature_range[0], temperature_range[1])
-plt.grid(which='major', axis='both')
+# plt.grid(which='major', axis='both')
 # plt.legend(['HH path', 'CC path'])
 # plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
 
 plt.figure(4)  # S vs T
 plt.xlabel(r'$T_s$ [K]')
 plt.ylabel(r'$s$ [J kg$^{-1}$ K$^{-1}$]')
-# plt.xlim(temperature_range[0], temperature_range[1])
 plt.xlim(280, 315)
 plt.ylim(60, 120)
+plt.vlines([293.608, 303.4515], 60, 120, colors=['k', 'k'])
+plt.hlines([75.0682, 104.551], 280, 315, colors=['k', 'k'])
+plt.text(282, 115, 'b)', fontsize=15)
+# plt.xlim(temperature_range[0], temperature_range[1])
+# plt.xlim(270, 320)
+# plt.ylim(30, 130)
 # plt.grid(which='major', axis='both')
 # plt.legend(s_legends, loc='upper left')
 # plt.legend(['0 T', '1.4 T'])
@@ -208,11 +279,11 @@ plt.ylabel('M [A m$^2$ kg$^{-1}$]')
 # plt.xlim(temperature_range[0], temperature_range[1])
 # plt.xlim(295,317)
 # plt.ylim(65, 110)
-plt.grid(which='major', axis='both')
-plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
+# plt.grid(which='major', axis='both')
+# plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 0.9 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.52}$ - 1.4 T'])
+plt.legend(['0.6 T', '1.0 T', '1.4 T', '1.8 T'])
 
-
-# plt.show()
+plt.show()
 
 
 # 2) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Ploting on TS diagrams %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -221,10 +292,10 @@ plt.legend(['Gd - 0.9 T', 'Gd - 1.4 T', 'Mn$_{1.18}$Fe$_{0.73}$P$_{0.48}$Si$_{0.
 import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
-directory = "output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/Thot_extended_Tspan27K"  #   "output/FAME_20layer_infl_Thot_flow2"
+directory = "output/FAME_MnFePSi/internal_voids_DDMC/results"  #   "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
-inputs_file_name = "FAME_Dsp300um_B1400mT_layering_Thot_extended_Tspan27K"  #  "Run_parallel"
-case = 29
+inputs_file_name = "FAME_PSB_Dsp300um_B1400mT_L60mm_ff_vfl_Lvoid"  #  "Run_parallel"
+case = 6
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
 
@@ -268,8 +339,8 @@ applied_field = 1.4
 # dThot       = 4      # [K] Maximum temperature difference between the fluid leaving hot side and hot reservoir
 # dTcold      = 4      # [K] Maximum temperature difference between the fluid leaving cold side and cold reservoir
 Reg_Length = 0.060  # [mm]
-nodes       = 600   #  1800  # [-]
-time_steps  = 217  # 600     # [-]
+nodes       = 1000   #  1800  # [-]
+time_steps  = 400  # 600     # [-]
 # node = [48, 143, 237, 332, 427, 521, 616, 711, 805, 900, 995, 1089, 1184, 1279, 1373, 1468, 1563, 1657, 1752] # 19 layers 1800 columns in temperature matrices
 # node = [16, 48, 79, 111, 142, 174, 205, 237, 268, 300, 332, 363, 395, 426, 458, 489, 521, 552, 584]  # for 19 layers
 
@@ -284,6 +355,8 @@ print(materials_this_case)
 nn = 0
 int_discription = np.zeros(nodes+1, dtype=int)
 species_descriptor = []
+node_min = [1]
+node_max = []
 xloc = np.zeros(nodes+1)
 # Set the rest of the nodes to id with geoDis(cription)
 DX = Reg_Length / (nodes - 1)
@@ -291,17 +364,25 @@ for i in range(nodes+1):  # sets 0->N-2 which is from 1st node with material to 
     xloc[i] = (DX * i + DX / 2)  # modify i so 0->N
     if xloc[i] >= layer_interp_pos_this_case[nn + 1] + DX and i < nodes:
         nn = nn + 1
+        node_max.append(i-1)
+        node_min.append(i)
     int_discription[i] = nn
     species_descriptor.append(materials[nn])
-# TODO get the list of first, middle and last node of each layer automatically
+node_max.append(nodes)
+node_mid = [int(i) for i in (np.array(node_min) + np.array(node_max))/2]
+print(species_descriptor)
+
 # node_min = [1, 51,101,151,201,251,301,351,401,451,501,551]
 # node_mid = [25,75,125,175,225,275,325,375,425,475,525,575]
 # node_max = [50,100,150,200,250,300,350,400,450,500,550,600]
 
-node_min = [1,  21, 41, 61,  81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501, 521, 541, 561, 581]  # [1, 61, 121, 181, 241, 301, 361, 421, 481, 541]  #[1, 151, 301, 451]  # for 12 layers 600 columns in temperature matrix
-node_mid = [10, 30, 50, 70,  90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 570, 590]  # [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]  #[75,	225, 375, 525]
-node_max = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600]  # [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  #[150, 300, 450, 600]
+# node_min = [1,  21, 41, 61,  81, 101, 121, 141, 161, 181, 201, 221, 241, 261, 281, 301, 321, 341, 361, 381, 401, 421, 441, 461, 481, 501, 521, 541, 561, 581]  # [1, 61, 121, 181, 241, 301, 361, 421, 481, 541]  #[1, 151, 301, 451]  # for 12 layers 600 columns in temperature matrix
+# node_mid = [10, 30, 50, 70,  90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370, 390, 410, 430, 450, 470, 490, 510, 530, 550, 570, 590]  # [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]  #[75,	225, 375, 525]
+# node_max = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480, 500, 520, 540, 560, 580, 600]  # [60, 120, 180, 240, 300, 360, 420, 480, 540, 600]  #[150, 300, 450, 600]
 
+# node_min = [1, 51,101,151,201,251,301,351,401,451,501,551]
+# node_mid = [25,75,125,175,225,275,325,375,425,475,525,575]
+# node_max = [50,100,150,200,250,300,350,400,450,500,550,600]
 
 # node = [30, 90, 150, 210, 270, 330, 390, 450, 510, 570]
 # node = [15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345, 375, 405, 435, 465, 495, 525, 555, 585]
@@ -356,10 +437,27 @@ for mat in materials:
 W_mag_AMR = 0
 s_t0 = np.zeros(nodes+1)
 s_t126 = np.zeros(nodes+1)
-for node in range(nodes):
+entropy_node0 = np.zeros(time_steps)
+entropy_mid_node = np.zeros(time_steps)
+entropy_last_node = np.zeros(time_steps)
+for node in range(0, nodes, 4):
     w_mag_node = 0
     for n in range(time_steps):
         s_current = s_int_functions[int_discription[node+1]](solidTemp[n, node + 1], int_mag_field[n, int((node+1)/2)])[0, 0]
+        plt.figure(7)
+        if node == 0:
+            color_node = 'red'
+            # solidTemp_node0[n] = solidTemp[n, node + 1]
+            entropy_node0[n] = s_current
+        elif node == 1000:
+            entropy_mid_node[n] = s_current
+            color_node = 'red'
+        elif node == nodes-1:
+            entropy_last_node[n] = s_current
+            color_node = 'red'
+        else:
+            color_node = 'powderblue'
+        plt.plot(solidTemp[n, node + 1], s_current, marker='o', color=color_node)
         s_next = s_int_functions[int_discription[node+1]](solidTemp[n+1, node + 1], int_mag_field[n+1, int((node+1)/2)])[0, 0]
         Area_loop = 0.5 * (solidTemp[n, node+1] + solidTemp[n+1, node+1]) * (s_next - s_current)
         # print('ds = ', (s_next - s_current))
@@ -370,6 +468,40 @@ for node in range(nodes):
             s_t126[node] = s_current
     W_mag_node = w_mag_node * 6100 * (0.045*0.013*DX*(1-0.36))
     W_mag_AMR = W_mag_AMR + W_mag_node
+
+plt.figure(7)
+plt.plot(solidTemp[0:-1, 1], entropy_node0, marker='o', color='red')
+plt.plot(solidTemp[0:-1, 1000], entropy_mid_node, marker='o', color='red')
+plt.plot(solidTemp[0:-1, -1], entropy_last_node, marker='o', color='red')
+
+# Plot entropy curves for node 0
+s_h = np.loadtxt(species_descriptor[1]+'/'+species_descriptor[1]+'_S_h.txt')
+T_s_h = s_h[1:, 0]
+plt.figure(7)  # ST diagram
+plt.plot(T_s_h, s_h[1:, 1], color='k', linestyle='solid')  # Heating low field
+# plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
+plt.plot(T_s_h, s_h[1:, 15], color='k', linestyle='solid')  # Heating high field
+
+# Plot entropy curves for node 300
+s_h = np.loadtxt(species_descriptor[1000]+'/'+species_descriptor[1000]+'_S_h.txt')
+T_s_h = s_h[1:, 0]
+plt.figure(7)  # ST diagram
+plt.plot(T_s_h, s_h[1:, 1], color='k', linestyle='solid')  # Heating low field
+# plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
+plt.plot(T_s_h, s_h[1:, 15], color='k', linestyle='solid')  # Heating high field
+
+# Plot entropy curves for node 600
+s_h = np.loadtxt(species_descriptor[2000]+'/'+species_descriptor[2000]+'_S_h.txt')
+T_s_h = s_h[1:, 0]
+plt.figure(7)  # ST diagram
+plt.plot(T_s_h, s_h[1:, 1], color='k', linestyle='solid')  # Heating low field
+# plt.plot(T_s_c, s_c[1:, 1], color=colors[index], linestyle='dashed')  # Cooling low field
+plt.plot(T_s_h, s_h[1:, 15], color='k', linestyle='solid')  # Heating high field
+
+plt.axhline(y=105, color='k', linestyle='solid')  # xmin=250, xmax=350,
+plt.axhline(y=75, color='k', linestyle='solid')  # xmin=250, xmax=350,
+# plt.xlim((300, 310))
+# plt.show()
 
 plt.figure(4)
 plt.scatter(solidTemp[0, :], s_t0)
