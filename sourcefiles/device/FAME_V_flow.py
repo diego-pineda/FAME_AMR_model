@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
     from sourcefiles.device.FAME_app_field import app_field
 
-    nt = 400 # number of nodes in the time domain
+    nt = 1000 # number of nodes in the time domain
     N = 1 # number of nodes in the spatial domain. This is just for the applied field function
     mag_field = 1.4
 
@@ -69,6 +69,8 @@ if __name__ == '__main__':
     plot1.set_ylim([-1.5, 1.5])
     plot1.set_xlim([0, 1])
     plot1.set_yticks([-1.4, -0.7, 0, 0.7, 1.4])
+    plot1.spines['left'].set_color('red')
+    plot1.tick_params(axis='y', colors='red')
 
 
     # plot1.set_xticks(np.arange(0, 1, 10))
@@ -98,6 +100,9 @@ if __name__ == '__main__':
     plot2.plot([0.9, 1], [0, 0], '-', color='red')  # This is just for the legend
     plot2.plot(np.linspace(0, 1, (nt+1)), volumetric_rate, '--', color='blue')
     plot2.set_ylabel("Normalized flow rate [-]", color='blue')
+    plot2.spines['right'].set_color('blue')
+    plot2.spines['left'].set_color('red')
+    plot2.tick_params(axis='y', colors='blue')
     plt.tight_layout()
     # plt.plot(np.linspace(0, 180, (nt+1)), volumetric_rate, '--')
     # plt.xlabel("Angle [°]")
