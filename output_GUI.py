@@ -156,10 +156,10 @@ import importlib
 
 # directory = "../../output/FAME_20layer_infl_Thot_flow"
 # "output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
-directory = 'output/FAME_MnFePSi/FAME_Dsp300um_B_1400mT_layering/ff_vflow_Thots_1200cases'  # 'output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR' # 'output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl_intern_voids' #"output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "output/FAME_20layer_infl_Thot_flow2"
+directory = 'output/FAME_MnFePSi/SMG_44K_PSB_230mm_400um_23layers_por32perc'  # 'output/FAME_GD/FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR' # 'output/FAME_MnFePSi/FAME_Dsp300um_B1400mT_ff_vfl_intern_voids' #"output/FAME_MnFePSi/FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "output/FAME_20layer_infl_Thot_flow2"
 # inputs_file_name = 'FAME_20layer_infl_Thot_flow'  # File were the values of the input variables were defined.
 #"FAME_Dsp300um_B1400mT_L60mm_ff_vfl_only_intern_voids"
-inputs_file_name = 'FAME_Dsp300um_B1400mT_layering_ff_vflow_extended_new_Thots'  # 'FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR'  # 'FAME_Dsp300um_B1400mT_ff_vfl_intern_voids'  #"FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "Run_parallel"
+inputs_file_name = 'FAME_Dsp300um_B1400mT_ff_vfl4'  # 'FAME_Dsp300um_B1400mT_Gd_ff_vfl'  #'FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR'  # 'FAME_Dsp300um_B1400mT_ff_vfl_intern_voids'  #"FAME_MnFePSi_12layers_PB_Dsp300um_B1400mT_ff_vfl_AR_new"  # "Run_parallel"
 
 # inputs = importlib.import_module(directory.replace('/', '.').replace('.', '', 6)+'.'+inputs_file_name)
 inputs = importlib.import_module(directory.replace('/', '.')+'.'+inputs_file_name)
@@ -219,15 +219,14 @@ legends2 = []
 Qc = np.load(directory + '/' + inputs_file_name + '_Qc.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qc.npy'
 Qh = np.load(directory + '/' + inputs_file_name + '_Qh.npy')  # 'output/FAME_Dsp300um_B900mT_ff_vfl/FAME_Dsp300um_B900mT_ff_vfl_Qh.npy'
 
-Win = np.load(directory + '/' + inputs_file_name + '_Win.npy')
-# COP_h = Qh / (Qh - Qc)
-# COP_c = Qc / (Qh - Qc)
+COP_h = Qh / (Qh - Qc)
+COP_c = Qc / (Qh - Qc)
+
+# Win = np.load(directory + '/' + inputs_file_name + '_Win.npy')
+# COP_h = (Qh / Win) #/ 11.48  # TODO Warning: hard coding
+# COP_c = (Qc / Win) #/ 11.48   # TODO Warning: hard coding
 
 Carnot_COP = Thot/Tspan
-
-COP_h = (Qh / Win) #/ 11.48  # TODO Warning: hard coding
-COP_c = (Qc / Win) #/ 11.48   # TODO Warning: hard coding
-
 # ------------------- Average heating and cooling capacities over several Tspan and Thot
 # Qc_ave = np.zeros((variable_3_resolution, variable_2_resolution, variable_1_resolution))
 # Qh_ave = np.zeros((variable_3_resolution, variable_2_resolution, variable_1_resolution))
@@ -631,8 +630,8 @@ class Window:
 
         figure = plt.figure(figsize=(7, 5), dpi=100)
         # figure.add_subplot(111).plot(t,y)
-        figure.add_subplot(111).plot(X*1000/60, Y, 'dk', markersize=2)  # Plotting grid mesh
-        CS = figure.add_subplot(111).contourf(X*1000/60, Y, Z, levels=np.linspace(0, Z_max, 100), extend='neither', cmap='jet')  # np.linspace(0, 60, 100) abs(np.amax(Z))
+        figure.add_subplot(111).plot(X, Y, 'dk', markersize=2)  # Plotting grid mesh  *1000/60 to convert to g/s
+        CS = figure.add_subplot(111).contourf(X, Y, Z, levels=np.linspace(0, Z_max, 100), extend='neither', cmap='jet')  # np.linspace(0, 60, 100) abs(np.amax(Z)) *1000/60
         clb = plt.colorbar(ticks=colorbar_ticks, mappable=CS, aspect=10)
         # clb.set_label(r'$\eta_{\rm Carnot}$ [-]', labelpad=-45, y=1.075, rotation=0)  # TODO Warning! hard coding
         clb.ax.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
